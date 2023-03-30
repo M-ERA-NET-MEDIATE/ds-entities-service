@@ -1,0 +1,33 @@
+name: CI - Tests
+
+on:
+  pull_request:
+  push:
+    branches:
+      - 'main'
+      - 'push-action/**'  # Allow pushing to protected branches (using CasperWA/push-protected)
+
+jobs:
+  basic-tests:
+    name: External
+    uses: SINTEF/ci-cd/.github/workflows/ci_tests.yml@v2.2.1
+    with:
+      # General setup
+      install_extras: "[dev]"
+
+      # pre-commit
+      python_version_pre-commit: "3.10"
+      skip_pre-commit_hooks: pylint
+
+      # pylint & safety
+      python_version_pylint_safety: "3.10"
+      pylint_runs: |
+        --rcfile=pyproject.toml --extension-pkg-whitelist='pydantic' dlite_entities_service
+
+      # Build dist
+      python_version_package: "3.10"
+      build_libs: flit
+      build_cmd: flit build
+
+      # Build documentation
+      run_build_docs: false
