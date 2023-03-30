@@ -40,6 +40,7 @@ class ServiceSettings(BaseSettings):
         """Pydantic configuraiton for the settings."""
 
         env_prefix = "entity_service_"
+        env_file = ".env"
 
 
 CONFIG = ServiceSettings()

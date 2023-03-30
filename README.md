@@ -45,6 +45,23 @@ Then go to [localhost:8000/docs](http://localhost:8000/docs) and try out retriev
 
 For production, use a public MongoDB, and follow the same instructions above for building and running the DLite Entities Service Docker image, but exchange the `--target` value with `production`, put in the proper value for the `entity_service_mongo_uri` environment value, possibly add the `entity_service_mongo_user` and `entity_service_mongo_password` environment variables as well, if needed.
 
+### Using Docker Compose
+
+Run the following commands:
+
+```shell
+docker compose pull
+docker compose up --build
+```
+
+By default the `development` target will be built, to change this, set the `entity_service_docker_target` environment variable accordingly, e.g.:
+
+```shell
+entity_service_docker_target=production docker compose up --build
+```
+
+Furthermore, the used `localhost` port can be changed via the `PORT` environment variable.
+
 ### Using the local environment
 
 Install an ASGI server, like `uvicorn`:
@@ -63,6 +80,19 @@ uvicorn dlite_entities_service.main:APP --reload --host localhost --port 8000 --
 ```
 
 Then go to [localhost:8000/docs](http://localhost:8000/docs) and try out retrieving a DLite entity.
+
+### Using a file for environment variables
+
+The service supports a "dot-env" file, i.e., a `.env` file with a list of (secret) environment variables.
+
+In order to use this, create a new file named `.env`.
+This file will never be committed if you choose to `git commit` any files, as it has been hardcoded into the `.gitignore` file.
+
+Then fill up the `.env` file with secret environment variables.
+
+For using it locally, no changes are needed, as the service will automatically check for a `.env` file and load it in, using it to set the service app configuration.
+
+For using it with Docker, use the `--env-file .env` argument when calling `docker run` or `docker compose up`.
 
 ## Licensing & copyright
 
