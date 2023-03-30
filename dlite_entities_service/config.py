@@ -1,8 +1,14 @@
 """Service app configuration."""
 from typing import Any
 
-from pydantic import BaseSettings, Field, validator
+from pydantic import BaseSettings, Field, SecretStr, validator
 from pydantic.networks import AnyHttpUrl, MongoDsn
+
+
+class MongoSrvDsn(MongoDsn):
+    """Support `+srv` extension."""
+
+    allowed_schemes = {"mongodb", "mongodb+srv"}
 
 
 class ServiceSettings(BaseSettings):
@@ -12,9 +18,15 @@ class ServiceSettings(BaseSettings):
         "http://onto-ns.com/meta",
         description="Base URL, where the service is running.",
     )
-    mongo_uri: MongoDsn = Field(  # type: ignore[assignment]
+    mongo_uri: MongoSrvDsn = Field(  # type: ignore[assignment]
         "mongodb://localhost:27017",
         description="URI for the MongoDB cluster/server.",
+    )
+    mongo_user: str | None = Field(
+        None, description="Username for connecting to the MongoDB."
+    )
+    mongo_password: SecretStr | None = Field(
+        None, description="Password for connecting to the MongoDB."
     )
 
     @validator("base_url", pre=True)

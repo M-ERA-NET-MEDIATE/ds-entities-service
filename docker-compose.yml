@@ -1,0 +1,32 @@
+version: "3"
+
+services:
+  dlite_entities_service:
+    build:
+      context: "."
+      target: "${entity_service_docker_target:-development}"
+    ports:
+      - "${PORT:-8000}:80"
+    environment:
+      entity_service_base_url: "http://onto-ns.com/meta"
+      entity_service_mongo_uri: "mongodb://mongodb:27017"
+      entity_service_mongo_user: root
+      entity_service_mongo_password: root
+    depends_on:
+      - mongodb
+    networks:
+      - dlite_entities_net
+    volumes:
+      - "${PWD}:/app"
+
+  mongodb:
+    image: mongo:6
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: root
+    networks:
+      - dlite_entities_net
+
+networks:
+  dlite_entities_net:

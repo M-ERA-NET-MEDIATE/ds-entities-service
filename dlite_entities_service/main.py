@@ -19,7 +19,12 @@ APP = FastAPI(
 )
 
 
-@APP.get("/{version}/{name}", response_model=Entity, response_model_by_alias=True)
+@APP.get(
+    "/{version}/{name}",
+    response_model=Entity,
+    response_model_by_alias=True,
+    response_model_exclude_unset=True,
+)
 async def get_entity(version: str, name: str) -> "dict[str, Any]":
     """Get a DLite entity."""
     query = {
