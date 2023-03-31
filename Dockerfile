@@ -14,7 +14,7 @@ EXPOSE 80
 
 FROM base as development
 
-ENTRYPOINT uvicorn --host 0.0.0.0 --port 80 --log-level debug --no-server-header --header "Server:DLiteEntitiesService" --reload --debug dlite_entities_service.main:APP
+ENTRYPOINT uvicorn --host 0.0.0.0 --port 80 --log-level debug --no-server-header --header "Server:DLiteEntitiesService" --reload dlite_entities_service.main:APP
 
 FROM base as production
 
