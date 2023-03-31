@@ -31,3 +31,60 @@ jobs:
 
       # Build documentation
       run_build_docs: false
+
+  docker:
+    name: Docker
+    runs-on: ubuntu-latest
+
+    services:
+      mongo:
+        image: mongo:6
+        ports:
+          - "27017:27017"
+        env:
+          MONGO_INITDB_ROOT_USERNAME: root
+          MONGO_INITDB_ROOT_PASSWORD: root
+
+    env:
+      entity_service_mongo_uri: mongodb://localhost:27017
+      entity_service_mongo_user: root
+      entity_service_mongo_password: root
+      DOCKER_TEST_PORT: 8000
+
+    steps:
+      - name: Checkout ${{ github.repository }}
+        uses: actions/checkout@v3
+
+      - name: Setup Python 3.10
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Build Docker image
+        run: docker build --pull -t entity-service --target development .
+
+      - name: Run Docker container
+        run: |
+          docker run --rm -d \
+            --env entity_service_mongo_uri \
+            --env entity_service_mongo_user \
+            --env entity_service_mongo_password \
+            --name "entity-service" \
+            -p "${DOCKER_TEST_PORT}:80" \
+            entity-service
+          sleep 5
+
+      - name: Install test dependencies
+        run: |
+          python -m pip install -U pip
+          pip install -U setuptools wheel flit
+          pip install -U -r .github/utils/requirements_docker_test.txt
+          pip install -U .
+
+      - name: Fill MongoDB with test data
+        run: ./.github/utils/docker_test.py add-testdata
+
+      - name: Run tests
+        env:
+          DOCKER_TEST_HOST: localhost
+        run: ./.github/utils/docker_test.py run-tests
