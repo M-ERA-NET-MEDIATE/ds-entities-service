@@ -6,6 +6,7 @@ from fastapi import FastAPI, HTTPException, Path, status
 from dlite_entities_service import __version__
 from dlite_entities_service.backend import ENTITIES_COLLECTION
 from dlite_entities_service.config import CONFIG
+from dlite_entities_service.logger import LOGGER
 from dlite_entities_service.models import Entity
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -44,11 +45,23 @@ async def get_entity(
             {"uri": f"{CONFIG.base_url}/{version}/{name}"},
         ]
     }
+    LOGGER.debug("Performing MongoDB query: %r", query)
     entity_doc: "dict[str, Any]" = ENTITIES_COLLECTION.find_one(query)
     if entity_doc is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Could not find entity: uri={CONFIG.base_url}/{version}/{name}",
         )
+    LOGGER.debug("Found entity's MongoDB ID: %s", entity_doc["_id"])
     entity_doc.pop("_id", None)
+    LOGGER.debug(
+        "Entity prior to returning (and forcing it into a pydantic model): %s",
+        entity_doc,
+    )
     return entity_doc
+
+
+@APP.on_event("startup")
+async def on_startup() -> None:
+    """Do some logging."""
+    LOGGER.debug("Starting service with config: %s", CONFIG)
