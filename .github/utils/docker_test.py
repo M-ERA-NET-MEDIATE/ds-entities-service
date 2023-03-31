@@ -124,6 +124,7 @@ def run_tests() -> None:
 def main(args: list[str] | None = None) -> None:
     """Entrypoint for docker CI tests."""
     parser = argparse.ArgumentParser(
+        prog="docker_test.py",
         description=main.__doc__,
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
@@ -144,4 +145,4 @@ def main(args: list[str] | None = None) -> None:
 
 
 if __name__ == "__main__":
-    main(sys.argv)
+    main(sys.argv[1:])
