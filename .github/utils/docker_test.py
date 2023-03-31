@@ -113,12 +113,12 @@ def run_tests() -> None:
     version, name = _get_version_name("http://onto-ns.com/meta/0.3/EntitySchema")
     response = requests.get(f"http://{host}:{port}/{version}/{name}", timeout=5)
     assert not response.ok, "Non existant (valid) URI returned an OK response!"
-    assert response.status_code == 404
+    assert response.status_code == 404, f"Response:\n\n{response.content!s}"
 
     version, name = _get_version_name("http://onto-ns.com/meta/Entity/1.0")
     response = requests.get(f"http://{host}:{port}/{version}/{name}", timeout=5)
     assert not response.ok, "Invalid URI returned an OK response!"
-    assert response.status_code != 404
+    assert response.status_code != 404, f"Response:\n\n{response.content!s}"
 
 
 def main(args: list[str] | None = None) -> None:

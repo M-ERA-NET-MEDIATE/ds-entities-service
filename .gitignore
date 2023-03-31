@@ -1,5 +1,7 @@
 # dev
 .*_cache/
+.coverage
+coverage.xml
 
 # secrets
 .env

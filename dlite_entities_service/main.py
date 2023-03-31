@@ -1,7 +1,7 @@
 """The main application module."""
 from typing import TYPE_CHECKING
 
-from fastapi import FastAPI, HTTPException, status
+from fastapi import FastAPI, HTTPException, Path, status
 
 from dlite_entities_service import __version__
 from dlite_entities_service.backend import ENTITIES_COLLECTION
@@ -25,7 +25,18 @@ APP = FastAPI(
     response_model_by_alias=True,
     response_model_exclude_unset=True,
 )
-async def get_entity(version: str, name: str) -> "dict[str, Any]":
+async def get_entity(
+    version: str = Path(
+        ...,
+        regex=r"^[0-9]+\.[0-9]+$",
+        description="The version part must be of the kind MAJOR.MINOR.",
+    ),
+    name: str = Path(
+        ...,
+        regex=r"^([A-Z][a-z]+)+$",
+        description="The name part must be CamelCase without any white space.",
+    ),
+) -> "dict[str, Any]":
     """Get a DLite entity."""
     query = {
         "$or": [

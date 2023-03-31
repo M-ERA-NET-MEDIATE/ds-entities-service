@@ -40,10 +40,10 @@ dependencies = [
 #     "mkdocs-material ~=9.1",
 #     "mkdocstrings[python-legacy] ~=0.20.0",
 # ]
-# testing = [
-#     "pytest ~=7.2",
-#     "pytest-cov ~=4.0",
-# ]
+testing = [
+    # "pytest ~=7.2",
+    # "pytest-cov ~=4.0",
+]
 dev = [
     "pre-commit ~=2.21",
     "pylint ~=2.17",
