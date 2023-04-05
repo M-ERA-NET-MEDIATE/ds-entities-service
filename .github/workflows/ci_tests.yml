@@ -95,5 +95,15 @@ jobs:
         env:
           DOCKER_TEST_HOST: localhost
         run: |
-          ./.github/utils/docker_test.py run-tests
-          cat logs/dlite_entities_service.log
+          {
+            ./.github/utils/docker_test.py run-tests &&
+            cat logs/dlite_entities_service.log
+          } || {
+            echo "Failed! Here's the Docker logs for the service:" &&
+            docker logs entity-service &&
+
+            echo -e "\nAnd the service log:" &&
+            cat logs/dlite_entities_service.log &&
+
+            exit 1
+          }

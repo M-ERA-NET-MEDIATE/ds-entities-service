@@ -1,4 +1,5 @@
 """The main application module."""
+from pathlib import Path as sysPath
 from typing import TYPE_CHECKING
 
 from fastapi import FastAPI, HTTPException, Path, status
@@ -16,8 +17,22 @@ if TYPE_CHECKING:  # pragma: no cover
 APP = FastAPI(
     title="DLite Entities Service",
     version=__version__,
-    description="REPLACE WITH README.md",
+    description=(
+        sysPath(__file__).resolve().parent.parent.resolve() / "README.md"
+    ).read_text(encoding="utf8"),
 )
+
+SEMVER_REGEX = (
+    r"^(?P<major>0|[1-9]\d*)(?:\.(?P<minor>0|[1-9]\d*))?(?:\.(?P<patch>0|[1-9]\d*))?"
+    r"(?:-(?P<prerelease>(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)"
+    r"(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?"
+    r"(?:\+(?P<buildmetadata>[0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$"
+)
+"""Semantic Versioning regular expression.
+
+Slightly changed version of the one found at https://semver.org.
+The changed bits pertain to `minor` and `patch`, which are now both optional.
+"""
 
 
 @APP.get(
@@ -29,12 +44,12 @@ APP = FastAPI(
 async def get_entity(
     version: str = Path(
         ...,
-        regex=r"^[0-9]+\.[0-9]+$",
+        regex=SEMVER_REGEX,
         description="The version part must be of the kind MAJOR.MINOR.",
     ),
     name: str = Path(
         ...,
-        regex=r"^([A-Z][a-z]+)+$",
+        regex=r"^[A-Za-z]+$",
         description="The name part must be CamelCase without any white space.",
     ),
 ) -> "dict[str, Any]":
@@ -54,10 +69,6 @@ async def get_entity(
         )
     LOGGER.debug("Found entity's MongoDB ID: %s", entity_doc["_id"])
     entity_doc.pop("_id", None)
-    LOGGER.debug(
-        "Entity prior to returning (and forcing it into a pydantic model): %s",
-        entity_doc,
-    )
     return entity_doc
 
 

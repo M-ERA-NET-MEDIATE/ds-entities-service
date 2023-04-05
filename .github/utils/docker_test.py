@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Run tests for the service."""
+# pylint: disable=import-error
 import argparse
+import json
 import os
 import re
 import sys
@@ -102,9 +104,10 @@ def run_tests() -> None:
             raise TypeError("uri must be a string")
         version, name = _get_version_name(uri)
         response = requests.get(f"http://{host}:{port}/{version}/{name}", timeout=5)
-        assert (
-            response.ok
-        ), f"Test data {test_entity['uri']!r} not found! (Or some other error)"
+        assert response.ok, (
+            f"Test data {test_entity['uri']!r} not found! (Or some other error).\n"
+            f"Response:\n{json.dumps(response.json(), indent=2)}"
+        )
 
         entity = response.json()
         assert entity == test_entity
@@ -113,12 +116,16 @@ def run_tests() -> None:
     version, name = _get_version_name("http://onto-ns.com/meta/0.3/EntitySchema")
     response = requests.get(f"http://{host}:{port}/{version}/{name}", timeout=5)
     assert not response.ok, "Non existant (valid) URI returned an OK response!"
-    assert response.status_code == 404, f"Response:\n\n{response.content!s}"
+    assert (
+        response.status_code == 404
+    ), f"Response:\n\n{json.dumps(response.json(), indent=2)}"
 
     version, name = _get_version_name("http://onto-ns.com/meta/Entity/1.0")
     response = requests.get(f"http://{host}:{port}/{version}/{name}", timeout=5)
     assert not response.ok, "Invalid URI returned an OK response!"
-    assert response.status_code != 404, f"Response:\n\n{response.content!s}"
+    assert (
+        response.status_code != 404
+    ), f"Response:\n\n{json.dumps(response.json(), indent=2)}"
 
 
 def main(args: list[str] | None = None) -> None:

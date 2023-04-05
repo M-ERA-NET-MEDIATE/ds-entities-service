@@ -5,3 +5,6 @@ coverage.xml
 
 # secrets
 .env
+
+# running
+logs/
