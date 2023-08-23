@@ -2,8 +2,14 @@
 from typing import Any
 
 from pydantic import Field, SecretStr, field_validator
-from pydantic.networks import AnyHttpUrl, MongoDsn
+from pydantic.networks import AnyHttpUrl, MultiHostUrl, UrlConstraints
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from typing_extensions import Annotated
+
+MongoDsn = Annotated[
+    MultiHostUrl, UrlConstraints(allowed_schemes=["mongodb", "mongodb+srv"])
+]
+"""Support MongoDB schemes with hidden port (no default port)."""
 
 
 class ServiceSettings(BaseSettings):
