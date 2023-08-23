@@ -1,7 +1,7 @@
 """Pydantic models."""
 from typing import Literal
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 from pydantic.networks import AnyHttpUrl
 
 from dlite_entities_service.config import CONFIG
@@ -76,10 +76,11 @@ class Entity(BaseModel):
         ),
     )
 
-    @validator("uri")
+    @field_validator("uri")
+    @classmethod
     def _validate_base_url(cls, value: AnyHttpUrl) -> AnyHttpUrl:
         """Validate `uri` starts with the current base URL for the service."""
-        if not value.startswith(CONFIG.base_url):
+        if not str(value).startswith(str(CONFIG.base_url)):
             raise ValueError(
                 f"This service only works with DLite entities at {CONFIG.base_url}."
             )

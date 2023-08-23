@@ -29,7 +29,7 @@ repos:
   # Black is a code style and formatter
   # It works on files in-place
   - repo: https://github.com/ambv/black
-    rev: 23.3.0
+    rev: 23.7.0
     hooks:
     - id: black
 
@@ -49,12 +49,12 @@ repos:
   # The project's documentation can be found at:
   # https://mypy.readthedocs.io/en/stable/index.html
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.3.0
+    rev: v1.5.1
     hooks:
     - id: mypy
       exclude: ^docs/example/.*$$
       additional_dependencies:
-        - pydantic
+        - pydantic>=2
         - types-requests
 
   - repo: local

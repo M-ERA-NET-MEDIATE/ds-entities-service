@@ -15,7 +15,7 @@ for key, value in list(client_kwargs.items()):
 
 
 MONGO_CLIENT = MongoClient(
-    CONFIG.mongo_uri,
+    str(CONFIG.mongo_uri),
     **client_kwargs,
 )
 MONGO_DB = MONGO_CLIENT.dlite
