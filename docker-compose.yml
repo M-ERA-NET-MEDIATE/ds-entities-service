@@ -10,8 +10,8 @@ services:
     environment:
       entity_service_base_url: "http://onto-ns.com/meta"
       entity_service_mongo_uri: "mongodb://mongodb:27017"
-      entity_service_mongo_user: root
-      entity_service_mongo_password: root
+      entity_service_mongo_user: ${MONGO_USER:-root}
+      entity_service_mongo_password: ${MONGO_PASSWORD:-root}
     depends_on:
       - mongodb
     networks:
@@ -22,9 +22,11 @@ services:
   mongodb:
     image: mongo:6
     restart: always
+    ports:
+      - "${MONGO_PORT:-27017}:27017"
     environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: root
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER:-root}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-root}
     networks:
       - dlite_entities_net
 
