@@ -13,10 +13,10 @@ from dlite import Instance
 from pymongo import MongoClient
 
 if TYPE_CHECKING:
-    from typing import Literal
+    from typing import Any, Literal
 
 
-DLITE_TEST_ENTITIES = [
+DLITE_TEST_ENTITIES: "list[dict[str, Any]]" = [
     {
         "uri": "http://onto-ns.com/meta/0.1/Person",
         "meta": "http://onto-ns.com/meta/0.3/EntitySchema",
@@ -63,6 +63,42 @@ DLITE_TEST_ENTITIES = [
             },
         },
     },
+    # SOFT5 example
+    {
+        "name": "Dog",
+        "version": "0.1",
+        "namespace": "http://onto-ns.com/meta",
+        "description": "A dog.",
+        "dimensions": [
+            {
+                "name": "ncolors",
+                "description": "Number of different colors the dog has.",
+            }
+        ],
+        "properties": [
+            {
+                "name": "name",
+                "type": "string",
+                "description": "The dog's name.",
+            },
+            {
+                "name": "age",
+                "type": "int",
+                "description": "The dog's age.",
+            },
+            {
+                "name": "color",
+                "type": "string",
+                "description": "The dog's different colors.",
+                "dims": ["ncolors"],
+            },
+            {
+                "name": "breed",
+                "type": "string",
+                "description": "The dog's breed.",
+            },
+        ],
+    },
 ]
 
 
@@ -79,9 +115,7 @@ def add_testdata() -> None:
 
     client = MongoClient(mongodb_uri, username=mongodb_user, password=mongodb_pass)
     collection = client.dlite.entities
-
-    for test_entity in DLITE_TEST_ENTITIES:
-        collection.insert_one(test_entity)
+    collection.insert_many(DLITE_TEST_ENTITIES)
 
 
 def _get_version_name(uri: str) -> tuple[str, str]:
@@ -94,18 +128,32 @@ def _get_version_name(uri: str) -> tuple[str, str]:
     return match.group("version") or "", match.group("name") or ""
 
 
+def _get_uri(entity: "dict[str, Any]") -> str:
+    """Return the uri for an entity."""
+    namespace = entity.get("namespace")
+    version = entity.get("version")
+    name = entity.get("name")
+    if any(_ is None for _ in (namespace, version, name)):
+        raise RuntimeError(
+            "Could not retrieve namespace, version, and/or name from test entities."
+        )
+    return f"{namespace}/{version}/{name}"
+
+
 def run_tests() -> None:
     """Test the service."""
     host = os.getenv("DOCKER_TEST_HOST", "localhost")
     port = os.getenv("DOCKER_TEST_PORT", "8000")
     for test_entity in DLITE_TEST_ENTITIES:
-        uri = test_entity["uri"]
+        uri = test_entity.get("uri")
+        if uri is None:
+            uri = _get_uri(test_entity)
         if not isinstance(uri, str):
             raise TypeError("uri must be a string")
         version, name = _get_version_name(uri)
         response = requests.get(f"http://{host}:{port}/{version}/{name}", timeout=5)
         assert response.ok, (
-            f"Test data {test_entity['uri']!r} not found! (Or some other error).\n"
+            f"Test data {uri!r} not found! (Or some other error).\n"
             f"Response:\n{json.dumps(response.json(), indent=2)}"
         )
 
