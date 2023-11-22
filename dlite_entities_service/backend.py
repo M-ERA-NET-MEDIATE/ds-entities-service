@@ -1,4 +1,6 @@
 """Backend implementation."""
+from __future__ import annotations
+
 from pymongo import MongoClient
 
 from dlite_entities_service.config import CONFIG

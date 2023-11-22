@@ -1,4 +1,6 @@
 """SOFT models."""
+from __future__ import annotations
+
 from pydantic import ValidationError
 
 from .soft5 import SOFT5Entity

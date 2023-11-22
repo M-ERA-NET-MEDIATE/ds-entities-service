@@ -18,6 +18,7 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Natural Language :: English",
     "Operating System :: OS Independent",
     "Private :: Do Not Upload",
@@ -27,29 +28,16 @@ requires-python = "~=3.10"
 dynamic = ["version", "description"]
 
 dependencies = [
-    "fastapi ~=0.104.0",
-    "pydantic-settings ~=2.0",
-    "pymongo ~=4.5",
+    "fastapi ~=0.104.1",
+    "pydantic-settings ~=2.1",
+    "pymongo ~=4.6",
     "python-dotenv ~=1.0",
-    "uvicorn >=0.23.2,<1",
+    "uvicorn >=0.24.0,<1",
 ]
 
 [project.optional-dependencies]
-# docs = [
-#     "mike ~=1.1",
-#     "mkdocs ~=1.4",
-#     "mkdocs-awesome-pages-plugin ~=2.8",
-#     "mkdocs-material ~=9.1",
-#     "mkdocstrings[python-legacy] ~=0.20.0",
-# ]
-# testing = [
-#     "pytest ~=7.2",
-#     "pytest-cov ~=4.0",
-# ]
 dev = [
     "pre-commit ~=3.5",
-    "pylint ~=3.0",
-    "pylint-pydantic ~=0.3.0",
 ]
 
 [project.urls]
@@ -69,21 +57,34 @@ allow_redefinition = true
 check_untyped_defs = true
 plugins = ["pydantic.mypy"]
 
-[tool.pylint]
-max-line-length = 88
-disable = [
-    "too-few-public-methods",
-    "no-name-in-module",
-    "no-self-argument",
+[tool.ruff.lint]
+extend-select = [
+  "E",  # pycodestyle
+  "F",  # pyflakes
+  "B",  # flake8-bugbear
+  "BLE",  # flake8-blind-except
+  "I",  # isort
+  "ARG",  # flake8-unused-arguments
+  "C4",  # flake8-comprehensions
+  "EM",  # flake8-errmsg
+  "ICN",  # flake8-import-conventions
+  "G",  # flake8-logging-format
+  "PGH",  # pygrep-hooks
+  "PIE",  # flake8-pie
+  "PL",  # pylint
+  "PT",  # flake8-pytest-style
+  "PTH",  # flake8-use-pathlib
+  "RET",  # flake8-return
+  "RUF",  # Ruff-specific
+  "SIM",  # flake8-simplify
+  "T20",  # flake8-print
+  "YTT",  # flake8-2020
+  "EXE",  # flake8-executable
+  "NPY",  # NumPy specific rules
+  "PD",  # pandas-vet
+  "PYI",  # flake8-pyi
 ]
-max-args = 15
-max-branches = 15
-load-plugins = ["pylint_pydantic"]
-
-# [tool.pytest.ini_options]
-# minversion = "7.0"
-# filterwarnings = [
-#     "ignore:.*imp module.*:DeprecationWarning",
-#     # Remove when invoke updates to `inspect.signature()` or similar:
-#     "ignore:.*inspect.getargspec().*:DeprecationWarning",
-# ]
+ignore = [
+  "PLR",  # Design related pylint codes
+]
+isort.required-imports = ["from __future__ import annotations"]
