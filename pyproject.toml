@@ -21,7 +21,6 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Natural Language :: English",
     "Operating System :: OS Independent",
-    "Private :: Do Not Upload",
 ]
 keywords = ["dlite", "mongodb"]
 requires-python = "~=3.10"
@@ -36,8 +35,17 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+testing = [
+    "dlite-python >=0.4.5,<1; python_version < '3.12'",
+    "httpx >=0.25.1,<1",
+    "mongomock ~=4.1",
+    "pytest ~=7.4",
+    "pytest-cov ~=4.1",
+    "pyyaml ~=6.0",
+]
 dev = [
     "pre-commit ~=3.5",
+    "dlite-entities-service[testing]",
 ]
 
 [project.urls]
@@ -59,32 +67,42 @@ plugins = ["pydantic.mypy"]
 
 [tool.ruff.lint]
 extend-select = [
-  "E",  # pycodestyle
-  "F",  # pyflakes
-  "B",  # flake8-bugbear
-  "BLE",  # flake8-blind-except
-  "I",  # isort
-  "ARG",  # flake8-unused-arguments
-  "C4",  # flake8-comprehensions
-  "EM",  # flake8-errmsg
-  "ICN",  # flake8-import-conventions
-  "G",  # flake8-logging-format
-  "PGH",  # pygrep-hooks
-  "PIE",  # flake8-pie
-  "PL",  # pylint
-  "PT",  # flake8-pytest-style
-  "PTH",  # flake8-use-pathlib
-  "RET",  # flake8-return
-  "RUF",  # Ruff-specific
-  "SIM",  # flake8-simplify
-  "T20",  # flake8-print
-  "YTT",  # flake8-2020
-  "EXE",  # flake8-executable
-  "NPY",  # NumPy specific rules
-  "PD",  # pandas-vet
-  "PYI",  # flake8-pyi
+    "E",  # pycodestyle
+    "F",  # pyflakes
+    "B",  # flake8-bugbear
+    "BLE",  # flake8-blind-except
+    "I",  # isort
+    "ARG",  # flake8-unused-arguments
+    "C4",  # flake8-comprehensions
+    "EM",  # flake8-errmsg
+    "ICN",  # flake8-import-conventions
+    "G",  # flake8-logging-format
+    "PGH",  # pygrep-hooks
+    "PIE",  # flake8-pie
+    "PL",  # pylint
+    "PT",  # flake8-pytest-style
+    "PTH",  # flake8-use-pathlib
+    "RET",  # flake8-return
+    "RUF",  # Ruff-specific
+    "SIM",  # flake8-simplify
+    "T20",  # flake8-print
+    "YTT",  # flake8-2020
+    "EXE",  # flake8-executable
+    "NPY",  # NumPy specific rules
+    "PD",  # pandas-vet
+    "PYI",  # flake8-pyi
 ]
 ignore = [
-  "PLR",  # Design related pylint codes
+    "PLR",  # Design related pylint codes
 ]
 isort.required-imports = ["from __future__ import annotations"]
+
+[tool.pytest.ini_options]
+addopts = "-rs --cov=dlite_entities_service --cov-report=term-missing:skip-covered --no-cov-on-fail"
+filterwarnings = [
+    # Treat all warnings as errors
+    "error",
+
+    # mongomock uses pkg_resources
+    "ignore:.*pkg_resources is deprecated as an API.*:DeprecationWarning",
+]

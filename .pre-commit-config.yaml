@@ -66,3 +66,5 @@ repos:
       additional_dependencies:
         - pydantic>=2
         - types-requests
+        - types-pyyaml
+      args: [--explicit-package-bases]

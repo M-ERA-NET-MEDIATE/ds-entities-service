@@ -41,34 +41,39 @@ def disable_logging():
         logging.disable(logging.NOTSET)
 
 
-# Instantiate LOGGER
-LOGGER = logging.getLogger("dlite-entities-service")
-LOGGER.setLevel(logging.DEBUG)
+def _get_service_logger_handlers() -> list[logging.Handler]:
+    """Return a list of handlers for the service logger."""
+    # Create logs directory
+    root_dir = Path(__file__).resolve().parent.parent.resolve()
+    logs_dir = root_dir / "logs"
+    logs_dir.mkdir(exist_ok=True)
 
-# Save a file with all messages (DEBUG level)
-ROOT_DIR = Path(__file__).parent.parent.resolve()
-LOGS_DIR = ROOT_DIR.joinpath("logs/")
-LOGS_DIR.mkdir(exist_ok=True)
+    # Set handlers
+    file_handler = logging.handlers.RotatingFileHandler(
+        logs_dir / "dlite_entities_service.log", maxBytes=1000000, backupCount=5
+    )
+    file_handler.setLevel(logging.DEBUG)
 
-# Set handlers
-FILE_HANDLER = logging.handlers.RotatingFileHandler(
-    LOGS_DIR.joinpath("dlite_entities_service.log"), maxBytes=1000000, backupCount=5
-)
-FILE_HANDLER.setLevel(logging.DEBUG)
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setLevel(logging.INFO)
 
-CONSOLE_HANDLER = logging.StreamHandler(sys.stdout)
-CONSOLE_HANDLER.setLevel(logging.INFO)
+    # Set formatters
+    file_formatter = logging.Formatter(
+        "[%(levelname)-8s %(asctime)s %(filename)s:%(lineno)d] %(message)s",
+        "%d-%m-%Y %H:%M:%S",
+    )
+    file_handler.setFormatter(file_formatter)
 
-# Set formatters
-FILE_FORMATTER = logging.Formatter(
-    "[%(levelname)-8s %(asctime)s %(filename)s:%(lineno)d] %(message)s",
-    "%d-%m-%Y %H:%M:%S",
-)
-FILE_HANDLER.setFormatter(FILE_FORMATTER)
+    console_formatter = DefaultFormatter("%(levelprefix)s [%(name)s] %(message)s")
+    console_handler.setFormatter(console_formatter)
 
-CONSOLE_FORMATTER = DefaultFormatter("%(levelprefix)s [%(name)s] %(message)s")
-CONSOLE_HANDLER.setFormatter(CONSOLE_FORMATTER)
+    return [file_handler, console_handler]
 
-# Finalize LOGGER
-LOGGER.addHandler(FILE_HANDLER)
-LOGGER.addHandler(CONSOLE_HANDLER)
+
+def setup_logger() -> None:
+    """Return a logger with the given name."""
+    logger = logging.getLogger("dlite_entities_service")
+    logger.setLevel(logging.DEBUG)
+
+    for handler in _get_service_logger_handlers():
+        logger.addHandler(handler)

@@ -1,6 +1,7 @@
 """The main application module."""
 from __future__ import annotations
 
+import logging
 from contextlib import asynccontextmanager
 from pathlib import Path as sysPath
 from typing import TYPE_CHECKING, Annotated
@@ -10,18 +11,23 @@ from fastapi import FastAPI, HTTPException, Path, status
 from dlite_entities_service import __version__
 from dlite_entities_service.backend import ENTITIES_COLLECTION
 from dlite_entities_service.config import CONFIG
-from dlite_entities_service.logger import LOGGER
+from dlite_entities_service.logger import setup_logger
 from dlite_entities_service.models import VersionedSOFTEntity
 
 if TYPE_CHECKING:  # pragma: no cover
     from typing import Any
 
 
+LOGGER = logging.getLogger("dlite_entities_service")
+
+
 # Application lifespan function
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     """Add lifespan events to the application."""
-    # Do some logging
+    # Initialize logger
+    setup_logger()
+
     LOGGER.debug("Starting service with config: %s", CONFIG)
 
     # Run application

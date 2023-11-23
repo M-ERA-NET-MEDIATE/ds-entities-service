@@ -41,7 +41,7 @@ jobs:
 
     services:
       mongo:
-        image: mongo:6
+        image: mongo:7
         ports:
           - "27017:27017"
         env:
@@ -52,7 +52,8 @@ jobs:
       ENTITY_SERVICE_MONGO_URI: mongodb://localhost:27017
       ENTITY_SERVICE_MONGO_USER: root
       ENTITY_SERVICE_MONGO_PASSWORD: root
-      DOCKER_TEST_PORT: 8000
+      ENTITY_SERVICE_HOST: localhost
+      ENTITY_SERVICE_PORT: 8000
 
     steps:
       - name: Checkout ${{ github.repository }}
@@ -64,7 +65,12 @@ jobs:
           python-version: "3.10"
 
       - name: Build Docker image
-        run: docker build --pull -t entity-service --target ${{ matrix.docker_target }} .
+        run: |
+          docker build \
+            --pull \
+            --tag entity-service \
+            --target ${{ matrix.docker_target }} \
+            .
 
       - name: Run Docker container
         run: |
@@ -72,7 +78,7 @@ jobs:
             --env ENTITY_SERVICE_MONGO_URI \
             --env ENTITY_SERVICE_MONGO_USER \
             --env ENTITY_SERVICE_MONGO_PASSWORD \
-            --env PORT=${DOCKER_TEST_PORT} \
+            --env PORT=${ENTITY_SERVICE_PORT} \
             --name "entity-service" \
             --network "host" \
             --volume "${PWD}:/app" \
@@ -83,19 +89,12 @@ jobs:
         run: |
           python -m pip install -U pip
           pip install -U setuptools wheel flit
-          pip install -U -r .github/utils/requirements_docker_test.txt
-          pip install -U -e .
-
-      - name: Fill MongoDB with test data
-        run: ./.github/utils/docker_test.py add-testdata
+          pip install -U -e .[testing]
 
       - name: Run tests
-        env:
-          DOCKER_TEST_HOST: localhost
         run: |
           {
-            ./.github/utils/docker_test.py run-tests &&
-            cat logs/dlite_entities_service.log
+            pytest -vv --live-backend
           } || {
             echo "Failed! Here's the Docker logs for the service:" &&
             docker logs entity-service &&
@@ -105,3 +104,39 @@ jobs:
 
             exit 1
           }
+
+  pytest:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python_version: ["3.10", "3.11", "3.12"]
+
+    steps:
+      - name: Checkout ${{ github.repository }}
+        uses: actions/checkout@v4
+
+      - name: Setup Python ${{ matrix.python_version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python_version }}
+
+      - name: Install test dependencies
+        run: |
+          python -m pip install -U pip
+          pip install -U setuptools wheel flit
+          pip install -U -e .[testing]
+
+      - name: Run pytest
+        run: pytest -vv --cov-report=xml
+
+      - name: Upload coverage
+        if: github.repository_owner == 'SINTEF' && matrix.python_version == '3.10'
+        uses: codecov/codecov-action@v3
+        with:
+          fail_ci_if_error: true
+          env_vars: OS,PYTHON
+        env:
+          OS: ubuntu-latest
+          PYTHON: ${{ matrix.python_version }}

@@ -1,2 +1,0 @@
-DLite-Python>=0.3.18,<1
-requests~=2.28
