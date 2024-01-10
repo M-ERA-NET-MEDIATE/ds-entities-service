@@ -1,0 +1,27 @@
+{
+    "namespace": "http://onto-ns.com",
+    "version": "0.1",
+    "name": "Person",
+    "uri": "http://onto-ns.com/meta/0.1/Person",
+    "meta": "http://onto-ns.com/meta/0.3/EntitySchema",
+    "description": "A person, living or dead",
+    "dimensions": [{"n_skills": "Number of skills."}],
+    "properties": [
+        {
+            "name": "skills",
+            "type": "string",
+            "shape": ["n_skills"],
+            "description": "Skills of the person."
+        },
+        {
+            "name": "name",
+            "type": "string",
+            "description": "Name of the person."
+        },
+        {
+            "name": "age",
+            "type": "int",
+            "description": "Age of the person."
+        }
+    ]
+}

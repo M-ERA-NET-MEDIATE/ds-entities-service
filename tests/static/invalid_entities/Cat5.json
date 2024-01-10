@@ -1,0 +1,23 @@
+{
+    "uri": "http://onto-ns.com/0.1/Cat",
+    "meta": "http://onto-ns.com/meta/0.4/EntitySchema",
+    "description": "A cat.",
+    "dimensions": [],
+    "properties": [
+        {
+            "name": "name",
+            "type": "string",
+            "description": "Name of the cat."
+        },
+        {
+            "name": "age",
+            "type": "int",
+            "description": "Age of the cat."
+        },
+        {
+            "name": "color",
+            "type": "string",
+            "description": "Color of the cat."
+        }
+    ]
+}

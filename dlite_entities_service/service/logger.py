@@ -44,7 +44,7 @@ def disable_logging():
 def _get_service_logger_handlers() -> list[logging.Handler]:
     """Return a list of handlers for the service logger."""
     # Create logs directory
-    root_dir = Path(__file__).resolve().parent.parent.resolve()
+    root_dir = Path(__file__).resolve().parent.parent.parent.resolve()
     logs_dir = root_dir / "logs"
     logs_dir.mkdir(exist_ok=True)
 

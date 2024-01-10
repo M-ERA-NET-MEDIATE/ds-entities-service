@@ -1,12 +1,19 @@
 """SOFT5 models."""
 from __future__ import annotations
 
+import difflib
+import re
 from typing import Annotated, Any
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import AliasChoices, BaseModel, Field, field_validator, model_validator
 from pydantic.networks import AnyHttpUrl
 
-from dlite_entities_service.config import CONFIG
+from dlite_entities_service.service.config import CONFIG
+
+URI_REGEX = re.compile(
+    r"^(?P<namespace>https?://.+)/(?P<version>\d(?:\.\d+){0,2})/(?P<name>[^/#?]+)$"
+)
+"""Regular expression to parse a SOFT entity URI."""
 
 
 class SOFT5Dimension(BaseModel):
@@ -37,7 +44,8 @@ class SOFT5Property(BaseModel):
     ref: Annotated[
         AnyHttpUrl | None,
         Field(
-            alias="$ref",
+            validation_alias=AliasChoices("$ref", "ref"),
+            serialization_alias="$ref",
             description=(
                 "Formally a part of type. `$ref` is used together with the `ref` type, "
                 "which is a special datatype for referring to other instances."
@@ -111,7 +119,19 @@ class SOFT5Entity(BaseModel):
         if not str(value).startswith(str(CONFIG.base_url)):
             error_message = (
                 "This service only works with DLite/SOFT entities at "
-                f"{CONFIG.base_url}."
+                f"{CONFIG.base_url}.\n"
+            )
+            raise ValueError(error_message)
+        return value
+
+    @field_validator("uri", mode="after")
+    @classmethod
+    def _validate_uri(cls, value: AnyHttpUrl) -> AnyHttpUrl:
+        """Validate `uri` is consistent with `name`, `version`, and `namespace`."""
+        if URI_REGEX.match(str(value)) is None:
+            error_message = (
+                "The 'uri' is not a valid SOFT7 entity URI. It must be of the form "
+                f"{str(CONFIG.base_url).rstrip('/')}/{{version}}/{{name}}.\n"
             )
             raise ValueError(error_message)
         return value
@@ -123,7 +143,7 @@ class SOFT5Entity(BaseModel):
         if str(value) != "http://onto-ns.com/meta/0.3/EntitySchema":
             error_message = (
                 "This service only works with DLite/SOFT entities using EntitySchema "
-                "v0.3 at onto-ns.com as the metadata entity."
+                "v0.3 at onto-ns.com as the metadata entity.\n"
             )
             raise ValueError(error_message)
         return value
@@ -139,7 +159,36 @@ class SOFT5Entity(BaseModel):
         ):
             error_message = (
                 "Either all of `name`, `version`, and `namespace` must be set "
-                "or all must be unset."
+                "or all must be unset.\n"
+            )
+            raise ValueError(error_message)
+
+        if (
+            isinstance(data, dict)
+            and any(data.get(_) is None for _ in ("name", "version", "namespace"))
+            and data.get("uri") is None
+        ):
+            error_message = (
+                "Either `name`, `version`, and `namespace` or `uri` must be set.\n"
+            )
+            raise ValueError(error_message)
+
+        if (
+            isinstance(data, dict)
+            and all(data.get(_) is not None for _ in ("name", "version", "namespace"))
+            and data.get("uri") is not None
+            and data["uri"] != f"{data['namespace']}/{data['version']}/{data['name']}"
+        ):
+            # Ensure that `uri` is consistent with `name`, `version`, and `namespace`.
+            diff = "\n  ".join(
+                difflib.ndiff(
+                    [data["uri"]],
+                    [f"{data['namespace']}/{data['version']}/{data['name']}"],
+                )
+            )
+            error_message = (
+                "The `uri` is not consistent with `name`, `version`, and "
+                f"`namespace`:\n\n  {diff}\n\n"
             )
             raise ValueError(error_message)
         return data

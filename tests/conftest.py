@@ -1,4 +1,4 @@
-"""Pytest configuration file."""
+"""Configuration and fixtures for all pytest tests."""
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -58,20 +58,35 @@ def mongo_test_collection(static_dir: Path, live_backend: bool) -> Collection | 
     """Add MongoDB test data, returning the MongoDB collection."""
     import yaml
 
+    # Convert all '$ref' to 'ref' in the entities.yaml file
+    entities = yaml.safe_load((static_dir / "entities.yaml").read_text())
+    for entity in entities:
+        # SOFT5
+        if isinstance(entity["properties"], list):
+            for index, property_value in enumerate(list(entity["properties"])):
+                entity["properties"][index] = {
+                    key.replace("$", ""): value for key, value in property_value.items()
+                }
+
+        # SOFT7
+        else:
+            for property_name, property_value in list(entity["properties"].items()):
+                entity["properties"][property_name] = {
+                    key.replace("$", ""): value for key, value in property_value.items()
+                }
+
     if live_backend:
-        from dlite_entities_service.backend import ENTITIES_COLLECTION
+        from dlite_entities_service.service.backend import ENTITIES_COLLECTION
 
         # TODO: Handle authentication properly
-        ENTITIES_COLLECTION.insert_many(
-            yaml.safe_load((static_dir / "entities.yaml").read_text())
-        )
+        ENTITIES_COLLECTION.insert_many(entities)
 
         return None
 
     # else
     from mongomock import MongoClient
 
-    from dlite_entities_service.config import CONFIG
+    from dlite_entities_service.service.config import CONFIG
 
     client_kwargs = {
         "username": CONFIG.mongo_user,
@@ -87,9 +102,7 @@ def mongo_test_collection(static_dir: Path, live_backend: bool) -> Collection | 
         str(CONFIG.mongo_uri), **client_kwargs
     ).dlite.entities
 
-    MOCK_ENTITIES_COLLECTION.insert_many(
-        yaml.safe_load((static_dir / "entities.yaml").read_text())
-    )
+    MOCK_ENTITIES_COLLECTION.insert_many(entities)
 
     return MOCK_ENTITIES_COLLECTION
 
@@ -101,7 +114,7 @@ def _mock_backend_entities_collection(
     if mongo_test_collection is None:
         return
 
-    from dlite_entities_service import backend
+    from dlite_entities_service.service import backend
 
     monkeypatch.setattr(backend, "ENTITIES_COLLECTION", mongo_test_collection)
 
@@ -113,8 +126,8 @@ def client(live_backend: bool) -> TestClient:
 
     from fastapi.testclient import TestClient
 
-    from dlite_entities_service.config import CONFIG
     from dlite_entities_service.main import APP
+    from dlite_entities_service.service.config import CONFIG
 
     if live_backend:
         host, port = os.getenv("ENTITY_SERVICE_HOST", "localhost"), os.getenv(

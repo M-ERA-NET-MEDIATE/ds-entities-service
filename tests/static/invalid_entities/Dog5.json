@@ -1,0 +1,28 @@
+{
+    "meta": "http://onto-ns.com/meta/0.3/EntitySchema",
+    "description": "A good dog.",
+    "dimensions": [{"n_tricks": "Number of tricks."}],
+    "properties": [
+        {
+            "name": "tricks",
+            "type": "string",
+            "shape": ["n_tricks"],
+            "description": "Tricks the dog can do."
+        },
+        {
+            "name": "name",
+            "type": "string",
+            "description": "Name of the dog."
+        },
+        {
+            "name": "age",
+            "type": "int",
+            "description": "Age of the dog."
+        },
+        {
+            "name": "breed",
+            "type": "string",
+            "description": "Breed of the dog."
+        }
+    ]
+}

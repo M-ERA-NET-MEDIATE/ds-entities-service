@@ -17,7 +17,7 @@
       type: string
 
 - description: A cat.
-  uri: http://onto-ns.com/meta/0.1/Cat
+  uri: http://onto-ns.com/meta/0.2/Cat
   meta: http://onto-ns.com/meta/0.3/EntitySchema
   dimensions:
     ncolors: Number of different colors the cat has.
@@ -37,10 +37,10 @@
       description: The cat's name.
       type: string
 
-  # SOFT5 example
+# SOFT5 example
 - description: A dog.
   namespace: http://onto-ns.com/meta
-  version: '0.1'
+  version: '0.2'
   name: Dog
   dimensions:
   - description: Number of different colors the dog has.
@@ -60,3 +60,29 @@
   - description: The dog's breed.
     name: breed
     type: string
+
+# Reference type property example
+- description: A person with one or more dogs.
+  uri: http://onto-ns.com/meta/0.1/PersonWithDog
+  meta: http://onto-ns.com/meta/0.3/EntitySchema
+  dimensions:
+    nskills: Number of skills.
+    ndogs: Number of dogs.
+  properties:
+    age:
+      description: The person's age.
+      type: int
+    name:
+      description: The person's name.
+      type: string
+    skills:
+      description: The person's skills.
+      shape:
+      - nskills
+      type: string
+    dogs:
+      description: The person's dogs.
+      shape:
+      - ndogs
+      type: ref
+      $ref: http://onto-ns.com/meta/0.2/Dog

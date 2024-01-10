@@ -41,7 +41,9 @@ class ServiceSettings(BaseSettings):
         """Strip any end forward slashes."""
         return AnyHttpUrl(str(value).rstrip("/"))
 
-    model_config = SettingsConfigDict(env_prefix="entity_service_", env_file=".env")
+    model_config = SettingsConfigDict(
+        env_prefix="entity_service_", env_file=".env", extra="ignore"
+    )
 
 
 CONFIG = ServiceSettings()

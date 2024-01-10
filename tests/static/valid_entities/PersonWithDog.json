@@ -1,0 +1,27 @@
+{
+    "uri": "http://onto-ns.com/meta/0.1/PersonWithDog",
+    "meta": "http://onto-ns.com/meta/0.3/EntitySchema",
+    "description": "A person, living or dead",
+    "dimensions": {"n_skills": "Number of skills.", "n_dogs": "Number of dogs."},
+    "properties": {
+        "skills": {
+            "type": "string",
+            "shape": ["n_skills"],
+            "description": "Skills of the person."
+        },
+        "name": {
+            "type": "string",
+            "description": "Name of the person."
+        },
+        "age": {
+            "type": "int",
+            "description": "Age of the person."
+        },
+        "dogs": {
+            "type": "ref",
+            "$ref": "http://onto-ns.com/meta/0.1/Dog",
+            "shape": ["n_dogs"],
+            "description": "The person's dogs."
+        }
+    }
+}
