@@ -110,6 +110,7 @@ jobs:
         if: github.repository_owner == 'SINTEF'
         uses: codecov/codecov-action@v3
         with:
+          token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: true
           env_vars: OS,PYTHON
           flags: docker
@@ -147,6 +148,7 @@ jobs:
         if: github.repository_owner == 'SINTEF'
         uses: codecov/codecov-action@v3
         with:
+          token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: true
           env_vars: OS,PYTHON
           flags: local
