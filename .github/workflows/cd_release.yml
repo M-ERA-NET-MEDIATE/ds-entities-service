@@ -1,0 +1,33 @@
+name: CD - Release
+
+on:
+  release:
+    types:
+    - published
+
+jobs:
+  release:
+    name: External
+    uses: SINTEF/ci-cd/.github/workflows/cd_release.yml@v2.7.2
+    if: github.repository == 'SINTEF/dlite-entities-service' && startsWith(github.ref, 'refs/tags/v')
+    with:
+      # General
+      git_username: "TEAM 4.0[bot]"
+      git_email: "Team4.0@SINTEF.no"
+      release_branch: main
+
+      # Python package
+      python_package: true
+      package_dirs: dlite_entities_service
+      install_extras: "[dev]"
+      python_version_build: "3.10"
+      build_libs: flit
+      build_cmd: "flit build"
+      changelog_exclude_labels: skip_changelog,duplicate,question,invalid,wontfix
+      publish_on_pypi: false
+
+      # Documentation
+      update_docs: false
+
+    secrets:
+      PAT: ${{ secrets.TEAM40_PAT }}
