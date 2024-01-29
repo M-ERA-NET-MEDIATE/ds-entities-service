@@ -27,7 +27,7 @@ jobs:
 
       - name: Deploy updated main
         run: |
-          curl -o response.json --silent -m 30 http://api.onto-ns.com/deploy?service=entities-service
+          curl -o response.json --silent -m 30 http://api.onto-ns.com/deploy/?service=entities-service
 
           cat << EOF | python
           import json
