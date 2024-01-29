@@ -19,7 +19,7 @@ def get_version_name(uri: str) -> tuple[str, str]:
     """Return the version and name part of a uri."""
     import re
 
-    from dlite_entities_service.service.config import CONFIG
+    from entities_service.service.config import CONFIG
 
     namespace = str(CONFIG.base_url).rstrip("/")
 

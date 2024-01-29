@@ -1,22 +1,22 @@
 version: "3"
 
 services:
-  dlite_entities_service:
+  entities_service:
     build:
       context: "."
-      target: "${ENTITY_SERVICE_DOCKER_TARGET:-development}"
+      target: "${ENTITIES_SERVICE_DOCKER_TARGET:-development}"
     ports:
-      - "${ENTITY_SERVICE_PORT:-8000}:80"
+      - "${ENTITIES_SERVICE_PORT:-8000}:80"
     environment:
-      PORT: ${ENTITY_SERVICE_PORT:-8000}
-      ENTITY_SERVICE_BASE_URL: "${ENTITY_SERVICE_HOST:-http://onto-ns.com/meta}"
-      ENTITY_SERVICE_MONGO_URI: "mongodb://mongodb:27017"
-      ENTITY_SERVICE_MONGO_USER: ${MONGO_USER:-root}
-      ENTITY_SERVICE_MONGO_PASSWORD: ${MONGO_PASSWORD:-root}
+      PORT: ${ENTITIES_SERVICE_PORT:-8000}
+      ENTITIES_SERVICE_BASE_URL: "${ENTITIES_SERVICE_HOST:-http://onto-ns.com/meta}"
+      ENTITIES_SERVICE_MONGO_URI: "mongodb://mongodb:27017"
+      ENTITIES_SERVICE_MONGO_USER: ${MONGO_USER:-root}
+      ENTITIES_SERVICE_MONGO_PASSWORD: ${MONGO_PASSWORD:-root}
     depends_on:
       - mongodb
     networks:
-      - dlite_entities_net
+      - entities_service_net
     volumes:
       - "${PWD}:/app"
 
@@ -29,7 +29,7 @@ services:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER:-root}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-root}
     networks:
-      - dlite_entities_net
+      - entities_service_net
 
 networks:
-  dlite_entities_net:
+  entities_service_net:

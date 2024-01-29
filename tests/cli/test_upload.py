@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 def test_upload_no_args(cli: CliRunner) -> None:
     """Test `entities-service upload` CLI command."""
-    from dlite_entities_service.cli.main import APP, upload
+    from entities_service.cli.main import APP, upload
 
     result = cli.invoke(APP, "upload")
     assert result.exit_code == 0, result.stderr
@@ -30,7 +30,7 @@ def test_upload_filepath(
     """Test upload with a filepath."""
     import json
 
-    from dlite_entities_service.cli import main
+    from entities_service.cli import main
 
     result = cli.invoke(
         main.APP, f"upload --file {static_dir / 'valid_entities' / 'Person.json'}"
@@ -52,7 +52,7 @@ def test_upload_filepath_invalid(
     cli: CliRunner, static_dir: Path, fail_fast: bool
 ) -> None:
     """Test upload with an invalid filepath."""
-    from dlite_entities_service.cli.main import APP
+    from entities_service.cli.main import APP
 
     result = cli.invoke(
         APP,
@@ -78,7 +78,7 @@ def test_upload_filepath_invalid(
 
 def test_upload_filepath_invalid_format(cli: CliRunner, tmp_path: Path) -> None:
     """Test upload with an invalid file format."""
-    from dlite_entities_service.cli.main import APP
+    from entities_service.cli.main import APP
 
     (tmp_path / "Person.txt").touch()
 
@@ -90,7 +90,7 @@ def test_upload_filepath_invalid_format(cli: CliRunner, tmp_path: Path) -> None:
 
 def test_upload_no_file_or_dir(cli: CliRunner) -> None:
     """Test error when no file or directory is provided."""
-    from dlite_entities_service.cli.main import APP
+    from entities_service.cli.main import APP
 
     result = cli.invoke(APP, "upload --format json")
     assert result.exit_code == 1, result.stdout
@@ -104,7 +104,7 @@ def test_upload_directory(
     """Test upload with a directory."""
     import json
 
-    from dlite_entities_service.cli import main
+    from entities_service.cli import main
 
     directory = static_dir / "valid_entities"
 
@@ -152,7 +152,7 @@ def test_upload_empty_dir(cli: CliRunner, tmp_path: Path) -> None:
     The outcome here should be the same whether an empty directory is
     provided or a directory with only invalid files.
     """
-    from dlite_entities_service.cli import main
+    from entities_service.cli import main
 
     empty_dir = tmp_path / "empty_dir"
     assert not empty_dir.exists()
@@ -174,7 +174,7 @@ def test_upload_empty_dir(cli: CliRunner, tmp_path: Path) -> None:
 
 def test_upload_files_with_unchosen_format(cli: CliRunner, static_dir: Path) -> None:
     """Test upload several files with a format not chosen."""
-    from dlite_entities_service.cli.main import APP
+    from entities_service.cli.main import APP
 
     directory = static_dir / "valid_entities"
     file_inputs = " ".join(
@@ -205,7 +205,7 @@ def test_upload_directory_invalid_entities(
     """Test uploading a directory full of invalid entities."""
     import re
 
-    from dlite_entities_service.cli.main import APP
+    from entities_service.cli.main import APP
 
     directory = static_dir / "invalid_entities"
 
@@ -265,8 +265,8 @@ def test_get_backend(
 
     from dotenv import set_key
 
-    from dlite_entities_service.cli._utils.global_settings import CONTEXT
-    from dlite_entities_service.cli.main import APP
+    from entities_service.cli._utils.global_settings import CONTEXT
+    from entities_service.cli.main import APP
 
     # Create a temporary '.env' file
     if not dotenv_file.exists():
@@ -274,7 +274,7 @@ def test_get_backend(
     else:
         dotenv_file.unlink()
         dotenv_file.touch()
-    set_key(dotenv_file, "ENTITY_SERVICE_MONGO_URI", "mongodb://localhost:27017")
+    set_key(dotenv_file, "ENTITIES_SERVICE_MONGO_URI", "mongodb://localhost:27017")
 
     CONTEXT["dotenv_path"] = dotenv_file
 
@@ -297,7 +297,7 @@ def test_existing_entity(
     cli: CliRunner, static_dir: Path, mock_entities_collection: Collection
 ) -> None:
     """Test that an existing entity is not overwritten."""
-    from dlite_entities_service.cli.main import APP
+    from entities_service.cli.main import APP
 
     result = cli.invoke(
         APP, f"upload --file {static_dir / 'valid_entities' / 'Person.json'}"
@@ -330,8 +330,8 @@ def test_existing_entity_different_content(
     import json
     from copy import deepcopy
 
-    from dlite_entities_service.cli.main import APP
-    from dlite_entities_service.service.config import CONFIG
+    from entities_service.cli.main import APP
+    from entities_service.service.config import CONFIG
 
     raw_entity = (static_dir / "valid_entities" / "Person.json").read_text()
     parsed_entity: dict[str, Any] = json.loads(raw_entity)
@@ -469,7 +469,7 @@ def test_existing_entity_errors(
     import json
     from copy import deepcopy
 
-    from dlite_entities_service.cli.main import APP
+    from entities_service.cli.main import APP
 
     raw_entity = (static_dir / "valid_entities" / "Person.json").read_text()
     parsed_entity: dict[str, Any] = json.loads(raw_entity)

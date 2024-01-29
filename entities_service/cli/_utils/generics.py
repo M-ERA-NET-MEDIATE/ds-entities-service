@@ -11,7 +11,7 @@ try:
     from rich import print as rich_print
 except ImportError as exc:  # pragma: no cover
     raise ImportError(
-        "Please install the DLite entities service utility CLI with 'pip install "
+        "Please install the entities service utility CLI with 'pip install "
         f"{Path(__file__).resolve().parent.parent.parent.parent.resolve()}[cli]'"
     ) from exc
 
@@ -22,9 +22,9 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 EXC_MSG_INSTALL_PACKAGE = (
-    "Please install the DLite entities service utility CLI with "
+    "Please install the entities service utility CLI with "
     f"'pip install {Path(__file__).resolve().parent.parent.parent.parent.resolve()}"
-    "[cli]' or 'pip install dlite-entities-service[cli]'"
+    "[cli]' or 'pip install entities-service[cli]'"
 )
 
 OUTPUT_CONSOLE = get_console()

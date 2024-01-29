@@ -49,11 +49,11 @@ jobs:
           MONGO_INITDB_ROOT_PASSWORD: root
 
     env:
-      ENTITY_SERVICE_MONGO_URI: mongodb://localhost:27017
-      ENTITY_SERVICE_MONGO_USER: root
-      ENTITY_SERVICE_MONGO_PASSWORD: root
-      ENTITY_SERVICE_HOST: localhost
-      ENTITY_SERVICE_PORT: 8000
+      ENTITIES_SERVICE_MONGO_URI: mongodb://localhost:27017
+      ENTITIES_SERVICE_MONGO_USER: root
+      ENTITIES_SERVICE_MONGO_PASSWORD: root
+      ENTITIES_SERVICE_HOST: localhost
+      ENTITIES_SERVICE_PORT: 8000
 
     steps:
       - name: Checkout ${{ github.repository }}
@@ -68,22 +68,22 @@ jobs:
         run: |
           docker build \
             --pull \
-            --tag entity-service \
+            --tag entities-service \
             --target ${{ matrix.docker_target }} \
             .
 
       - name: Run Docker container
         run: |
           docker run --rm -d \
-            --env ENTITY_SERVICE_MONGO_URI \
-            --env ENTITY_SERVICE_MONGO_USER \
-            --env ENTITY_SERVICE_MONGO_PASSWORD \
-            --env PORT=${ENTITY_SERVICE_PORT} \
-            --name "entity-service" \
+            --env ENTITIES_SERVICE_MONGO_URI \
+            --env ENTITIES_SERVICE_MONGO_USER \
+            --env ENTITIES_SERVICE_MONGO_PASSWORD \
+            --env PORT=${ENTITIES_SERVICE_PORT} \
+            --name "entities-service" \
             --network "host" \
             --volume "${PWD}:/app" \
             --user "$(id -u):$(id -g)" \
-            entity-service
+            entities-service
           sleep 5
 
       - name: Install test dependencies
@@ -98,10 +98,10 @@ jobs:
             pytest -vv --live-backend --cov-report=xml
           } || {
             echo "Failed! Here's the Docker logs for the service:" &&
-            docker logs entity-service &&
+            docker logs entities-service &&
 
             echo -e "\nAnd the service log:" &&
-            cat logs/dlite_entities_service.log &&
+            cat logs/entities_service.log &&
 
             exit 1
           }

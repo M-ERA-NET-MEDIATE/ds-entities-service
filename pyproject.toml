@@ -3,10 +3,10 @@ requires = ["flit_core >=3.4,<4"]
 build-backend = "flit_core.buildapi"
 
 [tool.flit.module]
-name = "dlite_entities_service"
+name = "entities_service"
 
 [project]
-name = "dlite-entities-service"
+name = "entities-service"
 authors = [
     {name = "Casper Welzel Andersen", email = "casper.w.andersen@sintef.no"},
 ]
@@ -22,7 +22,6 @@ classifiers = [
     "Natural Language :: English",
     "Operating System :: OS Independent",
 ]
-keywords = ["dlite", "mongodb"]
 requires-python = "~=3.10"
 dynamic = ["version", "description"]
 
@@ -45,22 +44,22 @@ testing = [
     "pytest ~=7.4",
     "pytest-cov ~=4.1",
     "pyyaml ~=6.0",
-    "dlite-entities-service[cli]",
+    "entities-service[cli]",
 ]
 dev = [
     "pre-commit ~=3.6",
-    "dlite-entities-service[testing,cli]",
+    "entities-service[testing,cli]",
 ]
 
 [project.scripts]
-entities-service = "dlite_entities_service.cli.main:APP"
+entities-service = "entities_service.cli.main:APP"
 
 [project.urls]
-Home = "https://github.com/CasperWA/dlite-entities-service"
-Documentation = "https://CasperWA.github.io/dlite-entities-service"
-Source = "https://github.com/CasperWA/dlite-entities-service"
-"Issue Tracker" = "https://github.com/CasperWA/dlite-entities-service/issues"
-Changelog = "https://CasperWA.github.io/dlite-entities-service/latest/CHANGELOG"
+Home = "https://github.com/SINTEF/entities-service"
+Documentation = "https://CasperWA.github.io/entities-service"
+Source = "https://github.com/SINTEF/entities-service"
+"Issue Tracker" = "https://github.com/SINTEF/entities-service/issues"
+Changelog = "https://CasperWA.github.io/entities-service/latest/CHANGELOG"
 
 [tool.mypy]
 python_version = "3.10"
@@ -110,7 +109,7 @@ isort.required-imports = ["from __future__ import annotations"]
 
 [tool.pytest.ini_options]
 minversion = "7.4"
-addopts = "-rs --cov=dlite_entities_service --cov-report=term-missing:skip-covered --no-cov-on-fail"
+addopts = "-rs --cov=entities_service --cov-report=term-missing:skip-covered --no-cov-on-fail"
 filterwarnings = [
     # Treat all warnings as errors
     "error",

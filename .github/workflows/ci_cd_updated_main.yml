@@ -22,7 +22,7 @@ jobs:
       update_docs: false
       # update_python_api_ref: true
       # update_docs_landing_page: true
-      # package_dirs: dlite_entities_service
+      # package_dirs: entities_service
       # python_version: "3.10"
       # doc_extras: "[doc]"
       # changelog_exclude_labels: "skip_changelog,duplicate,question,invalid,wontfix"

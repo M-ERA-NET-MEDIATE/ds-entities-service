@@ -1,7 +1,7 @@
-# Service for serving DLite entities
+# Service for serving entities
 
 This is a FastAPI-based REST API service running on onto-ns.com.
-It's purpose is to serve DLite entities from an underlying database.
+It's purpose is to serve entities from an underlying database.
 
 ## Run the service
 
@@ -9,8 +9,8 @@ First, download and install the Python package from GitHub:
 
 ```shell
 # Download (git clone)
-git clone https://github.com/CasperWA/dlite-entities-service.git
-cd dlite-entities-service
+git clone https://github.com/SINTEF/entities-service.git
+cd entities-service
 
 # Install (using pip)
 python -m pip install -U pip
@@ -25,24 +25,24 @@ For development, start a local MongoDB server, e.g., through another Docker imag
 docker run -d --name "mongodb" -p "27017:27017" mongo:6
 ```
 
-Then build and run the DLite Entities Service Docker image:
+Then build and run the Entities Service Docker image:
 
 ```shell
-docker build --pull -t entity-service --target development .
+docker build --pull -t entities-service --target development .
 docker run --rm -d \
-  --env "entity_service_mongo_uri=mongodb://localhost:27017" \
-  --name "entity-service" \
+  --env "entities_service_mongo_uri=mongodb://localhost:27017" \
+  --name "entities-service" \
   -p "8000:80" \
-  entity-service
+  entities-service
 ```
 
-Now, fill up the MongoDB with valid DLite entities at the `dlite` database in the `entities` collection.
+Now, fill up the MongoDB with valid entities at the `entities_service` database in the `entities` collection.
 
-Then go to [localhost:8000/docs](http://localhost:8000/docs) and try out retrieving a DLite entity.
+Then go to [localhost:8000/docs](http://localhost:8000/docs) and try out retrieving an entity.
 
 ---
 
-For production, use a public MongoDB, and follow the same instructions above for building and running the DLite Entities Service Docker image, but exchange the `--target` value with `production`, put in the proper value for the `entity_service_mongo_uri` environment value, possibly add the `entity_service_mongo_user` and `entity_service_mongo_password` environment variables as well, if needed.
+For production, use a public MongoDB, and follow the same instructions above for building and running the Entities Service Docker image, but exchange the `--target` value with `production`, put in the proper value for the `entities_service_mongo_uri` environment value, possibly add the `entities_service_mongo_user` and `entities_service_mongo_password` environment variables as well, if needed.
 
 ### Using Docker Compose
 
@@ -53,10 +53,10 @@ docker compose pull
 docker compose up --build
 ```
 
-By default the `development` target will be built, to change this, set the `entity_service_docker_target` environment variable accordingly, e.g.:
+By default the `development` target will be built, to change this, set the `entities_service_docker_target` environment variable accordingly, e.g.:
 
 ```shell
-entity_service_docker_target=production docker compose up --build
+entities_service_docker_target=production docker compose up --build
 ```
 
 Furthermore, the used `localhost` port can be changed via the `PORT` environment variable.
@@ -75,10 +75,10 @@ Then run it according to your desires.
 For example, in development, it might be nice to have the server reload if any files are changed, as well as the server logging debug messages:
 
 ```shell
-uvicorn dlite_entities_service.main:APP --reload --host localhost --port 8000 --log-level debug --debug --no-server-header --header "Server:DLiteEntitiesService"
+uvicorn entities_service.main:APP --reload --host localhost --port 8000 --log-level debug --debug --no-server-header --header "Server:EntitiesService"
 ```
 
-Then go to [localhost:8000/docs](http://localhost:8000/docs) and try out retrieving a DLite entity.
+Then go to [localhost:8000/docs](http://localhost:8000/docs) and try out retrieving an entity.
 
 ### Using a file for environment variables
 

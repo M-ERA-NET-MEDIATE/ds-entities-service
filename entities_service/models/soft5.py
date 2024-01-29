@@ -8,7 +8,7 @@ from typing import Annotated, Any
 from pydantic import AliasChoices, BaseModel, Field, field_validator, model_validator
 from pydantic.networks import AnyHttpUrl
 
-from dlite_entities_service.service.config import CONFIG
+from entities_service.service.config import CONFIG
 
 URI_REGEX = re.compile(
     r"^(?P<namespace>https?://.+)/(?P<version>\d(?:\.\d+){0,2})/(?P<name>[^/#?]+)$"
@@ -118,8 +118,7 @@ class SOFT5Entity(BaseModel):
         """Validate `uri` starts with the current base URL for the service."""
         if not str(value).startswith(str(CONFIG.base_url)):
             error_message = (
-                "This service only works with DLite/SOFT entities at "
-                f"{CONFIG.base_url}.\n"
+                f"This service only works with entities at {CONFIG.base_url}.\n"
             )
             raise ValueError(error_message)
         return value
@@ -142,7 +141,7 @@ class SOFT5Entity(BaseModel):
         """Validate `meta` only refers to onto-ns.com EntitySchema v0.3."""
         if str(value) != "http://onto-ns.com/meta/0.3/EntitySchema":
             error_message = (
-                "This service only works with DLite/SOFT entities using EntitySchema "
+                "This service only works with entities using EntitySchema "
                 "v0.3 at onto-ns.com as the metadata entity.\n"
             )
             raise ValueError(error_message)

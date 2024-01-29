@@ -8,17 +8,17 @@ from typing import TYPE_CHECKING, Annotated
 
 from fastapi import FastAPI, HTTPException, Path, status
 
-from dlite_entities_service import __version__
-from dlite_entities_service.models import VersionedSOFTEntity
-from dlite_entities_service.service.backend import ENTITIES_COLLECTION
-from dlite_entities_service.service.config import CONFIG
-from dlite_entities_service.service.logger import setup_logger
+from entities_service import __version__
+from entities_service.models import VersionedSOFTEntity
+from entities_service.service.backend import ENTITIES_COLLECTION
+from entities_service.service.config import CONFIG
+from entities_service.service.logger import setup_logger
 
 if TYPE_CHECKING:  # pragma: no cover
     from typing import Any
 
 
-LOGGER = logging.getLogger("dlite_entities_service")
+LOGGER = logging.getLogger("entities_service")
 
 
 # Application lifespan function
@@ -36,7 +36,7 @@ async def lifespan(_: FastAPI):
 
 # Setup application
 APP = FastAPI(
-    title="DLite Entities Service",
+    title="Entities Service",
     version=__version__,
     description=(
         sysPath(__file__).resolve().parent.parent.resolve() / "README.md"
@@ -86,7 +86,7 @@ async def get_entity(
         ),
     ],
 ) -> dict[str, Any]:
-    """Get a DLite entity."""
+    """Get an entity."""
     query = {
         "$or": [
             {"namespace": str(CONFIG.base_url), "version": version, "name": name},

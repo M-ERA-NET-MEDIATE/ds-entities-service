@@ -81,11 +81,11 @@ Error message from pydantic as of 19.12.2023 (pydantic==2.5.2):
 ```console
 4 validation errors for SOFT7Entity
 uri
-  Value error, This service only works with DLite/SOFT entities at http://onto-ns.com/meta.
+  Value error, This service only works with entities at http://onto-ns.com/meta.
  [type=value_error, input_value='http://onto-ns.com/0.1/Cat', input_type=str]
     For further information visit https://errors.pydantic.dev/2.5/v/value_error
 meta
-  Value error, This service only works with DLite/SOFT entities using EntitySchema v0.3 at onto-ns.com as the metadata entity.
+  Value error, This service only works with entities using EntitySchema v0.3 at onto-ns.com as the metadata entity.
  [type=value_error, input_value='http://onto-ns.com/meta/0.4/EntitySchema', input_type=str]
     For further information visit https://errors.pydantic.dev/2.5/v/value_error
 dimensions
@@ -97,11 +97,11 @@ properties
 
 2 validation errors for SOFT5Entity
 uri
-  Value error, This service only works with DLite/SOFT entities at http://onto-ns.com/meta.
+  Value error, This service only works with entities at http://onto-ns.com/meta.
  [type=value_error, input_value='http://onto-ns.com/0.1/Cat', input_type=str]
     For further information visit https://errors.pydantic.dev/2.5/v/value_error
 meta
-  Value error, This service only works with DLite/SOFT entities using EntitySchema v0.3 at onto-ns.com as the metadata entity.
+  Value error, This service only works with entities using EntitySchema v0.3 at onto-ns.com as the metadata entity.
  [type=value_error, input_value='http://onto-ns.com/meta/0.4/EntitySchema', input_type=str]
     For further information visit https://errors.pydantic.dev/2.5/v/value_error
 ```

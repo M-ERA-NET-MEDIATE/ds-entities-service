@@ -28,8 +28,8 @@ def live_backend(request: pytest.FixtureRequest) -> bool:
     import os
 
     required_environment_variables = (
-        "ENTITY_SERVICE_MONGO_USER",
-        "ENTITY_SERVICE_MONGO_PASSWORD",
+        "ENTITIES_SERVICE_MONGO_USER",
+        "ENTITIES_SERVICE_MONGO_PASSWORD",
     )
 
     value = request.config.getoption("--live-backend")
@@ -76,7 +76,7 @@ def mongo_test_collection(static_dir: Path, live_backend: bool) -> Collection | 
                 }
 
     if live_backend:
-        from dlite_entities_service.service.backend import ENTITIES_COLLECTION
+        from entities_service.service.backend import ENTITIES_COLLECTION
 
         # TODO: Handle authentication properly
         ENTITIES_COLLECTION.insert_many(entities)
@@ -86,7 +86,7 @@ def mongo_test_collection(static_dir: Path, live_backend: bool) -> Collection | 
     # else
     from mongomock import MongoClient
 
-    from dlite_entities_service.service.config import CONFIG
+    from entities_service.service.config import CONFIG
 
     client_kwargs = {
         "username": CONFIG.mongo_user,
@@ -100,7 +100,7 @@ def mongo_test_collection(static_dir: Path, live_backend: bool) -> Collection | 
 
     MOCK_ENTITIES_COLLECTION = MongoClient(
         str(CONFIG.mongo_uri), **client_kwargs
-    ).dlite.entities
+    ).entities_service.entities
 
     MOCK_ENTITIES_COLLECTION.insert_many(entities)
 
@@ -114,7 +114,7 @@ def _mock_backend_entities_collection(
     if mongo_test_collection is None:
         return
 
-    from dlite_entities_service.service import backend
+    from entities_service.service import backend
 
     monkeypatch.setattr(backend, "ENTITIES_COLLECTION", mongo_test_collection)
 
@@ -126,12 +126,12 @@ def client(live_backend: bool) -> TestClient:
 
     from fastapi.testclient import TestClient
 
-    from dlite_entities_service.main import APP
-    from dlite_entities_service.service.config import CONFIG
+    from entities_service.main import APP
+    from entities_service.service.config import CONFIG
 
     if live_backend:
-        host, port = os.getenv("ENTITY_SERVICE_HOST", "localhost"), os.getenv(
-            "ENTITY_SERVICE_PORT", "8000"
+        host, port = os.getenv("ENTITIES_SERVICE_HOST", "localhost"), os.getenv(
+            "ENTITIES_SERVICE_PORT", "8000"
         )
 
         return TestClient(

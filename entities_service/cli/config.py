@@ -1,4 +1,4 @@
-"""config subcommand for dlite-entities-service CLI."""
+"""config subcommand for entities-service CLI."""
 from __future__ import annotations
 
 import sys
@@ -17,15 +17,15 @@ else:
 try:
     import typer
 except ImportError as exc:  # pragma: no cover
-    from dlite_entities_service.cli._utils.generics import EXC_MSG_INSTALL_PACKAGE
+    from entities_service.cli._utils.generics import EXC_MSG_INSTALL_PACKAGE
 
     raise ImportError(EXC_MSG_INSTALL_PACKAGE) from exc
 
 from dotenv import dotenv_values, set_key, unset_key
 
-from dlite_entities_service.cli._utils.generics import ERROR_CONSOLE, print
-from dlite_entities_service.cli._utils.global_settings import CONTEXT
-from dlite_entities_service.service.config import CONFIG
+from entities_service.cli._utils.generics import ERROR_CONSOLE, print
+from entities_service.cli._utils.global_settings import CONTEXT
+from entities_service.service.config import CONFIG
 
 APP = typer.Typer(
     name=__file__.rsplit("/", 1)[-1].replace(".py", ""),

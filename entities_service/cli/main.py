@@ -1,4 +1,4 @@
-"""Typer CLI for doing SOFT entities service stuff."""
+"""Typer CLI for doing Entities Service stuff."""
 from __future__ import annotations
 
 import json
@@ -20,7 +20,7 @@ else:
 try:
     import typer
 except ImportError as exc:  # pragma: no cover
-    from dlite_entities_service.cli._utils.generics import EXC_MSG_INSTALL_PACKAGE
+    from entities_service.cli._utils.generics import EXC_MSG_INSTALL_PACKAGE
 
     raise ImportError(EXC_MSG_INSTALL_PACKAGE) from exc
 
@@ -29,21 +29,21 @@ import yaml
 from dotenv import dotenv_values
 from pydantic import AnyHttpUrl
 
-from dlite_entities_service.cli._utils.generics import (
+from entities_service.cli._utils.generics import (
     ERROR_CONSOLE,
     pretty_compare_dicts,
     print,
 )
-from dlite_entities_service.cli._utils.global_settings import CONTEXT, global_options
-from dlite_entities_service.cli.config import APP as config_APP
-from dlite_entities_service.models import (
+from entities_service.cli._utils.global_settings import CONTEXT, global_options
+from entities_service.cli.config import APP as config_APP
+from entities_service.models import (
     URI_REGEX,
     get_updated_version,
     get_uri,
     get_version,
     soft_entity,
 )
-from dlite_entities_service.service.exceptions import BackendError
+from entities_service.service.exceptions import BackendError
 
 if TYPE_CHECKING:  # pragma: no cover
     from typing import Any
@@ -68,7 +68,7 @@ OptionalStr = Optional[str]
 
 APP = typer.Typer(
     name="entities-service",
-    help="SOFT entities service utility CLI",
+    help="Entities Service utility CLI",
     no_args_is_help=True,
     pretty_exceptions_show_locals=False,
     callback=global_options,
@@ -78,7 +78,7 @@ APP.add_typer(config_APP, callback=global_options)
 
 def _get_backend() -> Collection:
     """Return the backend."""
-    from dlite_entities_service.service.backend import (
+    from entities_service.service.backend import (
         ENTITIES_COLLECTION,
         get_collection,
     )
@@ -92,9 +92,9 @@ def _get_backend() -> Collection:
         config = {key.upper(): value for key, value in config.items()}
 
         backend_options = {
-            "uri": config.get("ENTITY_SERVICE_MONGO_URI"),
-            "username": config.get("ENTITY_SERVICE_MONGO_USER"),
-            "password": config.get("ENTITY_SERVICE_MONGO_PASSWORD"),
+            "uri": config.get("ENTITIES_SERVICE_MONGO_URI"),
+            "username": config.get("ENTITIES_SERVICE_MONGO_USER"),
+            "password": config.get("ENTITIES_SERVICE_MONGO_PASSWORD"),
         }
 
         if any(_ is not None for _ in backend_options.values()):

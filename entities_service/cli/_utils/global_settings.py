@@ -8,13 +8,13 @@ try:
     import typer
 except ImportError as exc:  # pragma: no cover
     raise ImportError(
-        "Please install the DLite entities service utility CLI with 'pip install "
+        "Please install the entities service utility CLI with 'pip install "
         f"{Path(__file__).resolve().parent.parent.parent.parent.resolve()}[cli]'"
     ) from exc
 
-from dlite_entities_service import __version__
-from dlite_entities_service.cli._utils.generics import print
-from dlite_entities_service.service.config import CONFIG
+from entities_service import __version__
+from entities_service.cli._utils.generics import print
+from entities_service.service.config import CONFIG
 
 if TYPE_CHECKING:  # pragma: no cover
     from typing import TypedDict
@@ -38,7 +38,7 @@ OptionalPath = Optional[Path]
 def print_version(value: bool) -> None:
     """Print version and exit."""
     if value:
-        print(f"dlite-entities-service version: {__version__}")
+        print(f"entities-service version: {__version__}")
         raise typer.Exit()
 
 

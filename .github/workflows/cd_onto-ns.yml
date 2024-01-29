@@ -27,7 +27,7 @@ jobs:
 
       - name: Deploy updated main
         run: |
-          curl -o response.json --silent -m 30 http://api.onto-ns.com/dlite/?service=dlite-entities-service
+          curl -o response.json --silent -m 30 http://api.onto-ns.com/deploy?service=entities-service
 
           cat << EOF | python
           import json
@@ -35,7 +35,7 @@ jobs:
           import sys
 
           response = json.loads(Path('response.json').read_bytes())
-          if response["service"] != "dlite-entities-service":
+          if response["service"] != "entities-service":
               sys.exit(
                   "ERROR: Did not deploy the correct service\n"
                   f"  service: {response['service']}\n"

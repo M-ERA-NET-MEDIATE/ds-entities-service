@@ -9,11 +9,11 @@ if TYPE_CHECKING:
 
 def test_version(cli: CliRunner) -> None:
     """Test that the version is printed."""
-    from dlite_entities_service import __version__
-    from dlite_entities_service.cli.main import APP
+    from entities_service import __version__
+    from entities_service.cli.main import APP
 
     result = cli.invoke(APP, "--version")
     assert result.exit_code == 0, result.stderr
-    assert f"dlite-entities-service version: {__version__}" in result.stdout.replace(
+    assert f"entities-service version: {__version__}" in result.stdout.replace(
         "\n", " "
     ), result.stdout

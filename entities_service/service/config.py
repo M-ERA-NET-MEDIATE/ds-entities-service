@@ -42,7 +42,7 @@ class ServiceSettings(BaseSettings):
         return AnyHttpUrl(str(value).rstrip("/"))
 
     model_config = SettingsConfigDict(
-        env_prefix="entity_service_", env_file=".env", extra="ignore"
+        env_prefix="entities_service_", env_file=".env", extra="ignore"
     )
 
 

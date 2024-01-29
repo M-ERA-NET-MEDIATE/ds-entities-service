@@ -14,5 +14,5 @@ class UvicornWorker(OriginalUvicornWorker):
 
     CONFIG_KWARGS: ClassVar[dict[str, Any]] = {
         "server_header": False,
-        "headers": [("Server", "DLiteEntitiesService")],
+        "headers": [("Server", "EntitiesService")],
     }
