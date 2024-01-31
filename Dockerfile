@@ -1,4 +1,4 @@
-FROM python:3.10 as base
+FROM python:3.10-slim as base
 
 WORKDIR /app
 
@@ -7,7 +7,7 @@ COPY pyproject.toml LICENSE README.md ./
 
 # Install dependencies
 RUN python -m pip install -U pip && \
-  pip install -U pip setuptools wheel && \
+  pip install -U setuptools wheel && \
   pip install -U -e .[server]
 
 ## DEVELOPMENT target
