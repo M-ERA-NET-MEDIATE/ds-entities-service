@@ -1,4 +1,4 @@
-FROM python:3.10-slim as base
+FROM python:3.10 as base
 
 WORKDIR /app
 
@@ -7,25 +7,30 @@ COPY pyproject.toml LICENSE README.md ./
 
 # Install dependencies
 RUN python -m pip install -U pip && \
-  pip install -U pip setuptools wheel flit && \
-  pip install -U uvicorn && \
-  pip install -U -e . && \
-  # Create log directory and file (if not existing already)
-  mkdir -p logs && \
-  touch -a logs/entities_service.log
+  pip install -U pip setuptools wheel && \
+  pip install -U -e .[server]
 
+## DEVELOPMENT target
 FROM base as development
 
+# Copy over the self-signed certificates for development
+COPY docker_security docker_security/
+
 ENV PORT=80
 EXPOSE ${PORT}
 
-ENTRYPOINT uvicorn --host 0.0.0.0 --port ${PORT} --log-level debug --no-server-header --header "Server:EntitiesService" --reload entities_service.main:APP
+# Set debug mode, since we're running in development mode
+ENV ENTITY_SERVICE_DEBUG=1
 
+ENTRYPOINT gunicorn --bind "0.0.0.0:${PORT}" --log-level debug --workers 1 --worker-class entities_service.uvicorn.UvicornWorker --reload entities_service.main:APP
+
+## PRODUCTION target
 FROM base as production
 
-RUN pip install gunicorn
-
 ENV PORT=80
 EXPOSE ${PORT}
+
+# Force debug mode to be off, since we're running in production mode
+ENV ENTITY_SERVICE_DEBUG=0
 
 ENTRYPOINT gunicorn --bind "0.0.0.0:${PORT}" --workers 1 --worker-class entities_service.uvicorn.UvicornWorker entities_service.main:APP

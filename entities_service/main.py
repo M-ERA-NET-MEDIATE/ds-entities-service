@@ -10,9 +10,10 @@ from fastapi import FastAPI, HTTPException, Path, status
 
 from entities_service import __version__
 from entities_service.models import VersionedSOFTEntity
-from entities_service.service.backend import ENTITIES_COLLECTION
+from entities_service.service.backend import get_backend
 from entities_service.service.config import CONFIG
 from entities_service.service.logger import setup_logger
+from entities_service.service.routers import get_routers
 
 if TYPE_CHECKING:  # pragma: no cover
     from typing import Any
@@ -30,6 +31,9 @@ async def lifespan(_: FastAPI):
 
     LOGGER.debug("Starting service with config: %s", CONFIG)
 
+    # Initialize backend
+    get_backend(CONFIG.backend, auth_level="write").initialize()
+
     # Run application
     yield
 
@@ -42,10 +46,14 @@ APP = FastAPI(
         sysPath(__file__).resolve().parent.parent.resolve() / "README.md"
     ).read_text(encoding="utf8"),
     lifespan=lifespan,
+    root_path=CONFIG.base_url.path if CONFIG.base_url.path != "/" else "",
 )
 
+# Add routers
+for router in get_routers():
+    APP.include_router(router)
 
-# Setup routes
+
 SEMVER_REGEX = (
     r"^(?P<major>0|[1-9]\d*)(?:\.(?P<minor>0|[1-9]\d*))?(?:\.(?P<patch>0|[1-9]\d*))?"
     r"(?:-(?P<prerelease>(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)"
@@ -71,7 +79,10 @@ async def get_entity(
         Path(
             title="Entity version",
             pattern=SEMVER_REGEX,
-            description="The version part must be of the kind MAJOR.MINOR.",
+            description=(
+                "The version part must be a semantic version, following the schema "
+                "laid out by SemVer.org."
+            ),
         ),
     ],
     name: Annotated[
@@ -87,19 +98,11 @@ async def get_entity(
     ],
 ) -> dict[str, Any]:
     """Get an entity."""
-    query = {
-        "$or": [
-            {"namespace": str(CONFIG.base_url), "version": version, "name": name},
-            {"uri": f"{CONFIG.base_url}/{version}/{name}"},
-        ]
-    }
-    LOGGER.debug("Performing MongoDB query: %r", query)
-    entity_doc: dict[str, Any] = ENTITIES_COLLECTION.find_one(query)
-    if entity_doc is None:
+    uri = f"{str(CONFIG.base_url).rstrip('/')}/{version}/{name}"
+    entity = get_backend().read(uri)
+    if entity is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Could not find entity: uri={CONFIG.base_url}/{version}/{name}",
+            detail=f"Could not find entity: uri={uri}",
         )
-    LOGGER.debug("Found entity's MongoDB ID: %s", entity_doc["_id"])
-    entity_doc.pop("_id", None)
-    return entity_doc
+    return entity

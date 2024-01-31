@@ -1,6 +1,6 @@
 # dev
 .*_cache/
-.coverage
+.coverage*
 coverage.xml
 
 # secrets
@@ -8,3 +8,4 @@ coverage.xml
 
 # running
 logs/
+docker_security/

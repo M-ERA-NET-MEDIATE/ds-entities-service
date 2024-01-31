@@ -43,8 +43,11 @@ def test_soft_entity_error(static_dir: Path) -> None:
     invalid_model_file = static_dir / "invalid_entities" / "Cat.json"
     invalid_model = json.loads(invalid_model_file.read_text())
 
-    with pytest.raises(ValueError, match=r"^Cannot instantiate entity\. Errors:.*"):
+    with pytest.raises(ValueError, match=r"^Cannot instantiate entity\.\nErrors:.*"):
         soft_entity(**invalid_model)
+
+    with pytest.raises(ValueError, match=r"^Custom error message\nErrors:.*"):
+        soft_entity(error_msg="Custom error message", **invalid_model)
 
     errors = soft_entity(return_errors=True, **invalid_model)
 

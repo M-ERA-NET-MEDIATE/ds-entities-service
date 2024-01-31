@@ -43,6 +43,8 @@ def disable_logging():
 
 def _get_service_logger_handlers() -> list[logging.Handler]:
     """Return a list of handlers for the service logger."""
+    from entities_service.service.config import CONFIG
+
     # Create logs directory
     root_dir = Path(__file__).resolve().parent.parent.parent.resolve()
     logs_dir = root_dir / "logs"
@@ -55,7 +57,7 @@ def _get_service_logger_handlers() -> list[logging.Handler]:
     file_handler.setLevel(logging.DEBUG)
 
     console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setLevel(logging.INFO)
+    console_handler.setLevel(logging.DEBUG if CONFIG.debug else logging.INFO)
 
     # Set formatters
     file_formatter = logging.Formatter(

@@ -3,7 +3,8 @@ from __future__ import annotations
 
 import sys
 from collections.abc import Generator
-from typing import Optional
+from functools import cache
+from typing import Optional, get_args
 
 if sys.version_info >= (3, 11):
     from enum import StrEnum
@@ -22,6 +23,7 @@ except ImportError as exc:  # pragma: no cover
     raise ImportError(EXC_MSG_INSTALL_PACKAGE) from exc
 
 from dotenv import dotenv_values, set_key, unset_key
+from pydantic import SecretBytes, SecretStr
 
 from entities_service.cli._utils.generics import ERROR_CONSOLE, print
 from entities_service.cli._utils.global_settings import CONTEXT
@@ -41,10 +43,11 @@ OptionalStr = Optional[str]
 class ConfigFields(StrEnum):
     """Configuration options."""
 
-    BASE_URL = "base_url"
-    MONGO_URI = "mongo_uri"
-    MONGO_USER = "mongo_user"
-    MONGO_PASSWORD = "mongo_password"  # nosec
+    _ignore_ = "ConfigFields config_name"
+
+    ConfigFields = vars()
+    for config_name in sorted(CONFIG.model_fields):
+        ConfigFields[config_name.upper()] = config_name.lower()
 
     @classmethod
     def autocomplete(cls, incomplete: str) -> Generator[tuple[str, str], None, None]:
@@ -62,9 +65,36 @@ class ConfigFields(StrEnum):
                     )
                 yield member.value, CONFIG.model_fields[member.value].description
 
+    @classmethod
+    @cache
+    def sensitive_fields(cls) -> dict[ConfigFields, bool]:  # type: ignore[valid-type]
+        """Return a mapping of sensitive configuration options."""
+        sensitive_fields: dict[ConfigFields, bool] = {}
+        for config_name, field_info in CONFIG.model_fields.items():
+            annotation = field_info.rebuild_annotation()
+
+            annotation_args = get_args(annotation)
+
+            if annotation_args:
+                if any(_ in (SecretStr, SecretBytes) for _ in annotation_args):
+                    sensitive_fields[getattr(cls, config_name.upper())] = True
+                else:
+                    sensitive_fields[getattr(cls, config_name.upper())] = False
+
+            elif annotation in (SecretStr, SecretBytes):  # pragma: no cover
+                # Currently there is no config value that fits this test.
+                # But we keep it here to be future-proof and more clear about the usage
+                # of `typing.get-args()`.
+                sensitive_fields[getattr(cls, config_name.upper())] = True
+
+            else:
+                sensitive_fields[getattr(cls, config_name.upper())] = False
+
+        return sensitive_fields
+
     def is_sensitive(self) -> bool:
         """Return True if this is a sensitive configuration option."""
-        return self in [ConfigFields.MONGO_PASSWORD]
+        return self.__class__.sensitive_fields()[self]
 
 
 @APP.command(name="set")
@@ -81,18 +111,23 @@ def set_config(
     ),
     value: OptionalStr = typer.Argument(
         None,
-        help=(
-            "Value to set. For sensitive values, this will be prompted for if not "
-            "provided."
-        ),
+        help="Value to set. This will be prompted for if not provided.",
         show_default=False,
     ),
 ) -> None:
     """Set a configuration option."""
     if not value:
-        value = typer.prompt(
-            f"Enter a value for {key.upper()}", hide_input=key.is_sensitive()
-        )
+        try:
+            value = typer.prompt(
+                f"Enter a value for {key.upper()}",
+                hide_input=key.is_sensitive(),
+                type=str,
+            )
+        except typer.Abort as exc:  # pragma: no cover
+            # Can only happen if the user presses Ctrl-C, which can not be tested
+            # currently
+            print("[bold blue]Info[/bold blue]: Aborted.")
+            raise typer.Exit(1) from exc
 
     dotenv_file = CONTEXT["dotenv_path"]
 

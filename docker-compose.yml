@@ -8,17 +8,20 @@ services:
     ports:
       - "${ENTITIES_SERVICE_PORT:-8000}:80"
     environment:
-      PORT: ${ENTITIES_SERVICE_PORT:-8000}
       ENTITIES_SERVICE_BASE_URL: "${ENTITIES_SERVICE_HOST:-http://onto-ns.com/meta}"
+      ENTITIES_SERVICE_BACKEND: mongodb
       ENTITIES_SERVICE_MONGO_URI: "mongodb://mongodb:27017"
-      ENTITIES_SERVICE_MONGO_USER: ${MONGO_USER:-root}
-      ENTITIES_SERVICE_MONGO_PASSWORD: ${MONGO_PASSWORD:-root}
+      ENTITIES_SERVICE_X509_CERTIFICATE_FILE: "docker_security/test-client.pem"
+      ENTITIES_SERVICE_CA_FILE: "docker_security/test-ca.pem"
     depends_on:
-      - mongodb
+      mongodb:
+        condition: service_healthy
+        restart: true
     networks:
       - entities_service_net
     volumes:
       - "${PWD}:/app"
+    user: "1000:1000"
 
   mongodb:
     image: mongo:7
@@ -26,10 +29,23 @@ services:
     ports:
       - "${MONGO_PORT:-27017}:27017"
     environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER:-root}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-root}
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: root
+      IN_DOCKER: "true"
+      HOST_USER: "${USER}"
     networks:
       - entities_service_net
+    expose:
+      - 27017
+    volumes:
+      - "./.github/docker_init/create_x509_user.js:/docker-entrypoint-initdb.d/0_create_x509_user.js"
+      - "./docker_security:/mongo_tls"
+    command: --tlsMode allowTLS --tlsCertificateKeyFile /mongo_tls/test-server1.pem --tlsCAFile /mongo_tls/test-ca.pem
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh mongodb://root:root@localhost:27017/?authSource=admin --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 networks:
   entities_service_net:

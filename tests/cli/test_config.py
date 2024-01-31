@@ -12,6 +12,23 @@ if TYPE_CHECKING:
     from typer.testing import CliRunner
 
 
+@pytest.fixture()
+def _prefill_dotenv_config(dotenv_file: Path) -> None:
+    """'Pre'-fill the monkeypatched dotenv config paths."""
+    from dotenv import set_key
+
+    from entities_service.cli.config import ConfigFields
+    from entities_service.service.config import CONFIG
+
+    env_prefix = CONFIG.model_config["env_prefix"]
+
+    if not dotenv_file.exists():
+        dotenv_file.touch()
+
+    for field in ConfigFields:
+        set_key(dotenv_file, f"{env_prefix}{field}".upper(), f"{field}_test")
+
+
 def test_config(cli: CliRunner) -> None:
     """Test `entities-service config` CLI command."""
     from entities_service.cli.config import APP
@@ -45,7 +62,7 @@ def test_set(
             result = cli.invoke(
                 config_app,
                 f"--dotenv-config={dotenv_file} set {field}",
-                input=f"{field}_test",
+                input=f"{field}_test\n",
             )
 
         assert result.exit_code == 0, result.stderr
@@ -199,8 +216,14 @@ def test_configfields_autocompletion() -> None:
     from entities_service.service.config import CONFIG
 
     test_values = {
-        "b": ["base_url"],
-        "m": ["mongo_uri", "mongo_user", "mongo_password"],
+        "b": ["base_url", "backend"],
+        "m": [
+            "mongo_uri",
+            "mongo_user",
+            "mongo_password",
+            "mongo_db",
+            "mongo_collection",
+        ],
         "mongo_u": ["mongo_uri", "mongo_user"],
         "mongo_p": ["mongo_password"],
         "mongo_ur": ["mongo_uri"],
@@ -208,7 +231,7 @@ def test_configfields_autocompletion() -> None:
     }
 
     for test_value, expected in test_values.items():
-        expected_values = list(
+        expected_values = sorted(
             zip(
                 expected,
                 [CONFIG.model_fields[_].description for _ in expected],

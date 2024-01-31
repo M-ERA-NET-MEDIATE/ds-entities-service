@@ -26,13 +26,14 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 CONTEXT: ContextDict = {
-    "dotenv_path": (Path().cwd() / str(CONFIG.model_config["env_file"])).resolve()
+    "dotenv_path": (Path().cwd() / str(CONFIG.model_config["env_file"])).resolve(),
 }
 """Global context for the CLI used to communicate global options."""
 
 # Type Aliases
 OptionalBool = Optional[bool]
 OptionalPath = Optional[Path]
+OptionalStr = Optional[str]
 
 
 def print_version(value: bool) -> None:
@@ -51,7 +52,7 @@ def global_options(
         callback=print_version,
     ),
     dotenv_path: OptionalPath = typer.Option(
-        None,
+        CONTEXT["dotenv_path"],
         "--dotenv-config",
         exists=False,
         dir_okay=False,
@@ -63,10 +64,10 @@ def global_options(
             "Use the .env file at the given location for the current command. "
             "By default it will point to the .env file in the current directory."
         ),
-        show_default=False,
+        show_default=True,
         rich_help_panel="Global options",
     ),
 ) -> None:
     """Global options for the CLI."""
-    if dotenv_path is not None:
+    if dotenv_path:
         CONTEXT["dotenv_path"] = dotenv_path

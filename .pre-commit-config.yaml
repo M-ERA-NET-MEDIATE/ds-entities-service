@@ -9,12 +9,15 @@ repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.5.0
     hooks:
-    - id: end-of-file-fixer
-    - id: debug-statements
-    - id: check-yaml
-      name: Check YAML
     - id: check-toml
       name: Check TOML
+    - id: check-yaml
+      name: Check YAML
+    - id: debug-statements
+    - id: end-of-file-fixer
+    - id: mixed-line-ending
+    - id: name-tests-test
+      args: ["--pytest-test-first"]
     - id: trailing-whitespace
       args: [--markdown-linebreak-ext=md]
 
@@ -28,7 +31,7 @@ repos:
   # Ruff is a code style and formatter
   # It works on files in-place
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.1.9
+    rev: v0.1.11
     hooks:
     - id: ruff
       args:

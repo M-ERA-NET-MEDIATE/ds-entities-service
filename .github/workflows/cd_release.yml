@@ -9,7 +9,7 @@ jobs:
   release:
     name: External
     uses: SINTEF/ci-cd/.github/workflows/cd_release.yml@v2.7.2
-    if: github.repository == 'SINTEF/dlite-entities-service' && startsWith(github.ref, 'refs/tags/v')
+    if: github.repository == 'SINTEF/entities-service' && startsWith(github.ref, 'refs/tags/v')
     with:
       # General
       git_username: "TEAM 4.0[bot]"
@@ -18,7 +18,7 @@ jobs:
 
       # Python package
       python_package: true
-      package_dirs: dlite_entities_service
+      package_dirs: entities_service
       install_extras: "[dev]"
       python_version_build: "3.10"
       build_libs: flit

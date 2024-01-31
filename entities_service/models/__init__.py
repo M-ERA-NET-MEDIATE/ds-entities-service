@@ -1,19 +1,35 @@
 """SOFT models."""
 from __future__ import annotations
 
-from typing import get_args
+from typing import TYPE_CHECKING, get_args, overload
 
 from pydantic import ValidationError
 
 from .soft5 import URI_REGEX, SOFT5Entity
 from .soft7 import SOFT7Entity
 
+if TYPE_CHECKING:  # pragma: no cover
+    from typing import Literal
+
 VersionedSOFTEntity = SOFT7Entity | SOFT5Entity
+SOFTModelTypes = (SOFT7Entity, SOFT5Entity)
 
 
+@overload
 def soft_entity(
-    *, return_errors: bool = False, **fields
-) -> VersionedSOFTEntity | list[ValidationError]:
+    *, return_errors: Literal[False] = False, error_msg: str | None = None, **fields
+) -> VersionedSOFTEntity:  # pragma: no cover
+    ...
+
+
+@overload
+def soft_entity(
+    *, return_errors: Literal[True], error_msg: str | None = None, **fields
+) -> VersionedSOFTEntity | list[ValidationError]:  # pragma: no cover
+    ...
+
+
+def soft_entity(*, return_errors: bool = False, error_msg: str | None = None, **fields):
     """Return the correct version of the SOFT Entity."""
     errors = []
     for versioned_entity_cls in get_args(VersionedSOFTEntity):
@@ -27,9 +43,11 @@ def soft_entity(
         if return_errors:
             return errors
 
+        if error_msg is None:
+            error_msg = "Cannot instantiate entity."
+
         raise ValueError(
-            "Cannot instantiate entity. Errors:\n"
-            + "\n\n".join(str(error) for error in errors)
+            f"{error_msg}\nErrors:\n" + "\n\n".join(str(error) for error in errors)
         )
     return new_object  # type: ignore[return-value]
 
