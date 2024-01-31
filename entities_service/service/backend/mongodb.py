@@ -1,4 +1,5 @@
 """Backend implementation."""
+
 from __future__ import annotations
 
 import logging
@@ -81,9 +82,9 @@ class MongoDBSettings(BackendSettings):
     Use default username and password for read access.
     """
 
-    mongo_uri: Annotated[
-        MongoDsn, Field(description="The MongoDB URI.")
-    ] = CONFIG.mongo_uri
+    mongo_uri: Annotated[MongoDsn, Field(description="The MongoDB URI.")] = (
+        CONFIG.mongo_uri
+    )
 
     mongo_username: Annotated[
         str | None, Field(description="The MongoDB username.")
@@ -113,13 +114,13 @@ class MongoDBSettings(BackendSettings):
         ),
     ] = None
 
-    mongo_db: Annotated[
-        str, Field(description="The MongoDB database.")
-    ] = CONFIG.mongo_db
+    mongo_db: Annotated[str, Field(description="The MongoDB database.")] = (
+        CONFIG.mongo_db
+    )
 
-    mongo_collection: Annotated[
-        str, Field(description="The MongoDB collection.")
-    ] = CONFIG.mongo_collection
+    mongo_collection: Annotated[str, Field(description="The MongoDB collection.")] = (
+        CONFIG.mongo_collection
+    )
 
     mongo_driver: Annotated[
         Literal["pymongo", "mongomock"],

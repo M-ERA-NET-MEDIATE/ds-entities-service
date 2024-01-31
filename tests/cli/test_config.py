@@ -1,4 +1,5 @@
 """Tests for `entities-service config` CLI commands."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING

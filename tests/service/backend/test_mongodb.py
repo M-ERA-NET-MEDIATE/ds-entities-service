@@ -1,4 +1,5 @@
 """Test the MongoDB backend."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -17,8 +18,7 @@ if TYPE_CHECKING:
 
         def __call__(
             self, auth: Literal["read", "write"] | None = None
-        ) -> MongoDBBackend:
-            ...
+        ) -> MongoDBBackend: ...
 
 
 @pytest.fixture()

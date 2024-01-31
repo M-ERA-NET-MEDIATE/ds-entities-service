@@ -6,6 +6,7 @@ creating entities.
 
 The endpoints in this router are not documented in the OpenAPI schema.
 """
+
 from __future__ import annotations
 
 import logging

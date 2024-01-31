@@ -1,4 +1,5 @@
 """Test the service's only route to retrieve entities."""
+
 from __future__ import annotations
 
 import sys

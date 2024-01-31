@@ -1,4 +1,5 @@
 """SOFT5 models."""
+
 from __future__ import annotations
 
 import difflib
@@ -75,9 +76,9 @@ class SOFT5Entity(BaseModel):
     """A SOFT5 Entity returned from this service."""
 
     name: Annotated[str | None, Field(description="The name of the entity.")] = None
-    version: Annotated[
-        str | None, Field(description="The version of the entity.")
-    ] = None
+    version: Annotated[str | None, Field(description="The version of the entity.")] = (
+        None
+    )
     namespace: Annotated[
         AnyHttpUrl | None, Field(description="The namespace of the entity.")
     ] = None

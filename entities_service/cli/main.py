@@ -1,4 +1,5 @@
 """Typer CLI for doing Entities Service stuff."""
+
 from __future__ import annotations
 
 import json

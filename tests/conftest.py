@@ -1,4 +1,5 @@
 """Configuration and fixtures for all pytest tests."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, NamedTuple
@@ -35,22 +36,21 @@ if TYPE_CHECKING:
             self,
             auth_role: Literal["read", "write"] | None = None,
             raise_server_exceptions: bool = True,
-        ) -> TestClient | Client:
-            ...
+        ) -> TestClient | Client: ...
 
     class GetBackendUserFixture(Protocol):
         """Protocol for the get_backend_user fixture."""
 
         def __call__(
             self, auth_role: Literal["read", "write"] | None = None
-        ) -> UserDict:
-            ...
+        ) -> UserDict: ...
 
     class MockAuthVerification(Protocol):
         """Protocol for the mock_auth_verification fixture."""
 
-        def __call__(self, auth_role: Literal["read", "write"] | None = None) -> None:
-            ...
+        def __call__(
+            self, auth_role: Literal["read", "write"] | None = None
+        ) -> None: ...
 
 
 class ParameterizeGetEntities(NamedTuple):
@@ -89,9 +89,9 @@ def pytest_configure(config: pytest.Config) -> None:
 
     # These are only really (properly) used when running with --live-backend,
     # but it's fine to set them here, since they are not checked when running without.
-    os.environ[
-        "ENTITIES_SERVICE_X509_CERTIFICATE_FILE"
-    ] = "docker_security/test-client.pem"
+    os.environ["ENTITIES_SERVICE_X509_CERTIFICATE_FILE"] = (
+        "docker_security/test-client.pem"
+    )
     os.environ["ENTITIES_SERVICE_CA_FILE"] = "docker_security/test-ca.pem"
 
     # Add extra markers

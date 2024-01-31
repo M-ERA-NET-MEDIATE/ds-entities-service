@@ -2,6 +2,7 @@
 
 This module contains functions for authentication and authorization.
 """
+
 from __future__ import annotations
 
 import logging

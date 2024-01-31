@@ -2,6 +2,7 @@
 
 For now there is only a single endpoint under /_admin, namely /_admin/create.
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING

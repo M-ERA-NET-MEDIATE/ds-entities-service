@@ -1,4 +1,5 @@
 """Various generic constants and functions used by the CLI."""
+
 from __future__ import annotations
 
 import difflib

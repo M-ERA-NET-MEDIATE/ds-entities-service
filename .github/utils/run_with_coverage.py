@@ -4,6 +4,7 @@ First, import the coverage module and start it.
 Then, import the application and register a function to save the coverage at exit.
 Finally, run the application.
 """
+
 from __future__ import annotations
 
 import atexit

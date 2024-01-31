@@ -1,4 +1,5 @@
 """Generic backend class for the Entities Service."""
+
 from __future__ import annotations
 
 import logging

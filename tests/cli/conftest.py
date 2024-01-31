@@ -1,4 +1,5 @@
 """Fixtures for the utils_cli tests."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING

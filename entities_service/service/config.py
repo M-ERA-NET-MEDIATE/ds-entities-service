@@ -1,4 +1,5 @@
 """Service app configuration."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -49,9 +50,9 @@ class ServiceSettings(BaseSettings):
         AnyHttpUrl, Field(description="OAuth2 provider base URL.")
     ] = AnyHttpUrl("https://gitlab.sintef.no")
 
-    roles_group: Annotated[
-        str, Field(description="GitLab group for roles.")
-    ] = "team4.0-authentication/entities-service"
+    roles_group: Annotated[str, Field(description="GitLab group for roles.")] = (
+        "team4.0-authentication/entities-service"
+    )
 
     # MongoDB backend settings
     mongo_uri: Annotated[
