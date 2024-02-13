@@ -105,7 +105,7 @@ def initialize_oauth2(
         openid_config_url = OPENID_CONFIG_URL
 
     try:
-        AnyHttpUrl(openid_config_url)
+        openid_url: AnyHttpUrl = AnyHttpUrl(openid_config_url)
     except ValidationError as exc:
         raise ValueError(
             f"Invalid OpenID configuration URL: {openid_config_url}."
@@ -114,7 +114,7 @@ def initialize_oauth2(
 
     try:
         with httpx.Client() as client:
-            response = client.get(openid_config_url).json()
+            response: dict[str, Any] = client.get(openid_config_url).json()
     except (httpx.HTTPError, JSONDecodeError) as exc:
         raise ValueError(
             f"Could not retrieve OpenID configuration from {openid_config_url}."
@@ -128,6 +128,12 @@ def initialize_oauth2(
             f"Invalid OpenID configuration from {openid_config_url}."
             " Please check that the URL is correct."
         ) from exc
+
+    if openid_config.code_challenge_methods_supported is None:
+        # If omitted, the authorization server does not support PKCE.
+        raise ValueError(
+            f"{openid_url.unicode_host} does not support the PKCE Auth flow."
+        )
 
     response_type = "code"
     if response_type not in openid_config.response_types_supported:
