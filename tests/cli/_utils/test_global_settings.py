@@ -58,3 +58,52 @@ def test_dotenv_path(
     assert not result.stderr
 
     assert CONTEXT["dotenv_path"] == dotenv_path
+
+
+def test_cache_dir_creation(cli: CliRunner, tmp_cache_dir: Path) -> None:
+    """Ensure the cache directiory is created if it does not already exist.
+
+    Note, the callback to `global_settings` is not done if invoking the CLI without any
+    arguments. It will instead go straight to outputting the help.
+    However, when calling any command, `global_settings` is called.
+    Hence, `upload` is called here, which will simply return the help for that command.
+    """
+    from entities_service.cli.main import APP
+
+    # tmp_cache_dir should not yet exist
+    assert not tmp_cache_dir.exists()
+
+    result = cli.invoke(APP, "upload")
+    assert result.exit_code == 0, CLI_RESULT_FAIL_MESSAGE.format(
+        stdout=result.stdout, stderr=result.stderr
+    )
+    assert not result.stderr
+
+    # tmp_cache_dir should now exist
+    assert tmp_cache_dir.exists()
+
+
+def test_cache_dir_permissionerror(cli: CliRunner, tmp_path: Path) -> None:
+    """Ensure a PermissionError is raised and handled if the cache dir cannot be
+    created.
+
+    Note, the callback to `global_settings` is not done if invoking the CLI without any
+    arguments. It will instead go straight to outputting the help.
+    However, when calling any command, `global_settings` is called.
+    Hence, `upload` is called here, which will simply return the help for that command.
+    """
+    from entities_service.cli.main import APP
+
+    org_mode = tmp_path.stat().st_mode
+    tmp_path.chmod(0x555)
+
+    result = cli.invoke(APP, "upload")
+    assert result.exit_code != 0, CLI_RESULT_FAIL_MESSAGE.format(
+        stdout=result.stdout, stderr=result.stderr
+    )
+    assert not result.stdout
+
+    assert "Error: " in result.stderr
+    assert "is not writable. Please check your permissions." in result.stderr
+
+    tmp_path.chmod(org_mode)

@@ -41,12 +41,12 @@ def config_app() -> Typer:
 @pytest.fixture()
 def tmp_cache_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     """Create a temporary cache directory."""
-    from entities_service.cli._utils import generics
+    from entities_service.cli._utils import generics, global_settings
 
     cache_dir = tmp_path / ".cache" / "entities-service"
-    cache_dir.mkdir(parents=True)
 
     monkeypatch.setattr(generics, "CACHE_DIRECTORY", cache_dir)
+    monkeypatch.setattr(global_settings, "CACHE_DIRECTORY", cache_dir)
 
     return cache_dir
 
@@ -67,7 +67,6 @@ def _function_specific_cli_cache_dir(
     from entities_service.cli._utils import generics
 
     cache = JsonTokenFileCache(str(tmp_cache_file))
-    cache.clear()
 
     monkeypatch.setattr(generics.OAuth2, "token_cache", cache)
 

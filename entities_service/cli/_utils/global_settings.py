@@ -14,7 +14,7 @@ except ImportError as exc:  # pragma: no cover
     ) from exc
 
 from entities_service import __version__
-from entities_service.cli._utils.generics import print
+from entities_service.cli._utils.generics import CACHE_DIRECTORY, ERROR_CONSOLE, print
 from entities_service.service.config import CONFIG
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -69,6 +69,19 @@ def global_options(
         rich_help_panel="Global options",
     ),
 ) -> None:
-    """Global options for the CLI."""
+    """Global options for the CLI.
+
+    This function is also used to run initial setup for the CLI.
+    """
     if dotenv_path:
         CONTEXT["dotenv_path"] = dotenv_path
+
+    # Initialize the cache directory
+    try:
+        CACHE_DIRECTORY.mkdir(parents=True, exist_ok=True)
+    except PermissionError as exc:
+        ERROR_CONSOLE.print(
+            f"[bold red]Error[/bold red]: {CACHE_DIRECTORY} is not writable. "
+            "Please check your permissions."
+        )
+        raise typer.Exit(1) from exc
