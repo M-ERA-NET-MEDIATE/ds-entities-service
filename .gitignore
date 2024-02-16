@@ -1,3 +1,7 @@
+# python
+*.py[cod]
+__pycache__
+
 # dev
 .*_cache/
 .coverage*
@@ -9,3 +13,6 @@ coverage.xml
 # running
 logs/
 docker_security/
+
+# Sdist
+dist/

@@ -1,7 +1,8 @@
-# Service for serving entities
+<!-- markdownlint-disable MD013 -->
+# DataSpaces service for serving Entities
 
-This is a FastAPI-based REST API service running on onto-ns.com.
-It's purpose is to serve entities from an underlying database.
+This is a FastAPI-based REST API service meant to be used in DataSpaces.
+It's purpose is to serve entities from a multitude of backends.
 
 ## Install the service
 
@@ -22,7 +23,7 @@ pip install -U -e .
 The service requires a MongoDB server to be running, and the service needs to be able to connect to it.
 The service also requires a valid X.509 certificate, in order to connect to the MongoDB server.
 
-The MongoDB server could be MongoDB Atlas, a local MongoDB server, or a Docker container running MongoDB.
+The MongoDB server could be on MongoDB Atlas, a local MongoDB server running either as a system service or through a Docker container.
 
 ### Using the local environment and MongoDB Atlas
 
@@ -40,7 +41,11 @@ ENTITIES_SERVICE_MONGO_PASSWORD=<your MongoDB Atlas user's password with read-on
 Run the service:
 
 ```shell
-uvicorn entities_service.main:APP --host localhost --port 8000 --no-server-header --header "Server:EntitiesService"
+uvicorn entities_service.main:APP \
+--host localhost \
+--port 8000 \
+--no-server-header \
+--header "Server:EntitiesService"
 ```
 
 Finally, go to [localhost:8000/docs](http://localhost:8000/docs) and try out retrieving an entity.

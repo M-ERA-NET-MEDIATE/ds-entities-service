@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 -->
 # About invalid entities
 
 ## `Person.json`
