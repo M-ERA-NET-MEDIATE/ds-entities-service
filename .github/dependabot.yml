@@ -1,4 +1,5 @@
 version: 2
+
 updates:
 - package-ecosystem: github-actions
   directory: "/"
@@ -9,3 +10,16 @@ updates:
   labels:
     - CI/CD
     - skip_changelog
+- package-ecosystem: pip
+  directory: "/"
+  schedule:
+    interval: weekly
+    time: "05:16"
+  target-branch: main
+  labels:
+    - dependencies
+    - skip_changelog
+  groups:
+    pyproject:
+      patterns:
+        - "*"
