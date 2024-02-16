@@ -5,7 +5,7 @@ updates:
   schedule:
     interval: daily
     time: "05:24"
-  target-branch: ci/dependency-updates
+  target-branch: main
   labels:
     - CI/CD
     - skip_changelog
