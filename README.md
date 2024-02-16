@@ -9,7 +9,7 @@ First, download and install the Python package from GitHub:
 
 ```shell
 # Download (git clone)
-git clone https://github.com/SINTEF/entities-service.git
+git clone https://github.com/M-ERA-NET-MEDIATE/ds-entities-service.git
 cd entities-service
 
 # Install (using pip)

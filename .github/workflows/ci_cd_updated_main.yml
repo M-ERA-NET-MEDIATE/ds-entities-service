@@ -8,7 +8,7 @@ jobs:
   update-deps-branch-and-docs:
     name: External
     uses: SINTEF/ci-cd/.github/workflows/ci_cd_updated_default_branch.yml@v2.7.2
-    if: github.repository_owner == 'SINTEF'
+    if: github.repository_owner == 'M-ERA-NET-MEDIATE'
     with:
       # General
       git_username: "TEAM 4.0[bot]"

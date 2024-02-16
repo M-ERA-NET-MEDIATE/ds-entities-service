@@ -10,7 +10,7 @@ jobs:
   create-collected-pr:
     name: External
     uses: SINTEF/ci-cd/.github/workflows/ci_update_dependencies.yml@v2.7.2
-    if: github.repository_owner == 'SINTEF'
+    if: github.repository_owner == 'M-ERA-NET-MEDIATE'
     with:
       # General
       git_username: "TEAM 4.0[bot]"

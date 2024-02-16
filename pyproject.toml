@@ -61,11 +61,11 @@ dev = [
 entities-service = "entities_service.cli.main:APP"
 
 [project.urls]
-Home = "https://github.com/SINTEF/entities-service"
-Documentation = "https://CasperWA.github.io/entities-service"
-Source = "https://github.com/SINTEF/entities-service"
-"Issue Tracker" = "https://github.com/SINTEF/entities-service/issues"
-Changelog = "https://CasperWA.github.io/entities-service/latest/CHANGELOG"
+Home = "https://github.com/M-ERA-NET-MEDIATE/ds-entities-service"
+Documentation = "https://M-ERA-NET-MEDIATE.github.io/ds-entities-service"
+Source = "https://github.com/M-ERA-NET-MEDIATE/ds-entities-service"
+"Issue Tracker" = "https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/issues"
+Changelog = "https://M-ERA-NET-MEDIATE.github.io/ds-entities-service/latest/CHANGELOG"
 
 [tool.mypy]
 python_version = "3.10"

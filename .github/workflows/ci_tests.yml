@@ -148,7 +148,7 @@ jobs:
           coverage report --data-file=.coverage.final --rcfile=pyproject.toml --show-missing --skip-covered --skip-empty
 
       - name: Upload coverage
-        if: github.repository_owner == 'SINTEF'
+        if: github.repository_owner == 'M-ERA-NET-MEDIATE'
         uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
@@ -187,7 +187,7 @@ jobs:
         run: pytest -vv --cov-report=xml
 
       - name: Upload coverage
-        if: github.repository_owner == 'SINTEF'
+        if: github.repository_owner == 'M-ERA-NET-MEDIATE'
         uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
