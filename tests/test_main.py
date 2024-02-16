@@ -27,9 +27,9 @@ def test_get_entity(
         response.is_success
     ), f"Response: {response.json()}. Request: {response.request}"
     assert response.status_code == status.HTTP_200_OK, response.json()
-    assert (
-        resolved_entity := response.json()
-    ) == parameterized_entity.entity, resolved_entity
+
+    resolved_entity = response.json()
+    assert resolved_entity == parameterized_entity.entity, resolved_entity
 
 
 @pytest.mark.skipif(
@@ -48,11 +48,10 @@ def test_get_entity_instance(
             f"/{parameterized_entity.version}/{parameterized_entity.name}", timeout=5
         )
 
-    assert (
-        resolve_entity := response.json()
-    ) == parameterized_entity.entity, resolve_entity
+    resolved_entity = response.json()
+    assert resolved_entity == parameterized_entity.entity, resolved_entity
 
-    Instance.from_dict(resolve_entity)
+    Instance.from_dict(resolved_entity)
 
 
 def test_get_entity_not_found(client: ClientFixture) -> None:

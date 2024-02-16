@@ -8,6 +8,7 @@ ci:
   autoupdate_branch: 'main'
   autoupdate_commit_msg: '[pre-commit.ci] pre-commit autoupdate'
   autoupdate_schedule: 'weekly'
+  skip: []
   submodules: false
 
 # Hooks
@@ -47,14 +48,14 @@ repos:
   # Black is a code style and formatter
   # It works on files in-place
   - repo: https://github.com/ambv/black
-    rev: 24.1.1
+    rev: 24.2.0
     hooks:
     - id: black
 
   # Ruff is a code style and formatter
   # It works on files in-place
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.1.15
+    rev: v0.2.1
     hooks:
     - id: ruff
       args:
