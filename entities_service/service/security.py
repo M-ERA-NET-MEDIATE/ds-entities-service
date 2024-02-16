@@ -95,11 +95,11 @@ async def verify_token(
         raise credentials_exception from exc
 
     if CONFIG.roles_group not in userinfo.groups:
-        LOGGER.error("User is not a member of the entities-service group.")
+        LOGGER.error("User is not a member of the ds-entities-service group.")
         credentials_exception.status_code = status.HTTP_403_FORBIDDEN
         credentials_exception.detail = (
-            "You are not a member of the entities-service group. "
-            "Please contact the entities-service group maintainer."
+            "You are not a member of the ds-entities-service group. "
+            "Please contact the ds-entities-service group maintainer."
         )
         raise credentials_exception
 
@@ -120,6 +120,6 @@ async def verify_token(
         credentials_exception.status_code = status.HTTP_403_FORBIDDEN
         credentials_exception.detail = (
             "You do not have the rights to create entities. "
-            "Please contact the entities-service group maintainer."
+            "Please contact the ds-entities-service group maintainer."
         )
         raise credentials_exception

@@ -192,7 +192,7 @@ def test_user_with_no_write_access(
     assert "detail" in response_json, response_json
     assert response_json["detail"] == (
         "You do not have the rights to create entities. "
-        "Please contact the entities-service group maintainer."
+        "Please contact the ds-entities-service group maintainer."
     ), response_json
     assert "WWW-Authenticate" in response.headers, response.headers
     assert response.headers["WWW-Authenticate"] == "Bearer", response.headers[

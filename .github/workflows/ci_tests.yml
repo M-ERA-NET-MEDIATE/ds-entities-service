@@ -84,7 +84,7 @@ jobs:
         run: |
           docker build \
             --pull \
-            --tag entities-service \
+            --tag ds-entities-service \
             --target ${{ matrix.docker_target }} \
             .
 
@@ -108,11 +108,11 @@ jobs:
             --env PORT=${ENTITIES_SERVICE_PORT} \
             --env RUN_TIME=40 \
             --env STOP_TIME=3 \
-            --name "entities-service" \
+            --name "ds-entities-service" \
             --network "host" \
             --volume "${PWD}:/app" \
             --entrypoint "./.github/utils/coverage_entrypoint.sh" \
-            entities-service \
+            ds-entities-service \
             ${{ matrix.docker_target }}
           sleep 5  # Wait for the service to start
 
@@ -122,7 +122,7 @@ jobs:
             pytest -vv --live-backend --cov-report=
           } || {
             echo "Failed! Here's the Docker logs for the service:" &&
-            docker logs entities-service &&
+            docker logs ds-entities-service &&
 
             echo -e "\nAnd the service log:" &&
             cat logs/entities_service.log &&

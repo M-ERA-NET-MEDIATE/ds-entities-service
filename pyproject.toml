@@ -6,7 +6,7 @@ build-backend = "flit_core.buildapi"
 name = "entities_service"
 
 [project]
-name = "entities-service"
+name = "ds-entities-service"
 authors = [
     {name = "Casper Welzel Andersen", email = "casper.w.andersen@sintef.no"},
 ]
@@ -35,11 +35,6 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-cli = [
-    "httpx-auth ~=0.19.0",
-    "pyyaml ~=6.0",
-    "typer[all] >=0.9.0,<1",
-]
 testing = [
     "cryptography ~=42.0",
     "dlite-python ~=0.5.1; python_version < '3.12'",
@@ -47,18 +42,14 @@ testing = [
     "pytest ~=8.0",
     "pytest-cov ~=4.1",
     "pytest-httpx ~=0.29.0",
-    "entities-service[cli]",
 ]
 server = [
     "gunicorn ~=21.2",
 ]
 dev = [
     "pre-commit ~=3.6",
-    "entities-service[cli,testing]",
+    "ds-entities-service[testing]",
 ]
-
-[project.scripts]
-entities-service = "entities_service.cli.main:APP"
 
 [project.urls]
 Home = "https://github.com/M-ERA-NET-MEDIATE/ds-entities-service"

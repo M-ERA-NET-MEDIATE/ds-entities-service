@@ -10,7 +10,7 @@ First, download and install the Python package from GitHub:
 ```shell
 # Download (git clone)
 git clone https://github.com/M-ERA-NET-MEDIATE/ds-entities-service.git
-cd entities-service
+cd ds-entities-service
 
 # Install (using pip)
 python -m pip install -U pip
@@ -83,15 +83,15 @@ docker run --rm -d \
 Then build and run the Entities Service Docker image:
 
 ```shell
-docker build --pull -t entities-service --target development .
+docker build --pull -t ds-entities-service --target development .
 docker run --rm -d \
   --env "ENTITIES_SERVICE_MONGO_URI=mongodb://localhost:27017" \
   --env "ENTITIES_SERVICE_X509_CERTIFICATE_FILE=docker_security/test-client.pem" \
   --env "ENTITIES_SERVICE_CA_FILE=docker_security/test-ca.pem" \
-  --name "entities-service" \
+  --name "ds-entities-service" \
   -u "${id -ur}:${id -gr}" \
   -p "8000:80" \
-  entities-service
+  ds-entities-service
 ```
 
 Now, fill up the MongoDB with valid entities at the `entities_service` database in the `entities` collection.

@@ -123,7 +123,7 @@ class ServiceSettings(BaseSettings):
     @classmethod
     def _handle_raw_certificate(cls, value: Any, info: ValidationInfo) -> Any:
         """Handle the case of the value being a "raw" certificate file content."""
-        cache_dir = Path.home() / ".cache" / "entities-service"
+        cache_dir = Path.home() / ".cache" / "ds-entities-service"
         if not info.field_name:
             raise ValueError(
                 "This validator can only be used for fields with a name, "
