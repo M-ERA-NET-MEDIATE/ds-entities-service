@@ -66,9 +66,6 @@ class ParameterizeGetEntities(NamedTuple):
 ## Pytest configuration functions and hooks ##
 
 
-pytest_plugins = "httpx_auth.testing"
-
-
 def pytest_addoption(parser: pytest.Parser) -> None:
     """Add the command line option to run the tests with a live backend."""
     parser.addoption(
@@ -628,10 +625,7 @@ def _empty_backend_collection(
 
 @pytest.fixture()
 def token_mock() -> str:
-    """Return a mock token.
-
-    Overwrite `token_mock` fixture from `httpx_auth.testing`.
-    """
+    """Return a mock token."""
     return (
         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJyb290IiwiaXNzIjoiaHR0cDovL29u"
         "dG8tbnMuY29tL21ldGEiLCJleHAiOjE3MDYxOTI1OTAsImNsaWVudF9pZCI6Imh0dHA6Ly9vbnRvL"

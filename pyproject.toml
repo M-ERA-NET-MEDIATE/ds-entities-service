@@ -117,9 +117,6 @@ filterwarnings = [
 
     # mongomock uses pkg_resources
     "ignore:.*pkg_resources is deprecated as an API.*:DeprecationWarning",
-
-    # httpx-auth uses datetime.datetime.utcfromtimestamp(), deprecated in Python 3.12
-    "ignore:.*Use timezone-aware objects to represent datetimes in UTC.*:DeprecationWarning",
 ]
 
 [tool.coverage.run]
