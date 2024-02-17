@@ -17,7 +17,7 @@ from entities_service.models import (
 )
 
 if TYPE_CHECKING:  # pragma: no cover
-    from collections.abc import Iterator
+    from collections.abc import Generator, Iterator
     from typing import Any
 
     from pydantic import AnyHttpUrl
@@ -142,18 +142,31 @@ class Backend(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def delete(self, entity_identity: AnyHttpUrl | str) -> None:  # pragma: no cover
+    def delete(
+        self, entity_identities: Sequence[AnyHttpUrl | str]
+    ) -> None:  # pragma: no cover
         """Delete an entity in the backend."""
         raise NotImplementedError
 
     # Backend methods (search)
     @abstractmethod
-    def search(self, query: Any) -> Iterator[dict[str, Any]]:  # pragma: no cover
-        """Search for entities."""
+    def search(
+        self,
+        raw_query: Any,
+        by_properties: list[str] | None = None,
+        by_dimensions: list[str] | None = None,
+        by_identity: list[str] | None = None,
+    ) -> Generator[dict[str, Any], None, None]:  # pragma: no cover
+        """Search for entities.
+
+        If `raw_query` is given, it will be used as the query. Otherwise, the
+        `by_properties`, `by_dimensions`, and `by_identity` will be used to
+        construct the query.
+        """
         raise NotImplementedError
 
     @abstractmethod
-    def count(self, query: Any = None) -> int:  # pragma: no cover
+    def count(self, raw_query: Any = None) -> int:  # pragma: no cover
         """Count entities."""
         raise NotImplementedError
 

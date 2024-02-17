@@ -27,7 +27,7 @@ from entities_service.service.backend.backend import (
 from entities_service.service.config import CONFIG, MongoDsn
 
 if TYPE_CHECKING:  # pragma: no cover
-    from collections.abc import Iterator, Sequence
+    from collections.abc import Generator, Iterator, Sequence
     from typing import Any, TypedDict
 
     from pydantic import AnyHttpUrl
@@ -333,23 +333,108 @@ class MongoDBBackend(Backend):
         filter = self._single_uri_query(str(entity_identity))
         self._collection.update_one(filter, {"$set": entity})
 
-    def delete(self, entity_identity: AnyHttpUrl | str) -> None:
+    def delete(self, entity_identities: Sequence[AnyHttpUrl | str]) -> None:
         """Delete an entity in the MongoDB."""
-        filter = self._single_uri_query(str(entity_identity))
-        self._collection.delete_one(filter)
+        namespaces: list[str] = []
+        versions: list[str] = []
+        names: list[str] = []
 
-    def search(self, query: Any) -> Iterator[dict[str, Any]]:
-        """Search for entities."""
-        query = query or {}
+        for identity in entity_identities:
+            if (match := URI_REGEX.match(identity)) is None:
+                raise ValueError(f"Invalid entity URI: {identity}")
+
+            uri_parts: URIParts = match.groupdict()
+            namespaces.append(uri_parts["namespace"])
+            versions.append(uri_parts["version"])
+            names.append(uri_parts["name"])
+
+        filter = {
+            "$or": [
+                {"uri": {"$in": [str(identity) for identity in entity_identities]}},
+                {"namespace": {"$in": namespaces}},
+                {"version": {"$in": versions}},
+                {"name": {"$in": names}},
+            ],
+        }
+
+        self._collection.delete_many(
+            filter,
+            comment=(
+                "deleting via the DS Entities Service MongoDB backend delete() method"
+            ),
+        )
+
+    def search(
+        self,
+        raw_query: Any,
+        by_properties: list[str] | None = None,
+        by_dimensions: list[str] | None = None,
+        by_identity: list[AnyHttpUrl] | list[str] | None = None,
+    ) -> Generator[dict[str, Any], None, None]:
+        """Search for entities.
+
+        If `raw_query` is given, it will be used as the query. Otherwise, the
+        `by_properties`, `by_dimensions`, and `by_identity` will be used to
+        construct the query.
+        """
+        query = raw_query or {}
 
         if not isinstance(query, dict):
             raise TypeError(f"Query must be a dict for {self.__class__.__name__}.")
 
-        return self._collection.find(query, projection={"_id": False})
+        if not query:
+            if any((by_properties, by_dimensions, by_identity)):
+                query = {"$or": []}
 
-    def count(self, query: Any = None) -> int:
+            if by_properties:
+                query["$or"].extend(
+                    [
+                        {"properties": {"$in": by_properties}},
+                        {"properties.name": {"$in": by_properties}},
+                    ]
+                )
+            if by_dimensions:
+                query["$or"].extend(
+                    [
+                        {"dimension": {"$in": by_dimensions}},
+                        {"dimension.name": {"$in": by_dimensions}},
+                    ]
+                )
+            if by_identity:
+                by_namespace: list[str] = []
+                by_version: list[str] = []
+                by_name: list[str] = []
+
+                for identity in by_identity:
+                    if (match := URI_REGEX.match(identity)) is None:
+                        raise ValueError(f"Invalid entity URI: {identity}")
+
+                    uri_parts: URIParts = match.groupdict()
+                    by_namespace.append(uri_parts["namespace"])
+                    by_version.append(uri_parts["version"])
+                    by_name.append(uri_parts["name"])
+
+                query["$or"].extend(
+                    [
+                        {"uri": {"$in": [str(identity) for identity in by_identity]}},
+                        {"namespace": {"$in": by_namespace}},
+                        {"version": {"$in": by_version}},
+                        {"name": {"$in": by_name}},
+                    ]
+                )
+
+        cursor = self._collection.find(
+            query,
+            projection={"_id": False},
+            comment=(
+                "search via the DS Entities Service MongoDB backend search() method"
+            ),
+        )
+        yield from cursor
+
+    def count(self, raw_query: Any = None) -> int:
         """Count entities."""
-        query = query or {}
+        query = raw_query or {}
 
         if not isinstance(query, dict):
             raise TypeError(f"Query must be a dict for {self.__class__.__name__}.")

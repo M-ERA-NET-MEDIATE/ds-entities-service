@@ -311,12 +311,9 @@ def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
 
     import yaml
 
-    from entities_service.service.config import CONFIG
-
     def get_version_name(uri: str) -> tuple[str, str]:
         """Return the version and name part of a uri."""
-        # namespace = "http://onto-ns.com/meta"
-        namespace = str(CONFIG.base_url).rstrip("/")
+        namespace = "http://onto-ns.com/meta"
 
         match = re.match(
             rf"^{re.escape(namespace)}/(?P<version>[^/]+)/(?P<name>[^/]+)$", uri
@@ -752,7 +749,6 @@ def client(
     from httpx import Client
 
     from entities_service.main import APP
-    from entities_service.service.config import CONFIG
 
     def _client(
         auth_role: Literal["read", "write"] | None = None,
@@ -762,7 +758,6 @@ def client(
         if not live_backend:
             return TestClient(
                 app=APP,
-                base_url=str(CONFIG.base_url),
                 raise_server_exceptions=raise_server_exceptions,
             )
 
