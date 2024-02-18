@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import logging
 from contextlib import asynccontextmanager
-from pathlib import Path as sysPath
 from typing import TYPE_CHECKING
 
 from fastapi import FastAPI

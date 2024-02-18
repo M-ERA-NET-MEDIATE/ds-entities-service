@@ -15,12 +15,13 @@ from fastapi import (
     Response,
     status,
 )
-from pydantic.networks import AnyHttpUrl
+from pydantic import Field
 
-from entities_service.models import VersionedSOFTEntity, get_uri, URI_REGEX
+from entities_service.models import URI_REGEX, VersionedSOFTEntity
 from entities_service.service.backend import get_backend
 from entities_service.service.config import CONFIG
 from entities_service.service.security import verify_token
+from entities_service.service.utils import get_uri
 
 LOGGER = logging.getLogger(__name__)
 
@@ -29,6 +30,8 @@ ROUTER = APIRouter(
     tags=["Entities"],
     responses={404: {"description": "Entites not found"}},
 )
+
+URIStrictType = Annotated[str, Field(pattern=URI_REGEX.pattern)]
 
 
 @ROUTER.get(
@@ -41,7 +44,7 @@ ROUTER = APIRouter(
 )
 async def get_entities(
     identities: Annotated[
-        list[AnyHttpUrl] | None,
+        list[URIStrictType] | None,
         Query(
             title="Entity identity",
             description="The identity (URI/IRI) of the entity to retrieve.",
@@ -195,7 +198,7 @@ async def update_entities(
     if new_entities:
         try:
             created_entities = entities_backend.create(new_entities)
-        except entities_backend.write_access as err:
+        except entities_backend.write_access_exception as err:
             LOGGER.error(
                 "Could not create entities: uris=%s",
                 ", ".join(get_uri(entity) for entity in new_entities),
@@ -295,7 +298,7 @@ async def patch_entities(
 
 @ROUTER.delete(
     "/",
-    response_model=list[AnyHttpUrl] | None,
+    response_model=list[URIStrictType] | None,
     status_code=status.HTTP_200_OK,
     dependencies=[Depends(verify_token)],
     summary="Delete one or more Entities.",
@@ -303,26 +306,25 @@ async def patch_entities(
 )
 async def delete_entities(
     identities_body: Annotated[
-        list[AnyHttpUrl] | AnyHttpUrl | None,
+        list[URIStrictType] | URIStrictType | None,
         Body(
             title="Entity identity",
             description="The identity/-ies (URI/IRI) of the entity/-ies to delete.",
         ),
     ] = None,
     identities_query: Annotated[
-        list[AnyHttpUrl] | None,
+        list[URIStrictType] | None,
         Query(
             title="Entity identity",
             description="The identity (URI/IRI) of the entity to delete.",
-            min_length=1,
             alias="id",
         ),
     ] = None,
-) -> list[AnyHttpUrl]:
+) -> list[URIStrictType]:
     """Delete one or more Entities."""
-    identities: set[AnyHttpUrl] = set()
+    identities: set[URIStrictType] = set()
 
-    if isinstance(identities_body, AnyHttpUrl):
+    if isinstance(identities_body, str):
         identities.add(identities_body)
     elif isinstance(identities_body, list):
         identities.update(identities_body)
@@ -358,7 +360,7 @@ async def delete_entities(
             ),
         ) from err
 
-    return identities
+    return sorted(identities)
 
 
 @ROUTER.get(
@@ -371,11 +373,10 @@ async def delete_entities(
 )
 async def get_entity(
     identity: Annotated[
-        str,
+        URIStrictType,
         Path(
             title="Entity identity",
             description="The identity (URI/IRI) of the entity to retrieve.",
-            pattern=URI_REGEX.pattern,
         ),
     ],
 ) -> dict[str, Any]:
@@ -409,11 +410,10 @@ async def get_entity(
 )
 async def create_entity(
     identity: Annotated[
-        str,
+        URIStrictType,
         Path(
             title="Entity identity",
             description="The identity (URI/IRI) of the entity to create.",
-            pattern=URI_REGEX.pattern,
         ),
     ],
     entity: VersionedSOFTEntity,
@@ -421,15 +421,20 @@ async def create_entity(
     """Create an entity."""
     entities_backend = get_backend(CONFIG.backend, auth_level="write")
 
+    write_fail_exception = HTTPException(
+        status_code=status.HTTP_502_BAD_GATEWAY,
+        detail=f"Could not create entity: uri={identity}",
+    )
+
     try:
         created_entity = entities_backend.create([entity])
     except entities_backend.write_access_exception as err:
         LOGGER.error("Could not create entity: uri=%s", identity)
         LOGGER.exception(err)
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=f"Could not create entity: uri={identity}",
-        ) from err
+        raise write_fail_exception from err
+
+    if not isinstance(created_entity, dict) or get_uri(created_entity) != identity:
+        raise write_fail_exception
 
     return created_entity
 
@@ -446,16 +451,15 @@ async def create_entity(
 )
 async def update_entity(
     identity: Annotated[
-        str,
+        URIStrictType,
         Path(
             title="Entity identity",
             description="The identity (URI/IRI) of the entity to update.",
-            pattern=URI_REGEX.pattern,
         ),
     ],
     entity: VersionedSOFTEntity,
     response: Response,
-) -> dict[str, Any] | None:
+) -> VersionedSOFTEntity | None:
     """Update or create an entity."""
     entities_backend = get_backend(CONFIG.backend, auth_level="write")
 
@@ -506,11 +510,10 @@ async def update_entity(
 )
 async def patch_entity(
     identity: Annotated[
-        str,
+        URIStrictType,
         Path(
             title="Entity identity",
             description="The identity (URI/IRI) of the entity to update.",
-            pattern=URI_REGEX.pattern,
         ),
     ],
     entity: dict[str, Any],
@@ -560,7 +563,7 @@ async def patch_entity(
 
 @ROUTER.delete(
     "/{identity:path}",
-    response_model=AnyHttpUrl,
+    response_model=URIStrictType,
     status_code=status.HTTP_200_OK,
     dependencies=[Depends(verify_token)],
     summary="Delete an Entity.",
@@ -568,18 +571,17 @@ async def patch_entity(
 )
 async def delete_entity(
     identity: Annotated[
-        str,
+        URIStrictType,
         Path(
             title="Entity identity",
             description="The identity (URI/IRI) of the entity to delete.",
-            pattern=URI_REGEX.pattern,
         ),
     ],
-) -> AnyHttpUrl:
+) -> URIStrictType:
     """Delete an entity."""
     entities_backend = get_backend(CONFIG.backend, auth_level="write")
 
-    if str(identity) not in entities_backend:
+    if identity not in entities_backend:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Could not find entity to delete: uri={identity}",

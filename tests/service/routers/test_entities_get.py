@@ -22,9 +22,7 @@ def test_get_entity(
     from fastapi import status
 
     with client() as client_:
-        response = client_.get(
-            f"{ENDPOINT}/{parameterized_entity.uri}", timeout=5
-        )
+        response = client_.get(f"{ENDPOINT}/{parameterized_entity.uri}", timeout=5)
 
     assert (
         response.is_success
@@ -47,9 +45,7 @@ def test_get_entity_instance(
     from dlite import Instance
 
     with client() as client_:
-        response = client_.get(
-            f"{ENDPOINT}/{parameterized_entity.uri}", timeout=5
-        )
+        response = client_.get(f"{ENDPOINT}/{parameterized_entity.uri}", timeout=5)
 
     resolved_entity = response.json()
     assert resolved_entity == parameterized_entity.entity, resolved_entity

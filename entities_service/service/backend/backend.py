@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from abc import ABC, abstractmethod
-from collections.abc import Sequence
+from collections.abc import Iterable
 from typing import TYPE_CHECKING
 
 from pydantic import BaseModel
@@ -120,7 +120,7 @@ class Backend(ABC):
     # Backend methods (CRUD)
     @abstractmethod
     def create(
-        self, entities: Sequence[VersionedSOFTEntity | dict[str, Any]]
+        self, entities: Iterable[VersionedSOFTEntity | dict[str, Any]]
     ) -> list[dict[str, Any]] | dict[str, Any] | None:  # pragma: no cover
         """Create an entity in the backend."""
         raise NotImplementedError
@@ -143,7 +143,7 @@ class Backend(ABC):
 
     @abstractmethod
     def delete(
-        self, entity_identities: Sequence[AnyHttpUrl | str]
+        self, entity_identities: Iterable[AnyHttpUrl | str]
     ) -> None:  # pragma: no cover
         """Delete one or more entities in the backend."""
         raise NotImplementedError
