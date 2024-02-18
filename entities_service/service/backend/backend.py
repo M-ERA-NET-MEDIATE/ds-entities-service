@@ -152,7 +152,7 @@ class Backend(ABC):
     @abstractmethod
     def search(
         self,
-        raw_query: Any,
+        raw_query: Any = None,
         by_properties: list[str] | None = None,
         by_dimensions: list[str] | None = None,
         by_identity: list[str] | None = None,
@@ -162,12 +162,17 @@ class Backend(ABC):
         If `raw_query` is given, it will be used as the query. Otherwise, the
         `by_properties`, `by_dimensions`, and `by_identity` will be used to
         construct the query.
+
+        If no arguments are given, all entities will be returned.
         """
         raise NotImplementedError
 
     @abstractmethod
     def count(self, raw_query: Any = None) -> int:  # pragma: no cover
-        """Count entities."""
+        """Count entities.
+
+        If `raw_query` is not given, all entities will be counted.
+        """
         raise NotImplementedError
 
     # Backend methods (close)

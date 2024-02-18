@@ -366,7 +366,7 @@ class MongoDBBackend(Backend):
 
     def search(
         self,
-        raw_query: Any,
+        raw_query: Any = None,
         by_properties: list[str] | None = None,
         by_dimensions: list[str] | None = None,
         by_identity: list[AnyHttpUrl] | list[str] | None = None,
