@@ -148,7 +148,7 @@ async def create_entities(
     response_model=list[VersionedSOFTEntity] | VersionedSOFTEntity | None,
     response_model_by_alias=True,
     response_model_exclude_unset=True,
-    status_code=status.HTTP_204_NO_CONTENT,
+    status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(verify_token)],
 )
 async def update_entities(
@@ -182,7 +182,6 @@ async def update_entities(
     ]
 
     if new_entities:
-        response.status_code = status.HTTP_201_CREATED
         try:
             created_entities = entities_backend.create(new_entities)
         except entities_backend.write_access as err:
@@ -219,6 +218,7 @@ async def update_entities(
     if new_entities:
         return created_entities
 
+    response.status_code = status.HTTP_204_NO_CONTENT
     return None
 
 
@@ -410,7 +410,7 @@ async def create_entity(
     response_model=VersionedSOFTEntity,
     response_model_by_alias=True,
     response_model_exclude_unset=True,
-    status_code=status.HTTP_204_NO_CONTENT,
+    status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(verify_token)],
 )
 async def update_entity(
@@ -435,7 +435,6 @@ async def update_entity(
 
     # Create new entity
     if str(identity) not in entities_backend:
-        response.status_code = status.HTTP_201_CREATED
         try:
             entities_backend.create([entity])
         except entities_backend.write_access_exception as err:
@@ -459,6 +458,7 @@ async def update_entity(
             detail=f"Could not update entity: uri={identity}",
         ) from err
 
+    response.status_code = status.HTTP_204_NO_CONTENT
     return None
 
 
