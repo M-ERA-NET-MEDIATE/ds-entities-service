@@ -42,9 +42,7 @@ async def lifespan(_: FastAPI):
 APP = FastAPI(
     title="Entities Service for DataSpaces",
     version=__version__,
-    description=(
-        sysPath(__file__).resolve().parent.parent.resolve() / "README.md"
-    ).read_text(encoding="utf8"),
+    description="A service for managing entities in DataSpaces.",
     lifespan=lifespan,
 )
 

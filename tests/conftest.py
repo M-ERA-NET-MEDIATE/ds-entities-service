@@ -651,7 +651,7 @@ def mock_auth_verification(
     get_backend_user: GetBackendUserFixture,
     auth_header: dict[Literal["Authorization"], str],
 ) -> MockAuthVerification:
-    """Mock authentication on the /_admin endpoints."""
+    """Mock authentication."""
     from entities_service.service.config import CONFIG
 
     # OpenID configuration
@@ -691,7 +691,7 @@ def mock_auth_verification(
     def _mock_auth_verification(
         auth_role: Literal["read", "write"] | None = None
     ) -> None:
-        """Mock authentication on the /_admin endpoints."""
+        """Mock authentication."""
         if auth_role is None:
             auth_role = "read"
 
