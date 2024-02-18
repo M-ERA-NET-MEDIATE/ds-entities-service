@@ -145,7 +145,7 @@ class Backend(ABC):
     def delete(
         self, entity_identities: Sequence[AnyHttpUrl | str]
     ) -> None:  # pragma: no cover
-        """Delete an entity in the backend."""
+        """Delete one or more entities in the backend."""
         raise NotImplementedError
 
     # Backend methods (search)

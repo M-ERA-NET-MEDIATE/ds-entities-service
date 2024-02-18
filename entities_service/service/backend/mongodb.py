@@ -334,14 +334,14 @@ class MongoDBBackend(Backend):
         self._collection.update_one(filter, {"$set": entity})
 
     def delete(self, entity_identities: Sequence[AnyHttpUrl | str]) -> None:
-        """Delete an entity in the MongoDB."""
+        """Delete one or more entities in the MongoDB."""
         namespaces: list[str] = []
         versions: list[str] = []
         names: list[str] = []
 
         for identity in entity_identities:
             if (match := URI_REGEX.match(identity)) is None:
-                raise ValueError(f"Invalid entity URI: {identity}")
+                raise MongoDBBackendError(f"Invalid entity URI: {identity}")
 
             uri_parts: URIParts = match.groupdict()
             namespaces.append(uri_parts["namespace"])
@@ -351,9 +351,11 @@ class MongoDBBackend(Backend):
         filter = {
             "$or": [
                 {"uri": {"$in": [str(identity) for identity in entity_identities]}},
-                {"namespace": {"$in": namespaces}},
-                {"version": {"$in": versions}},
-                {"name": {"$in": names}},
+                {"$and": [
+                    {"namespace": {"$in": namespaces}},
+                    {"version": {"$in": versions}},
+                    {"name": {"$in": names}},
+                ]},
             ],
         }
 
@@ -380,7 +382,7 @@ class MongoDBBackend(Backend):
         query = raw_query or {}
 
         if not isinstance(query, dict):
-            raise TypeError(f"Query must be a dict for {self.__class__.__name__}.")
+            raise MongoDBBackendError(f"Query must be a dict for {self.__class__.__name__}.")
 
         if not query:
             if any((by_properties, by_dimensions, by_identity)):
@@ -417,9 +419,11 @@ class MongoDBBackend(Backend):
                 query["$or"].extend(
                     [
                         {"uri": {"$in": [str(identity) for identity in by_identity]}},
-                        {"namespace": {"$in": by_namespace}},
-                        {"version": {"$in": by_version}},
-                        {"name": {"$in": by_name}},
+                        {"$and": [
+                            {"namespace": {"$in": by_namespace}},
+                            {"version": {"$in": by_version}},
+                            {"name": {"$in": by_name}},
+                        ]},
                     ]
                 )
 
@@ -437,7 +441,7 @@ class MongoDBBackend(Backend):
         query = raw_query or {}
 
         if not isinstance(query, dict):
-            raise TypeError(f"Query must be a dict for {self.__class__.__name__}.")
+            raise MongoDBBackendError(f"Query must be a dict for {self.__class__.__name__}.")
 
         return self._collection.count_documents(query)
 

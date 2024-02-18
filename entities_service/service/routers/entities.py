@@ -17,7 +17,7 @@ from fastapi import (
 )
 from pydantic.networks import AnyHttpUrl
 
-from entities_service.models import VersionedSOFTEntity, get_uri
+from entities_service.models import VersionedSOFTEntity, get_uri, URI_REGEX
 from entities_service.service.backend import get_backend
 from entities_service.service.config import CONFIG
 from entities_service.service.security import verify_token
@@ -371,15 +371,24 @@ async def delete_entities(
 )
 async def get_entity(
     identity: Annotated[
-        AnyHttpUrl,
+        str,
         Path(
             title="Entity identity",
             description="The identity (URI/IRI) of the entity to retrieve.",
+            pattern=URI_REGEX.pattern,
         ),
     ],
 ) -> dict[str, Any]:
     """Retrieve an entity."""
-    entity = get_backend().read(identity)
+    try:
+        entity = get_backend().read(identity)
+    except ValueError as err:
+        LOGGER.error("Could not retrieve entity: uri=%s", identity)
+        LOGGER.exception(err)
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Could not retrieve entity: uri={identity}",
+        ) from err
     if entity is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -400,10 +409,11 @@ async def get_entity(
 )
 async def create_entity(
     identity: Annotated[
-        AnyHttpUrl,
+        str,
         Path(
             title="Entity identity",
             description="The identity (URI/IRI) of the entity to create.",
+            pattern=URI_REGEX.pattern,
         ),
     ],
     entity: VersionedSOFTEntity,
@@ -436,10 +446,11 @@ async def create_entity(
 )
 async def update_entity(
     identity: Annotated[
-        AnyHttpUrl,
+        str,
         Path(
             title="Entity identity",
             description="The identity (URI/IRI) of the entity to update.",
+            pattern=URI_REGEX.pattern,
         ),
     ],
     entity: VersionedSOFTEntity,
@@ -495,10 +506,11 @@ async def update_entity(
 )
 async def patch_entity(
     identity: Annotated[
-        AnyHttpUrl,
+        str,
         Path(
             title="Entity identity",
             description="The identity (URI/IRI) of the entity to update.",
+            pattern=URI_REGEX.pattern,
         ),
     ],
     entity: dict[str, Any],
@@ -556,10 +568,11 @@ async def patch_entity(
 )
 async def delete_entity(
     identity: Annotated[
-        AnyHttpUrl,
+        str,
         Path(
             title="Entity identity",
             description="The identity (URI/IRI) of the entity to delete.",
+            pattern=URI_REGEX.pattern,
         ),
     ],
 ) -> AnyHttpUrl:
