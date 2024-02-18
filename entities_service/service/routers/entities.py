@@ -381,15 +381,8 @@ async def get_entity(
     ],
 ) -> dict[str, Any]:
     """Retrieve an entity."""
-    try:
-        entity = get_backend().read(identity)
-    except ValueError as err:
-        LOGGER.error("Could not retrieve entity: uri=%s", identity)
-        LOGGER.exception(err)
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=f"Could not retrieve entity: uri={identity}",
-        ) from err
+    entity = get_backend().read(identity)
+
     if entity is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
