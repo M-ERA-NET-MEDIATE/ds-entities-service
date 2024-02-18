@@ -36,6 +36,8 @@ ROUTER = APIRouter(
     response_model=list[VersionedSOFTEntity],
     response_model_by_alias=True,
     response_model_exclude_unset=True,
+    summary="Retrieve one or more Entities.",
+    response_description="Retrieved Entities.",
 )
 async def get_entities(
     identities: Annotated[
@@ -65,7 +67,12 @@ async def get_entities(
         ),
     ] = None,
 ) -> list[dict[str, Any]]:
-    """Retrieve one or more Entities."""
+    """Retrieve one or more Entities.
+
+    An inclusive search will be performed based the provided identities, properties,
+    and dimensions. If no search parameters are provided, all entities will be
+    retrieved.
+    """
     backend = get_backend()
 
     entities = list(
@@ -96,6 +103,8 @@ async def get_entities(
     response_model_exclude_unset=True,
     status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(verify_token)],
+    summary="Create one or more Entities.",
+    response_description="Created Entity or Entities.",
 )
 async def create_entities(
     entities: list[VersionedSOFTEntity] | VersionedSOFTEntity,
@@ -150,6 +159,8 @@ async def create_entities(
     response_model_exclude_unset=True,
     status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(verify_token)],
+    summary="Replace and/or create one or more Entities.",
+    response_description="Created (not replaced) Entity or Entities.",
 )
 async def update_entities(
     entities: list[VersionedSOFTEntity] | VersionedSOFTEntity,
@@ -229,6 +240,8 @@ async def update_entities(
     response_model_exclude_unset=True,
     status_code=status.HTTP_204_NO_CONTENT,
     dependencies=[Depends(verify_token)],
+    summary="Update one or more Entities.",
+    response_description="No content.",
 )
 async def patch_entities(
     entities: list[dict[str, Any]] | dict[str, Any],
@@ -285,6 +298,8 @@ async def patch_entities(
     response_model=list[AnyHttpUrl] | None,
     status_code=status.HTTP_200_OK,
     dependencies=[Depends(verify_token)],
+    summary="Delete one or more Entities.",
+    response_description="Deleted Entity identities.",
 )
 async def delete_entities(
     identities_body: Annotated[
@@ -347,10 +362,12 @@ async def delete_entities(
 
 
 @ROUTER.get(
-    "/{identity}",
+    "/{identity:path}",
     response_model=VersionedSOFTEntity,
     response_model_by_alias=True,
     response_model_exclude_unset=True,
+    summary="Retrieve an Entity.",
+    response_description="Retrieved Entity.",
 )
 async def get_entity(
     identity: Annotated[
@@ -361,7 +378,7 @@ async def get_entity(
         ),
     ],
 ) -> dict[str, Any]:
-    """Get an entity."""
+    """Retrieve an entity."""
     entity = get_backend().read(identity)
     if entity is None:
         raise HTTPException(
@@ -372,12 +389,14 @@ async def get_entity(
 
 
 @ROUTER.post(
-    "/{identity}",
+    "/{identity:path}",
     response_model=VersionedSOFTEntity,
     response_model_by_alias=True,
     response_model_exclude_unset=True,
     status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(verify_token)],
+    summary="Create an Entity.",
+    response_description="Created Entity.",
 )
 async def create_entity(
     identity: Annotated[
@@ -406,12 +425,14 @@ async def create_entity(
 
 
 @ROUTER.put(
-    "/{identity}",
+    "/{identity:path}",
     response_model=VersionedSOFTEntity,
     response_model_by_alias=True,
     response_model_exclude_unset=True,
     status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(verify_token)],
+    summary="Replace or create an Entity.",
+    response_description="Created (not replaced) Entity.",
 )
 async def update_entity(
     identity: Annotated[
@@ -463,12 +484,14 @@ async def update_entity(
 
 
 @ROUTER.patch(
-    "/{identity}",
+    "/{identity:path}",
     response_model=None,
     response_model_by_alias=True,
     response_model_exclude_unset=True,
     status_code=status.HTTP_204_NO_CONTENT,
     dependencies=[Depends(verify_token)],
+    summary="Update an entity.",
+    response_description="No content.",
 )
 async def patch_entity(
     identity: Annotated[
@@ -524,10 +547,12 @@ async def patch_entity(
 
 
 @ROUTER.delete(
-    "/{identity}",
+    "/{identity:path}",
     response_model=AnyHttpUrl,
     status_code=status.HTTP_200_OK,
     dependencies=[Depends(verify_token)],
+    summary="Delete an Entity.",
+    response_description="Deleted Entity's identity.",
 )
 async def delete_entity(
     identity: Annotated[
