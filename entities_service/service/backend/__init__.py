@@ -66,6 +66,7 @@ class Backends(StrEnum):
 
                 return {
                     "auth_level": auth_level,
+                    "mongo_username": "Application (not a real user)",
                     "mongo_x509_certificate_file": CONFIG.x509_certificate_file,
                     "mongo_ca_file": CONFIG.ca_file,
                 }

@@ -1,4 +1,4 @@
-"""Test the service's only route to retrieve entities."""
+"""Test the service's /entities router with `GET` endpoints."""
 
 from __future__ import annotations
 
@@ -8,7 +8,10 @@ from typing import TYPE_CHECKING
 import pytest
 
 if TYPE_CHECKING:
-    from .conftest import ClientFixture, ParameterizeGetEntities
+    from ...conftest import ClientFixture, ParameterizeGetEntities
+
+
+ENDPOINT = "/entities"
 
 
 def test_get_entity(
@@ -19,9 +22,7 @@ def test_get_entity(
     from fastapi import status
 
     with client() as client_:
-        response = client_.get(
-            f"/{parameterized_entity.version}/{parameterized_entity.name}", timeout=5
-        )
+        response = client_.get(f"{ENDPOINT}/{parameterized_entity.uri}", timeout=5)
 
     assert (
         response.is_success
@@ -44,9 +45,7 @@ def test_get_entity_instance(
     from dlite import Instance
 
     with client() as client_:
-        response = client_.get(
-            f"/{parameterized_entity.version}/{parameterized_entity.name}", timeout=5
-        )
+        response = client_.get(f"{ENDPOINT}/{parameterized_entity.uri}", timeout=5)
 
     resolved_entity = response.json()
     assert resolved_entity == parameterized_entity.entity, resolved_entity
@@ -58,9 +57,9 @@ def test_get_entity_not_found(client: ClientFixture) -> None:
     """Test that the route returns a Not Found (404) for non existant URIs."""
     from fastapi import status
 
-    version, name = "0.0", "NonExistantEntity"
+    namespace, version, name = "http://onto-ns.com/meta", "0.0", "NonExistantEntity"
     with client() as client_:
-        response = client_.get(f"/{version}/{name}", timeout=5)
+        response = client_.get(f"{ENDPOINT}/{namespace}/{version}/{name}", timeout=5)
 
     assert not response.is_success, "Non existant (valid) URI returned an OK response!"
     assert (
@@ -76,9 +75,9 @@ def test_get_entity_invalid_uri(client: ClientFixture) -> None:
     """
     from fastapi import status
 
-    version, name = "1.0", "EntityName"
+    namespace, version, name = "http://onto-ns.com/meta", "1.0", "EntityName"
     with client() as client_:
-        response = client_.get(f"/{name}/{version}", timeout=5)
+        response = client_.get(f"{ENDPOINT}/{namespace}/{name}/{version}", timeout=5)
 
     assert not response.is_success, "Invalid URI returned an OK response!"
     assert (

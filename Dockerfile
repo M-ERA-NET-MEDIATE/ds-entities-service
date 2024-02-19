@@ -20,7 +20,7 @@ ENV PORT=80
 EXPOSE ${PORT}
 
 # Set debug mode, since we're running in development mode
-ENV ENTITY_SERVICE_DEBUG=1
+ENV ENTITIES_SERVICE_DEBUG=1
 
 ENTRYPOINT gunicorn --bind "0.0.0.0:${PORT}" --log-level debug --workers 1 --worker-class entities_service.uvicorn.UvicornWorker --reload entities_service.main:APP
 
@@ -31,6 +31,6 @@ ENV PORT=80
 EXPOSE ${PORT}
 
 # Force debug mode to be off, since we're running in production mode
-ENV ENTITY_SERVICE_DEBUG=0
+ENV ENTITIES_SERVICE_DEBUG=0
 
 ENTRYPOINT gunicorn --bind "0.0.0.0:${PORT}" --workers 1 --worker-class entities_service.uvicorn.UvicornWorker entities_service.main:APP

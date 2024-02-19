@@ -31,13 +31,6 @@ class ServiceSettings(BaseSettings):
         ),
     ] = False
 
-    base_url: Annotated[
-        AnyHttpUrl,
-        Field(
-            description="Base URL, where the service is running.",
-        ),
-    ] = AnyHttpUrl("http://onto-ns.com/meta")
-
     backend: Annotated[
         Backends,
         Field(
@@ -112,12 +105,6 @@ class ServiceSettings(BaseSettings):
             ),
         ),
     ] = None
-
-    @field_validator("base_url", mode="before")
-    @classmethod
-    def _strip_ending_slashes(cls, value: Any) -> AnyHttpUrl:
-        """Strip any end forward slashes."""
-        return AnyHttpUrl(str(value).rstrip("/"))
 
     @field_validator("x509_certificate_file", "ca_file", mode="before")
     @classmethod

@@ -1,7 +1,4 @@
-"""Test the /_admin/* endpoints.
-
-For now there is only a single endpoint under /_admin, namely /_admin/create.
-"""
+"""Test the service's /entities router with `POST` endpoints."""
 
 from __future__ import annotations
 
@@ -19,6 +16,9 @@ if TYPE_CHECKING:
 pytestmark = pytest.mark.skip_if_live_backend("OAuth2 verification cannot be mocked.")
 
 
+ENDPOINT = "/entities"
+
+
 def test_create_single_entity(
     client: ClientFixture,
     parameterized_entity: ParameterizeGetEntities,
@@ -32,7 +32,7 @@ def test_create_single_entity(
     # Create single entity
     with client(auth_role="write") as client_:
         response = client_.post(
-            "/_admin/create",
+            ENDPOINT,
             json=parameterized_entity.entity,
             headers=auth_header,
         )
@@ -65,7 +65,7 @@ def test_create_multiple_entities(
     # Create multiple entities
     with client(auth_role="write") as client_:
         response = client_.post(
-            "/_admin/create",
+            ENDPOINT,
             json=entities,
             headers=auth_header,
         )
@@ -92,7 +92,7 @@ def test_create_no_entities(
     # Create no entities
     with client(auth_role="write") as client_:
         response = client_.post(
-            "/_admin/create",
+            ENDPOINT,
             json=[],
             headers=auth_header,
         )
@@ -126,7 +126,7 @@ def test_create_invalid_entity(
     # Create multiple invalid entities
     with client(auth_role="write", raise_server_exceptions=False) as client_:
         response = client_.post(
-            "/_admin/create",
+            ENDPOINT,
             json=entities,
             headers=auth_header,
         )
@@ -148,7 +148,7 @@ def test_create_invalid_entity(
 
         with client(auth_role="write", raise_server_exceptions=False) as client_:
             response = client_.post(
-                "/_admin/create",
+                ENDPOINT,
                 json=entity,
                 headers=auth_header,
             )
@@ -179,7 +179,7 @@ def test_user_with_no_write_access(
     # Create single entity
     with client(auth_role="read") as client_:
         response = client_.post(
-            "/_admin/create",
+            ENDPOINT,
             json=entities,
             headers=auth_header,
         )
@@ -227,7 +227,7 @@ def test_backend_write_error_exception(
     # Create single entity
     with client(auth_role="write", raise_server_exceptions=False) as client_:
         response = client_.post(
-            "/_admin/create",
+            ENDPOINT,
             json=entities,
             headers=auth_header,
         )
@@ -272,7 +272,7 @@ def test_backend_create_returns_bad_value(
     # Create single entity
     with client(auth_role="write") as client_:
         response = client_.post(
-            "/_admin/create",
+            ENDPOINT,
             json=parameterized_entity.entity,
             headers=auth_header,
         )

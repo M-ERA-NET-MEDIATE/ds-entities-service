@@ -220,7 +220,7 @@ def test_delete(
     number_of_entities = len(backend)
 
     # Delete the entity
-    backend.delete(parameterized_entity.uri)
+    backend.delete([parameterized_entity.uri])
 
     # Check that the entity is gone
     entity_from_backend = backend._collection.find_one(

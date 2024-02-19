@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from abc import ABC, abstractmethod
-from collections.abc import Sequence
+from collections.abc import Iterable
 from typing import TYPE_CHECKING
 
 from pydantic import BaseModel
@@ -17,7 +17,7 @@ from entities_service.models import (
 )
 
 if TYPE_CHECKING:  # pragma: no cover
-    from collections.abc import Iterator
+    from collections.abc import Generator, Iterator
     from typing import Any
 
     from pydantic import AnyHttpUrl
@@ -120,7 +120,7 @@ class Backend(ABC):
     # Backend methods (CRUD)
     @abstractmethod
     def create(
-        self, entities: Sequence[VersionedSOFTEntity | dict[str, Any]]
+        self, entities: Iterable[VersionedSOFTEntity | dict[str, Any]]
     ) -> list[dict[str, Any]] | dict[str, Any] | None:  # pragma: no cover
         """Create an entity in the backend."""
         raise NotImplementedError
@@ -142,19 +142,37 @@ class Backend(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def delete(self, entity_identity: AnyHttpUrl | str) -> None:  # pragma: no cover
-        """Delete an entity in the backend."""
+    def delete(
+        self, entity_identities: Iterable[AnyHttpUrl | str]
+    ) -> None:  # pragma: no cover
+        """Delete one or more entities in the backend."""
         raise NotImplementedError
 
     # Backend methods (search)
     @abstractmethod
-    def search(self, query: Any) -> Iterator[dict[str, Any]]:  # pragma: no cover
-        """Search for entities."""
+    def search(
+        self,
+        raw_query: Any = None,
+        by_properties: list[str] | None = None,
+        by_dimensions: list[str] | None = None,
+        by_identity: list[str] | None = None,
+    ) -> Generator[dict[str, Any], None, None]:  # pragma: no cover
+        """Search for entities.
+
+        If `raw_query` is given, it will be used as the query. Otherwise, the
+        `by_properties`, `by_dimensions`, and `by_identity` will be used to
+        construct the query.
+
+        If no arguments are given, all entities will be returned.
+        """
         raise NotImplementedError
 
     @abstractmethod
-    def count(self, query: Any = None) -> int:  # pragma: no cover
-        """Count entities."""
+    def count(self, raw_query: Any = None) -> int:  # pragma: no cover
+        """Count entities.
+
+        If `raw_query` is not given, all entities will be counted.
+        """
         raise NotImplementedError
 
     # Backend methods (close)

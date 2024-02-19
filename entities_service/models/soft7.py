@@ -9,8 +9,6 @@ from typing import Annotated, Any
 from pydantic import AliasChoices, BaseModel, Field, field_validator, model_validator
 from pydantic.networks import AnyHttpUrl
 
-from entities_service.service.config import CONFIG
-
 URI_REGEX = re.compile(
     r"^(?P<namespace>https?://.+)/(?P<version>\d(?:\.\d+){0,2})/(?P<name>[^/#?]+)$"
 )
@@ -109,18 +107,6 @@ class SOFT7Entity(BaseModel):
         ),
     ]
 
-    @field_validator("uri", "namespace", mode="after")
-    @classmethod
-    def _validate_base_url(cls, value: AnyHttpUrl) -> AnyHttpUrl:
-        """Validate `uri` and `namespace` starts with the current base URL for the
-        service."""
-        if not str(value).startswith(str(CONFIG.base_url)):
-            error_message = (
-                f"This service only works with entities at {CONFIG.base_url}.\n"
-            )
-            raise ValueError(error_message)
-        return value
-
     @field_validator("uri", mode="after")
     @classmethod
     def _validate_uri(cls, value: AnyHttpUrl) -> AnyHttpUrl:
@@ -128,7 +114,7 @@ class SOFT7Entity(BaseModel):
         if URI_REGEX.match(str(value)) is None:
             error_message = (
                 "The 'uri' is not a valid SOFT7 entity URI. It must be of the form "
-                f"{str(CONFIG.base_url).rstrip('/')}/{{version}}/{{name}}.\n"
+                "{namespace}}/{version}/{name}.\n"
             )
             raise ValueError(error_message)
         return value
