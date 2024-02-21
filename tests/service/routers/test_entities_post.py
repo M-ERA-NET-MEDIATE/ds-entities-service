@@ -13,7 +13,9 @@ if TYPE_CHECKING:
     from ...conftest import ClientFixture, MockAuthVerification, ParameterizeGetEntities
 
 
-pytestmark = pytest.mark.skip_if_live_backend("OAuth2 verification cannot be mocked.")
+pytestmark = pytest.mark.skip_if_live_backend(
+    "OAuth2 verification cannot be mocked on external backend."
+)
 
 
 ENDPOINT = "/entities"

@@ -721,14 +721,14 @@ def client(
     from fastapi.testclient import TestClient
     from httpx import Client
 
-    from entities_service.main import APP
-
     def _client(
         auth_role: Literal["read", "write"] | None = None,
         raise_server_exceptions: bool = True,
     ) -> TestClient | Client:
         """Return the test client with the given authentication role."""
         if not live_backend:
+            from entities_service.main import APP
+
             return TestClient(
                 app=APP,
                 raise_server_exceptions=raise_server_exceptions,
