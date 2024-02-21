@@ -142,18 +142,12 @@ For using it with Docker, use the `--env-file .env` argument when calling `docke
 
 ## Testing
 
-The service is tested using `pytest` and can be tested against a local MongoDB server and Entities Service instance or against a mock MongoDB server and Entities Service instance utilizing [Starlette's TestClient](https://fastapi.tiangolo.com/reference/testclient/#test-client-testclient).
+The service is tested using `pytest` and can be tested against a local MongoDB server and Entities Service instance.
 
 To run the tests, first install the test dependencies:
 
 ```shell
 pip install -U -e .[testing]
-```
-
-Then run the tests (for mock MongoDB ([`mongomock`](https://github.com/mongomock/mongomock)) and Entities Service):
-
-```shell
-pytest
 ```
 
 To run the tests against a live backend, you can pull, build, and run the [Docker Compose file](docker-compose.yml):

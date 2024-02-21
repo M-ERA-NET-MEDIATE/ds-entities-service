@@ -21,6 +21,11 @@ if TYPE_CHECKING:
         ) -> MongoDBBackend: ...
 
 
+pytestmark = pytest.mark.skip_if_not_live_backend(
+    reason="Tests are only valid with a live backend."
+)
+
+
 @pytest.fixture()
 def mongo_backend(get_backend_user: GetBackendUserFixture) -> GetMongoBackend:
     """Get a MongoDB backend."""
@@ -41,7 +46,6 @@ def mongo_backend(get_backend_user: GetBackendUserFixture) -> GetMongoBackend:
     return _mongo_backend
 
 
-@pytest.mark.skip_if_not_live_backend(reason="Indexing is not supported by mongomock")
 def test_multiple_initialize(mongo_backend: GetMongoBackend) -> None:
     """Test initializing the backend multiple times.
 

@@ -80,10 +80,6 @@ def pytest_configure(config: pytest.Config) -> None:
     """Configure pytest - set ENTITIES_SERVICE_BACKEND env var."""
     import os
 
-    # Set the environment variable for the MongoDB database name
-    live_backend: bool = config.getoption("--live-backend")
-    os.environ["ENTITIES_SERVICE_BACKEND"] = "mongodb" if live_backend else "mongomock"
-
     # These are only really (properly) used when running with --live-backend,
     # but it's fine to set them here, since they are not checked when running without.
     os.environ["ENTITIES_SERVICE_X509_CERTIFICATE_FILE"] = (
@@ -139,7 +135,7 @@ def pytest_collection_modifyitems(
                     pytest.mark.skip(reason=prefix_reason.format(reason=reason))
                 )
     else:
-        # If the tests are run with the mock backend, skip the tests marked with
+        # If the tests are not run with a live backend, skip the tests marked with
         # 'skip_if_not_live_backend'
         prefix_reason = "No live backend: {reason}"
         default_reason = "Test is skipped when not using a live backend"
@@ -410,10 +406,6 @@ def live_backend(request: pytest.FixtureRequest) -> bool:
                 stacklevel=1,
             )
 
-    # Sanity check - the ENTITIES_SERVICE_BACKEND should be set to 'pymongo' if
-    # the tests are run with a live backend, and 'mongomock' otherwise
-    assert os.getenv("ENTITIES_SERVICE_BACKEND") == "mongodb" if value else "mongomock"
-
     return value
 
 
@@ -477,14 +469,42 @@ def get_backend_user() -> GetBackendUserFixture:
 
 
 @pytest.fixture(scope="session", autouse=True)
-def _mongo_test_collection(
-    static_dir: Path, live_backend: bool, get_backend_user: GetBackendUserFixture
+def _mongo_backend_users(
+    live_backend: bool, get_backend_user: GetBackendUserFixture
 ) -> None:
-    """Add MongoDB test data to the chosen backend."""
-    import yaml
+    """Add MongoDB test users."""
+    if not live_backend:
+        return
 
-    from entities_service.service.backend import Backends, get_backend
-    from entities_service.service.config import CONFIG
+    from entities_service.service.backend import get_backend
+
+    backend: MongoDBBackend = get_backend(
+        settings={
+            "mongo_username": "root",
+            "mongo_password": "root",
+        },
+    )
+    admin_db = backend._collection.database.client["admin"]
+
+    existing_users: list[str] = [
+        user["user"] for user in admin_db.command("usersInfo", usersInfo=1)["users"]
+    ]
+
+    for auth_role in ("read", "write"):
+        user_info = get_backend_user(auth_role)
+        if user_info["username"] not in existing_users:
+            admin_db.command(
+                "createUser",
+                createUser=user_info["username"],
+                pwd=user_info["password"],
+                roles=user_info["roles"],
+            )
+
+
+@pytest.fixture()
+def backend_test_data(static_dir: Path) -> list[dict[str, Any]]:
+    """Return the test data for the backend."""
+    import yaml
 
     # Convert all '$ref' to 'ref' in the valid_entities.yaml file
     entities: list[dict[str, Any]] = yaml.safe_load(
@@ -510,70 +530,20 @@ def _mongo_test_collection(
                 f"Invalid type for entity['properties']: {type(entity['properties'])}"
             )
 
-    assert CONFIG.backend == (
-        Backends.MONGODB if live_backend else Backends.MONGOMOCK
-    ), (
-        "The backend should be set to 'mongodb' if the tests are run with a live "
-        "backend, and 'mongomock' otherwise."
-    )
-
-    if live_backend:
-        # Add test users to the database
-        backend: MongoDBBackend = get_backend(
-            settings={
-                "mongo_username": "root",
-                "mongo_password": "root",
-            },
-        )
-        admin_db = backend._collection.database.client["admin"]
-
-        existing_users: list[str] = [
-            user["user"] for user in admin_db.command("usersInfo", usersInfo=1)["users"]
-        ]
-
-        for auth_role in ("read", "write"):
-            user_info = get_backend_user(auth_role)
-            if user_info["username"] not in existing_users:
-                admin_db.command(
-                    "createUser",
-                    createUser=user_info["username"],
-                    pwd=user_info["password"],
-                    roles=user_info["roles"],
-                )
+    return entities
 
 
 @pytest.fixture(autouse=True)
 def _reset_mongo_test_collection(
-    get_backend_user: GetBackendUserFixture, static_dir: Path
+    get_backend_user: GetBackendUserFixture,
+    backend_test_data: list[dict[str, Any]],
+    live_backend: bool,
 ) -> None:
     """Purge the MongoDB test collection."""
-    import yaml
+    if not live_backend:
+        return
 
     from entities_service.service.backend import get_backend
-
-    # Convert all '$ref' to 'ref' in the valid_entities.yaml file
-    entities: list[dict[str, Any]] = yaml.safe_load(
-        (static_dir / "valid_entities.yaml").read_text()
-    )
-    for entity in entities:
-        # SOFT5
-        if isinstance(entity["properties"], list):
-            for index, property_value in enumerate(list(entity["properties"])):
-                entity["properties"][index] = {
-                    key.replace("$", ""): value for key, value in property_value.items()
-                }
-
-        # SOFT7
-        elif isinstance(entity["properties"], dict):
-            for property_name, property_value in list(entity["properties"].items()):
-                entity["properties"][property_name] = {
-                    key.replace("$", ""): value for key, value in property_value.items()
-                }
-
-        else:
-            raise TypeError(
-                f"Invalid type for entity['properties']: {type(entity['properties'])}"
-            )
 
     backend_user = get_backend_user("write")
 
@@ -585,7 +555,30 @@ def _reset_mongo_test_collection(
         },
     )
     backend._collection.delete_many({})
-    backend._collection.insert_many(entities)
+    backend._collection.insert_many(backend_test_data)
+
+
+@pytest.fixture()
+def _empty_backend_collection(
+    live_backend: bool, get_backend_user: GetBackendUserFixture
+) -> None:
+    """Empty the backend collection."""
+    if not live_backend:
+        return
+
+    from entities_service.service.backend import get_backend
+
+    backend_user = get_backend_user("write")
+
+    backend: MongoDBBackend = get_backend(
+        auth_level="write",
+        settings={
+            "mongo_username": backend_user["username"],
+            "mongo_password": backend_user["password"],
+        },
+    )
+    backend._collection.delete_many({})
+    assert backend._collection.count_documents({}) == 0
 
 
 @pytest.fixture(autouse=True)
@@ -598,26 +591,6 @@ def _mock_lifespan(live_backend: bool, monkeypatch: pytest.MonkeyPatch) -> None:
             "entities_service.service.backend.mongodb.MongoDBBackend.initialize",
             lambda _: None,
         )
-
-
-@pytest.fixture()
-def _empty_backend_collection(
-    live_backend: bool, get_backend_user: GetBackendUserFixture
-) -> None:
-    """Empty the backend collection."""
-    from entities_service.service.backend import get_backend
-
-    backend_settings = {}
-    if live_backend:
-        backend_user = get_backend_user("write")
-        backend_settings = {
-            "mongo_username": backend_user["username"],
-            "mongo_password": backend_user["password"],
-        }
-
-    backend: MongoDBBackend = get_backend(settings=backend_settings)
-    backend._collection.delete_many({})
-    assert backend._collection.count_documents({}) == 0
 
 
 @pytest.fixture()

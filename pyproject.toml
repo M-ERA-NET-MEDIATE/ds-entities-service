@@ -38,7 +38,6 @@ dependencies = [
 testing = [
     "cryptography ~=42.0",
     "dlite-python ~=0.5.1; python_version < '3.12'",
-    "mongomock ~=4.1",
     "pytest ~=8.0",
     "pytest-cov ~=4.1",
     "pytest-httpx ~=0.29.0",
@@ -115,9 +114,6 @@ addopts = "-rs --cov=entities_service --cov-config=pyproject.toml --cov-report=t
 filterwarnings = [
     # Treat all warnings as errors
     "error",
-
-    # mongomock uses pkg_resources
-    "ignore:.*pkg_resources is deprecated as an API.*:DeprecationWarning",
 ]
 
 [tool.coverage.run]

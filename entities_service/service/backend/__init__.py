@@ -31,12 +31,9 @@ class Backends(StrEnum):
 
     MONGODB = "mongodb"
 
-    # Testing
-    MONGOMOCK = "mongomock"
-
     def get_class(self) -> type[Backend]:
         """Get the backend class."""
-        if self in (self.MONGODB, self.MONGOMOCK):
+        if self == self.MONGODB:
             from entities_service.service.backend.mongodb import MongoDBBackend
 
             return MongoDBBackend
@@ -49,7 +46,7 @@ class Backends(StrEnum):
         """Get the settings for the auth level."""
         from entities_service.service.config import CONFIG
 
-        if self in (self.MONGODB, self.MONGOMOCK):
+        if self == self.MONGODB:
             if auth_level == "read":
                 return {
                     "auth_level": auth_level,

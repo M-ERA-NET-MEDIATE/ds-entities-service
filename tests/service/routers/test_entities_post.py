@@ -200,6 +200,7 @@ def test_user_with_no_write_access(
     ]
 
 
+@pytest.mark.skip_if_not_live_backend(reason="Will not mock a mock.")
 def test_backend_write_error_exception(
     static_dir: Path,
     client: ClientFixture,

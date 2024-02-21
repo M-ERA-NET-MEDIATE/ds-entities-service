@@ -54,9 +54,8 @@ The key is the available auth levels, i.e. 'read' and 'write'.
 """
 
 
-BACKEND_DRIVER_MAPPING: dict[Backends, Literal["pymongo", "mongomock"]] = {
+BACKEND_DRIVER_MAPPING: dict[Backends, Literal["pymongo"]] = {
     Backends.MONGODB: "pymongo",
-    Backends.MONGOMOCK: "mongomock",
 }
 
 
@@ -123,9 +122,11 @@ class MongoDBSettings(BackendSettings):
     )
 
     mongo_driver: Annotated[
-        Literal["pymongo", "mongomock"],
+        Literal["pymongo"],
         Field(
-            description="The MongoDB driver to use. Either 'pymongo' or 'mongomock'.",
+            description=(
+                "The MongoDB driver to use. Only 'pymongo' is currently supported."
+            ),
         ),
     ] = BACKEND_DRIVER_MAPPING.get(CONFIG.backend, "pymongo")
 
@@ -158,7 +159,7 @@ def get_client(
     password: str | None = None,
     certificate_file: Path | None = None,
     ca_file: Path | None = None,
-    driver: Literal["pymongo", "mongomock"] | None = None,
+    driver: Literal["pymongo"] | None = None,
 ) -> MongoClient:
     """Get the MongoDB client."""
     if driver is None:
@@ -166,12 +167,10 @@ def get_client(
 
     if driver == "pymongo":
         from pymongo import MongoClient
-    elif driver == "mongomock":
-        from mongomock import MongoClient
     else:
         raise ValueError(
             f"Invalid MongoDB driver: {driver}. "
-            "Should be either 'pymongo' or 'mongomock'."
+            "Only 'pymongo' is currently supported."
         )
 
     global MONGO_CLIENTS  # noqa: PLW0603
@@ -216,14 +215,6 @@ def get_client(
         MONGO_CLIENTS = {auth_level: new_client}
     else:
         MONGO_CLIENTS[auth_level] = new_client
-
-    # If using the mongomock backend, there should only ever be one client instance
-    # So we set all clients for all auth levels in the cache to the new client
-    if driver == "mongomock":
-        MONGO_CLIENTS = {
-            "read": new_client,
-            "write": new_client,
-        }
 
     return MONGO_CLIENTS[auth_level]
 
@@ -452,13 +443,6 @@ class MongoDBBackend(Backend):
             )
 
         return self._collection.count_documents(query)
-
-    def close(self) -> None:
-        """We never close the MongoDB connection once its created."""
-        if self._settings.mongo_driver == "mongomock":
-            return
-
-        super().close()
 
     # MongoDBBackend specific methods
     def _single_uri_query(self, uri: str) -> dict[str, Any]:
