@@ -9,6 +9,7 @@ import pytest
 
 if TYPE_CHECKING:
     from collections.abc import Generator, Iterator
+    from pathlib import Path
     from typing import Any
 
     from pydantic import AnyHttpUrl
@@ -21,6 +22,7 @@ def _mock_backend(
     live_backend: bool,
     backend_test_data: list[dict[str, Any]],
     monkeypatch: pytest.MonkeyPatch,
+    static_dir: Path,
 ) -> None:
     """Mock the backend if not using a live backend."""
     if live_backend:
@@ -28,6 +30,7 @@ def _mock_backend(
 
     from copy import deepcopy
 
+    import yaml
     from pydantic import ConfigDict
 
     from entities_service.models import URI_REGEX
@@ -88,8 +91,26 @@ def _mock_backend(
         def create(
             self, entities: Iterable[VersionedSOFTEntity | dict[str, Any]]
         ) -> list[dict[str, Any]] | dict[str, Any] | None:
+            """Create entities.
+
+            For testing purposes:
+            - Raise an error if entities is not part of the `valid_entities.yaml` file.
+            """
+            valid_entities: list[dict[str, Any]] = yaml.safe_load(
+                (static_dir / "valid_entities.yaml").read_text()
+            )
+            valid_prepared_entities: list[dict[str, Any]] = [
+                self._prepare_entity(entity) for entity in valid_entities
+            ]
+
             entities = [self._prepare_entity(entity) for entity in entities]
             entity_identities = [get_uri(entity) for entity in entities]
+
+            if not all(entity in valid_prepared_entities for entity in entities):
+                raise MockBackendError(
+                    "One or more entities are not part of the `valid_entities.yaml` "
+                    "file. Will act like the entities can not be created."
+                )
 
             if not entities:
                 return None

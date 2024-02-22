@@ -202,36 +202,41 @@ def test_user_with_no_write_access(
     ]
 
 
-@pytest.mark.skip_if_not_live_backend(reason="Will not mock a mock.")
 def test_backend_write_error_exception(
     static_dir: Path,
     client: ClientFixture,
     mock_auth_verification: MockAuthVerification,
     auth_header: dict[Literal["Authorization"], str],
-    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Test that a 502 exception is raised if the backend cannot write the entity."""
     import yaml
 
-    # Monkeypatch the backend create method to raise an exception
-    from entities_service.service.backend import mongodb as entities_backend
-
-    def mock_create(*args: Any, **kwargs: Any) -> None:  # noqa: ARG001
-        raise entities_backend.MongoDBBackendError("Test error.")
-
-    monkeypatch.setattr(entities_backend.MongoDBBackend, "create", mock_create)
-
     # Setup mock responses for OAuth2 verification
     mock_auth_verification(auth_role="write")
 
-    # Load entities
-    entities = yaml.safe_load((static_dir / "valid_entities.yaml").read_text())
+    valid_entity = {
+        "uri": "http://onto-ns.com/meta/1.0/ValidEntity",
+        "description": "A valid entity not in 'valid_entities.yaml'.",
+        "dimensions": {},
+        "properties": {
+            "test": {
+                "type": "string",
+                "description": "Test property.",
+            },
+        },
+    }
+
+    # Load valid ("known") entities
+    entities: list[dict[str, Any]] = yaml.safe_load(
+        (static_dir / "valid_entities.yaml").read_text()
+    )
+    assert valid_entity not in entities, valid_entity
 
     # Create single entity
     with client(auth_role="write", raise_server_exceptions=False) as client_:
         response = client_.post(
             ENDPOINT,
-            json=entities,
+            json=valid_entity,
             headers=auth_header,
         )
 
@@ -242,8 +247,7 @@ def test_backend_write_error_exception(
     assert isinstance(response_json, dict), response_json
     assert "detail" in response_json, response_json
     assert response_json["detail"] == (
-        "Could not create entities with uris: "
-        f"{', '.join(entity['uri'] for entity in entities)}"
+        f"Could not create entity with uri: {valid_entity['uri']}"
     ), response_json
 
 

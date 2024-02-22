@@ -474,7 +474,7 @@ class MongoDBBackend(Backend):
         if not isinstance(entity, SOFTModelTypes):
             raise TypeError(
                 "Entity must be a dict or a SOFTModelTypes for "
-                f"{self.__class__.__name__}."
+                f"{self.__class__.__name__}, got a {type(entity)}."
             )
 
         entity = entity.model_dump(by_alias=True, mode="json", exclude_unset=True)
