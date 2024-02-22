@@ -194,7 +194,7 @@ There are some custom pytest markers:
   A reason can be specified as an argument to the marker, e.g.:
 
   ```python
-  @pytest.mark.skip_if_not_live_backend(reason="Indexing is not supported by mongomock")
+  @pytest.mark.skip_if_not_live_backend(reason="OAuth2 cannot be mocked from the real backend")
   def test_something():
       ...
   ```
