@@ -118,6 +118,9 @@ filterwarnings = [
 
     # mongomock uses pkg_resources
     "ignore:.*pkg_resources is deprecated as an API.*:DeprecationWarning",
+
+    # Passing app directly to httpx client is deprecated - TestClient still does this
+    "ignore:.*The 'app' shortcut is now deprecated.*:DeprecationWarning",
 ]
 
 [tool.coverage.run]
