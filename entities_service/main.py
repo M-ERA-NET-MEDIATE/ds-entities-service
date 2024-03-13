@@ -38,8 +38,7 @@ async def lifespan(app: FastAPI):
         from entities_service.service.security import verify_token
 
         LOGGER.warning(
-            "Deactivating OAuth2 authentication and authorization. "
-            "This should NEVER be used in production."
+            "Deactivating OAuth2 authentication and authorization. This should NEVER be used in production."
         )
 
         app.dependency_overrides[verify_token] = lambda: None

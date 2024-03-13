@@ -81,17 +81,11 @@ class MongoDBSettings(BackendSettings):
     Use default username and password for read access.
     """
 
-    mongo_uri: Annotated[MongoDsn, Field(description="The MongoDB URI.")] = (
-        CONFIG.mongo_uri
-    )
+    mongo_uri: Annotated[MongoDsn, Field(description="The MongoDB URI.")] = CONFIG.mongo_uri
 
-    mongo_username: Annotated[
-        str | None, Field(description="The MongoDB username.")
-    ] = None
+    mongo_username: Annotated[str | None, Field(description="The MongoDB username.")] = None
 
-    mongo_password: Annotated[
-        SecretStr | None, Field(description="The MongoDB password.")
-    ] = None
+    mongo_password: Annotated[SecretStr | None, Field(description="The MongoDB password.")] = None
 
     mongo_x509_certificate_file: Annotated[
         Path | None,
@@ -113,20 +107,14 @@ class MongoDBSettings(BackendSettings):
         ),
     ] = None
 
-    mongo_db: Annotated[str, Field(description="The MongoDB database.")] = (
-        CONFIG.mongo_db
-    )
+    mongo_db: Annotated[str, Field(description="The MongoDB database.")] = CONFIG.mongo_db
 
-    mongo_collection: Annotated[str, Field(description="The MongoDB collection.")] = (
-        CONFIG.mongo_collection
-    )
+    mongo_collection: Annotated[str, Field(description="The MongoDB collection.")] = CONFIG.mongo_collection
 
     mongo_driver: Annotated[
         Literal["pymongo"],
         Field(
-            description=(
-                "The MongoDB driver to use. Only 'pymongo' is currently supported."
-            ),
+            description="The MongoDB driver to use. Only 'pymongo' is currently supported.",
         ),
     ] = BACKEND_DRIVER_MAPPING.get(CONFIG.backend, "pymongo")
 
@@ -145,10 +133,7 @@ class MongoDBSettings(BackendSettings):
                 raise ValueError("MongoDB password should be set for read access.")
         else:  # write
             if self.mongo_x509_certificate_file is None:
-                raise ValueError(
-                    "MongoDB X.509 certificate for connecting with write-access "
-                    "rights."
-                )
+                raise ValueError("MongoDB X.509 certificate for connecting with write-access rights.")
         return self
 
 
@@ -168,10 +153,7 @@ def get_client(
     if driver == "pymongo":
         from pymongo import MongoClient
     else:
-        raise ValueError(
-            f"Invalid MongoDB driver: {driver}. "
-            "Only 'pymongo' is currently supported."
-        )
+        raise ValueError(f"Invalid MongoDB driver: {driver}. Only 'pymongo' is currently supported.")
 
     global MONGO_CLIENTS  # noqa: PLW0603
 
@@ -194,9 +176,7 @@ def get_client(
     else:  # write
         client_options = {
             "tls": True,
-            "tlsCertificateKeyFile": str(
-                certificate_file or CONFIG.x509_certificate_file
-            ),
+            "tlsCertificateKeyFile": str(certificate_file or CONFIG.x509_certificate_file),
             "authSource": "$external",
             "authMechanism": "MONGODB-X509",
         }
@@ -205,8 +185,7 @@ def get_client(
 
         if client_options["tlsCertificateKeyFile"] is None:
             raise MongoDBBackendError(
-                "MongoDB X.509 certificate for connecting with write-access rights "
-                "not set."
+                "MongoDB X.509 certificate for connecting with write-access rights not set."
             )
 
     new_client = MongoClient(uri or str(CONFIG.mongo_uri), **client_options)
@@ -284,9 +263,7 @@ class MongoDBBackend(Backend):
             return
 
         # Create a unique index for the URI
-        self._collection.create_index(
-            ["uri", "namespace", "version", "name"], unique=True, name="URI"
-        )
+        self._collection.create_index(["uri", "namespace", "version", "name"], unique=True, name="URI")
 
     def create(
         self, entities: Iterable[VersionedSOFTEntity | dict[str, Any]]
@@ -300,14 +277,10 @@ class MongoDBBackend(Backend):
         result = self._collection.insert_many(entities)
         if len(result.inserted_ids) > 1:
             return list(
-                self._collection.find(
-                    {"_id": {"$in": result.inserted_ids}}, projection={"_id": False}
-                )
+                self._collection.find({"_id": {"$in": result.inserted_ids}}, projection={"_id": False})
             )
 
-        return self._collection.find_one(
-            {"_id": result.inserted_ids[0]}, projection={"_id": False}
-        )
+        return self._collection.find_one({"_id": result.inserted_ids[0]}, projection={"_id": False})
 
     def read(self, entity_identity: AnyHttpUrl | str) -> dict[str, Any] | None:
         """Read an entity from the MongoDB."""
@@ -375,9 +348,7 @@ class MongoDBBackend(Backend):
         query = raw_query or {}
 
         if not isinstance(query, dict):
-            raise MongoDBBackendError(
-                f"Query must be a dict for {self.__class__.__name__}."
-            )
+            raise MongoDBBackendError(f"Query must be a dict for {self.__class__.__name__}.")
 
         if not query:
             if any((by_properties, by_dimensions, by_identity)):
@@ -438,9 +409,7 @@ class MongoDBBackend(Backend):
         query = raw_query or {}
 
         if not isinstance(query, dict):
-            raise MongoDBBackendError(
-                f"Query must be a dict for {self.__class__.__name__}."
-            )
+            raise MongoDBBackendError(f"Query must be a dict for {self.__class__.__name__}.")
 
         return self._collection.count_documents(query)
 
@@ -457,14 +426,11 @@ class MongoDBBackend(Backend):
 
         return {"$or": [uri_parts, {"uri": uri}]}
 
-    def _prepare_entity(
-        self, entity: VersionedSOFTEntity | dict[str, Any]
-    ) -> dict[str, Any]:
+    def _prepare_entity(self, entity: VersionedSOFTEntity | dict[str, Any]) -> dict[str, Any]:
         """Clean and prepare the entity for interactions with the MongoDB backend."""
         if isinstance(entity, dict):
             uri = entity.get("uri", None) or (
-                f"{entity.get('namespace', '')}/{entity.get('version', '')}"
-                f"/{entity.get('name', '')}"
+                f"{entity.get('namespace', '')}/{entity.get('version', '')}/{entity.get('name', '')}"
             )
             entity = soft_entity(
                 error_msg=f"Invalid entity given for {uri}.",
@@ -493,8 +459,6 @@ class MongoDBBackend(Backend):
                 }
 
         else:
-            raise TypeError(
-                f"Invalid entity properties type: {type(entity['properties'])}"
-            )
+            raise TypeError(f"Invalid entity properties type: {type(entity['properties'])}")
 
         return entity

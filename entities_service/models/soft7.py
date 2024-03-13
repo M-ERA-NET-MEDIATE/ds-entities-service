@@ -9,9 +9,7 @@ from typing import Annotated, Any
 from pydantic import AliasChoices, BaseModel, Field, field_validator, model_validator
 from pydantic.networks import AnyHttpUrl
 
-URI_REGEX = re.compile(
-    r"^(?P<namespace>https?://.+)/(?P<version>\d(?:\.\d+){0,2})/(?P<name>[^/#?]+)$"
-)
+URI_REGEX = re.compile(r"^(?P<namespace>https?://.+)/(?P<version>\d(?:\.\d+){0,2})/(?P<name>[^/#?]+)$")
 """Regular expression to parse a SOFT entity URI."""
 
 
@@ -59,28 +57,19 @@ class SOFT7Property(BaseModel):
         ),
     ] = None
     unit: Annotated[str | None, Field(description="The unit of the property.")] = None
-    description: Annotated[
-        str, Field(description="A human-readable description of the property.")
-    ]
+    description: Annotated[str, Field(description="A human-readable description of the property.")]
 
 
 class SOFT7Entity(BaseModel):
     """A SOFT7 Entity returned from this service."""
 
     name: Annotated[str | None, Field(description="The name of the entity.")] = None
-    version: Annotated[str | None, Field(description="The version of the entity.")] = (
-        None
-    )
-    namespace: Annotated[
-        AnyHttpUrl | None, Field(description="The namespace of the entity.")
-    ] = None
+    version: Annotated[str | None, Field(description="The version of the entity.")] = None
+    namespace: Annotated[AnyHttpUrl | None, Field(description="The namespace of the entity.")] = None
     uri: Annotated[
         AnyHttpUrl | None,
         Field(
-            description=(
-                "The universal identifier for the entity. This MUST start with the "
-                "base URL."
-            ),
+            description="The universal identifier for the entity. This MUST start with the base URL.",
         ),
     ] = None
     meta: Annotated[
@@ -141,8 +130,7 @@ class SOFT7Entity(BaseModel):
             and not all(data.get(_) is None for _ in ("name", "version", "namespace"))
         ):
             error_message = (
-                "Either all of `name`, `version`, and `namespace` must be set "
-                "or all must be unset.\n"
+                "Either all of `name`, `version`, and `namespace` must be set or all must be unset.\n"
             )
             raise ValueError(error_message)
 
@@ -151,9 +139,7 @@ class SOFT7Entity(BaseModel):
             and any(data.get(_) is None for _ in ("name", "version", "namespace"))
             and data.get("uri") is None
         ):
-            error_message = (
-                "Either `name`, `version`, and `namespace` or `uri` must be set.\n"
-            )
+            error_message = "Either `name`, `version`, and `namespace` or `uri` must be set.\n"
             raise ValueError(error_message)
 
         if (
@@ -170,8 +156,7 @@ class SOFT7Entity(BaseModel):
                 )
             )
             error_message = (
-                "The `uri` is not consistent with `name`, `version`, and "
-                f"`namespace`:\n\n  {diff}\n\n"
+                f"The `uri` is not consistent with `name`, `version`, and `namespace`:\n\n  {diff}\n\n"
             )
             raise ValueError(error_message)
         return data

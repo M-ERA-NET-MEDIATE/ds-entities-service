@@ -24,9 +24,7 @@ def test_get_entity(
     with client() as client_:
         response = client_.get(f"{ENDPOINT}/{parameterized_entity.uri}", timeout=5)
 
-    assert (
-        response.is_success
-    ), f"Response: {response.json()}. Request: {response.request}"
+    assert response.is_success, f"Response: {response.json()}. Request: {response.request}"
     assert response.status_code == status.HTTP_200_OK, response.json()
 
     resolved_entity = response.json()
@@ -62,9 +60,7 @@ def test_get_entity_not_found(client: ClientFixture) -> None:
         response = client_.get(f"{ENDPOINT}/{namespace}/{version}/{name}", timeout=5)
 
     assert not response.is_success, "Non existent (valid) URI returned an OK response!"
-    assert (
-        response.status_code == status.HTTP_404_NOT_FOUND
-    ), f"Response:\n\n{response.json()}"
+    assert response.status_code == status.HTTP_404_NOT_FOUND, f"Response:\n\n{response.json()}"
 
 
 def test_get_entity_invalid_uri(client: ClientFixture) -> None:
@@ -80,6 +76,4 @@ def test_get_entity_invalid_uri(client: ClientFixture) -> None:
         response = client_.get(f"{ENDPOINT}/{namespace}/{name}/{version}", timeout=5)
 
     assert not response.is_success, "Invalid URI returned an OK response!"
-    assert (
-        response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
-    ), f"Response:\n\n{response.json()}"
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY, f"Response:\n\n{response.json()}"

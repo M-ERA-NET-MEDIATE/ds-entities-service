@@ -47,9 +47,7 @@ def soft_entity(*, return_errors: bool = False, error_msg: str | None = None, **
         if error_msg is None:
             error_msg = "Cannot instantiate entity."
 
-        raise ValueError(
-            f"{error_msg}\nErrors:\n" + "\n\n".join(str(error) for error in errors)
-        )
+        raise ValueError(f"{error_msg}\nErrors:\n" + "\n\n".join(str(error) for error in errors))
     return new_object  # type: ignore[return-value]
 
 

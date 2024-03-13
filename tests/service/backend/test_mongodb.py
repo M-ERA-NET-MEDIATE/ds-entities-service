@@ -16,14 +16,10 @@ if TYPE_CHECKING:
     class GetMongoBackend(Protocol):
         """Get the MongoDB backend."""
 
-        def __call__(
-            self, auth: Literal["read", "write"] | None = None
-        ) -> MongoDBBackend: ...
+        def __call__(self, auth: Literal["read", "write"] | None = None) -> MongoDBBackend: ...
 
 
-pytestmark = pytest.mark.skip_if_not_live_backend(
-    reason="Tests are only valid with a live backend."
-)
+pytestmark = pytest.mark.skip_if_not_live_backend(reason="Tests are only valid with a live backend.")
 
 
 @pytest.fixture()
@@ -92,9 +88,7 @@ def test_close() -> None:
 
 
 @pytest.mark.usefixtures("_empty_backend_collection")
-def test_create(
-    mongo_backend: GetMongoBackend, parameterized_entity: ParameterizeGetEntities
-) -> None:
+def test_create(mongo_backend: GetMongoBackend, parameterized_entity: ParameterizeGetEntities) -> None:
     """Test the create method."""
     backend = mongo_backend("write")
 
@@ -136,9 +130,7 @@ def test_create(
     assert entities_from_backend[1] in raw_entities
 
 
-def test_read(
-    mongo_backend: GetMongoBackend, parameterized_entity: ParameterizeGetEntities
-) -> None:
+def test_read(mongo_backend: GetMongoBackend, parameterized_entity: ParameterizeGetEntities) -> None:
     """Test the read method."""
     backend = mongo_backend("read")
 
@@ -148,9 +140,7 @@ def test_read(
     assert entity_from_backend == parameterized_entity.backend_entity
 
 
-def test_update(
-    mongo_backend: GetMongoBackend, parameterized_entity: ParameterizeGetEntities
-) -> None:
+def test_update(mongo_backend: GetMongoBackend, parameterized_entity: ParameterizeGetEntities) -> None:
     """Test the update method."""
     from copy import deepcopy
 
@@ -198,9 +188,7 @@ def test_update(
     assert entity_from_backend == changed_raw_entity
 
 
-def test_delete(
-    mongo_backend: GetMongoBackend, parameterized_entity: ParameterizeGetEntities
-) -> None:
+def test_delete(mongo_backend: GetMongoBackend, parameterized_entity: ParameterizeGetEntities) -> None:
     """Test the delete method."""
     from entities_service.service.backend.mongodb import URI_REGEX
 
@@ -241,9 +229,7 @@ def test_delete(
     assert len(backend) == number_of_entities - 1
 
 
-def test_search(
-    mongo_backend: GetMongoBackend, parameterized_entity: ParameterizeGetEntities
-) -> None:
+def test_search(mongo_backend: GetMongoBackend, parameterized_entity: ParameterizeGetEntities) -> None:
     """Test the search method.
 
     Note, this method only accepts valid MongoDB queries.
@@ -276,9 +262,7 @@ def test_search(
     assert parameterized_entity.backend_entity in entities_from_backend
 
 
-def test_count(
-    mongo_backend: GetMongoBackend, parameterized_entity: ParameterizeGetEntities
-) -> None:
+def test_count(mongo_backend: GetMongoBackend, parameterized_entity: ParameterizeGetEntities) -> None:
     """Test the count method."""
     from entities_service.service.backend.mongodb import URI_REGEX
 
@@ -302,9 +286,7 @@ def test_count(
     )
 
 
-def test_contains(
-    mongo_backend: GetMongoBackend, parameterized_entity: ParameterizeGetEntities
-) -> None:
+def test_contains(mongo_backend: GetMongoBackend, parameterized_entity: ParameterizeGetEntities) -> None:
     """Test the magic method __contains__."""
     backend = mongo_backend("read")
 
@@ -314,9 +296,7 @@ def test_contains(
     assert parameterized_entity.entity in backend
 
 
-def test_iter(
-    mongo_backend: GetMongoBackend, parameterized_entity: ParameterizeGetEntities
-) -> None:
+def test_iter(mongo_backend: GetMongoBackend, parameterized_entity: ParameterizeGetEntities) -> None:
     """Test the magic method: __iter__."""
     backend = mongo_backend("read")
 

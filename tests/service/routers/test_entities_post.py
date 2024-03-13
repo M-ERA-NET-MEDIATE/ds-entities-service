@@ -35,9 +35,7 @@ def test_create_single_entity(
 
     # Create single entity
     with client() as client_:
-        response = client_.post(
-            ENDPOINT, json=parameterized_entity.entity, headers=auth_header
-        )
+        response = client_.post(ENDPOINT, json=parameterized_entity.entity, headers=auth_header)
 
     try:
         response_json = response.json()
@@ -47,9 +45,7 @@ def test_create_single_entity(
     # Check response
     assert response.status_code == 201, json.dumps(response_json, indent=2)
     assert isinstance(response_json, dict), json.dumps(response_json, indent=2)
-    assert response_json == parameterized_entity.entity, json.dumps(
-        response_json, indent=2
-    )
+    assert response_json == parameterized_entity.entity, json.dumps(response_json, indent=2)
 
 
 def test_create_multiple_entities(
@@ -65,9 +61,7 @@ def test_create_multiple_entities(
     mock_auth_verification(auth_role="write")
 
     # Load entities
-    entities: list[dict[str, Any]] = yaml.safe_load(
-        (static_dir / "valid_entities.yaml").read_text()
-    )
+    entities: list[dict[str, Any]] = yaml.safe_load((static_dir / "valid_entities.yaml").read_text())
 
     # Create multiple entities
     with client(auth_role="write") as client_:
@@ -148,8 +142,7 @@ def test_create_invalid_entity(
     # Create single invalid entities
     for entity in entities:
         uri = entity.get("uri", None) or (
-            f"{entity.get('namespace', '')}/{entity.get('version', '')}"
-            f"/{entity.get('name', '')}"
+            f"{entity.get('namespace', '')}/{entity.get('version', '')}/{entity.get('name', '')}"
         )
         error_message = f"Failed to create entity with uri {uri}"
 
@@ -202,9 +195,7 @@ def test_user_with_no_write_access(
         "Please contact the ds-entities-service group maintainer."
     ), response_json
     assert "WWW-Authenticate" in response.headers, response.headers
-    assert response.headers["WWW-Authenticate"] == "Bearer", response.headers[
-        "WWW-Authenticate"
-    ]
+    assert response.headers["WWW-Authenticate"] == "Bearer", response.headers["WWW-Authenticate"]
 
 
 def test_backend_write_error_exception(
@@ -232,9 +223,7 @@ def test_backend_write_error_exception(
     }
 
     # Load valid ("known") entities
-    entities: list[dict[str, Any]] = yaml.safe_load(
-        (static_dir / "valid_entities.yaml").read_text()
-    )
+    entities: list[dict[str, Any]] = yaml.safe_load((static_dir / "valid_entities.yaml").read_text())
     assert valid_entity not in entities, valid_entity
 
     # Create single entity
@@ -296,6 +285,5 @@ def test_backend_create_returns_bad_value(
     assert isinstance(response_json, dict), response_json
     assert "detail" in response_json, response_json
     assert (
-        response_json["detail"]
-        == f"Could not create entity with uri: {parameterized_entity.uri}"
+        response_json["detail"] == f"Could not create entity with uri: {parameterized_entity.uri}"
     ), response_json

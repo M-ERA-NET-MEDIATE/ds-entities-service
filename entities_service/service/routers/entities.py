@@ -78,9 +78,7 @@ async def get_entities(
     backend = get_backend()
 
     entities = list(
-        backend.search(
-            by_identity=identities, by_properties=properties, by_dimensions=dimensions
-        )
+        backend.search(by_identity=identities, by_properties=properties, by_dimensions=dimensions)
     )
 
     if entities:
@@ -193,9 +191,7 @@ async def update_entities(
 
     entities_backend = get_backend(CONFIG.backend, auth_level="write")
 
-    new_entities = [
-        entity for entity in entities if get_uri(entity) not in entities_backend
-    ]
+    new_entities = [entity for entity in entities if get_uri(entity) not in entities_backend]
 
     if new_entities:
         try:
@@ -228,9 +224,7 @@ async def update_entities(
                     "Could not update entities: identities=[%s]",
                     ", ".join(get_uri(entity) for entity in entities),
                 )
-                LOGGER.error(
-                    "Error happened when updating entity: identity=%s", identity
-                )
+                LOGGER.error("Error happened when updating entity: identity=%s", identity)
                 LOGGER.exception(err)
                 raise write_fail_exception from err
 
@@ -276,9 +270,7 @@ async def patch_entities(
     entities_backend = get_backend(CONFIG.backend, auth_level="write")
 
     # First, check all entities already exist
-    non_existing_entities = [
-        entity for entity in entities if get_uri(entity) not in entities_backend
-    ]
+    non_existing_entities = [entity for entity in entities if get_uri(entity) not in entities_backend]
     if non_existing_entities:
         LOGGER.error(
             "Cannot patch non-existent entities: identities=[%s]",
@@ -294,9 +286,7 @@ async def patch_entities(
                 "Could not update entities: identities=[%s]",
                 ", ".join(get_uri(entity) for entity in entities),
             )
-            LOGGER.error(
-                "Error happened when updating entity: identity=%s", get_uri(entity)
-            )
+            LOGGER.error("Error happened when updating entity: identity=%s", get_uri(entity))
             LOGGER.exception(err)
             raise write_fail_exception from err
 

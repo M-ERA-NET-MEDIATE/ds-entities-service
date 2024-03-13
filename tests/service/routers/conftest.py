@@ -58,15 +58,11 @@ def _mock_backend(
         _settings_model: type[MockSettings] = MockSettings
         _settings: MockSettings
 
-        def __init__(
-            self, settings: MockSettings | dict[str, Any] | None = None
-        ) -> None:
+        def __init__(self, settings: MockSettings | dict[str, Any] | None = None) -> None:
             super(MongoDBBackend, self).__init__(settings=settings)
 
             self.__test_data: list[dict[str, Any]] = backend_test_data
-            self.__test_data_uris: list[str] = [
-                get_uri(entity) for entity in self.__test_data
-            ]
+            self.__test_data_uris: list[str] = [get_uri(entity) for entity in self.__test_data]
 
         def __str__(self) -> str:
             return super(MongoDBBackend, self).__str__()
@@ -140,16 +136,12 @@ def _mock_backend(
             entity = self._prepare_entity(entity)
 
             if entity_identity in self.__test_data_uris:
-                self.__test_data[self.__test_data_uris.index(entity_identity)] = (
-                    deepcopy(entity)
-                )
+                self.__test_data[self.__test_data_uris.index(entity_identity)] = deepcopy(entity)
 
             return
 
         def delete(self, entity_identities: Iterable[AnyHttpUrl | str]) -> None:
-            if any(
-                URI_REGEX.match(str(identity)) is None for identity in entity_identities
-            ):
+            if any(URI_REGEX.match(str(identity)) is None for identity in entity_identities):
                 raise MockBackendError("One or more invalid entity URIs given.")
 
             for identity in entity_identities:
@@ -165,9 +157,7 @@ def _mock_backend(
             by_identity: list[AnyHttpUrl] | list[str] | None = None,
         ) -> Generator[dict[str, Any], None, None]:
             if raw_query is not None:
-                raise MockBackendError(
-                    f"Raw queries are not supported by {self.__class__.__name__}."
-                )
+                raise MockBackendError(f"Raw queries are not supported by {self.__class__.__name__}.")
 
             results = []
 
@@ -180,8 +170,7 @@ def _mock_backend(
                     elif isinstance(entity.get("properties", []), list):
                         # SOFT5
                         if any(
-                            requested_prop
-                            in (prop.get("name") for prop in entity["properties"])
+                            requested_prop in (prop.get("name") for prop in entity["properties"])
                             for requested_prop in by_properties
                         ):
                             results.append(entity)
@@ -197,8 +186,7 @@ def _mock_backend(
                     elif isinstance(entity.get("dimensions", []), list):
                         # SOFT5
                         if any(
-                            requested_dim
-                            in (dim.get("name") for dim in entity["dimensions"])
+                            requested_dim in (dim.get("name") for dim in entity["dimensions"])
                             for requested_dim in by_dimensions
                         ):
                             results.append(entity)
@@ -208,20 +196,14 @@ def _mock_backend(
             if by_identity:
                 for identity in by_identity:
                     if identity in self.__test_data_uris:
-                        results.append(
-                            self._test_data[self.__test_data_uris.index(identity)]
-                        )
+                        results.append(self._test_data[self.__test_data_uris.index(identity)])
 
             yield from results
 
         def count(self, raw_query: Any = None) -> int:
             if raw_query is not None:
-                raise MockBackendError(
-                    f"Raw queries are not supported by {self.__class__.__name__}."
-                )
+                raise MockBackendError(f"Raw queries are not supported by {self.__class__.__name__}.")
 
             return len(self.__test_data)
 
-    monkeypatch.setattr(
-        "entities_service.service.backend.mongodb.MongoDBBackend", MockBackend
-    )
+    monkeypatch.setattr("entities_service.service.backend.mongodb.MongoDBBackend", MockBackend)

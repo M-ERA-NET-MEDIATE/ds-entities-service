@@ -58,6 +58,9 @@ Source = "https://github.com/M-ERA-NET-MEDIATE/ds-entities-service"
 "Issue Tracker" = "https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/issues"
 Changelog = "https://M-ERA-NET-MEDIATE.github.io/ds-entities-service/latest/CHANGELOG"
 
+[tool.black]
+line-length = 108
+
 [tool.mypy]
 python_version = "3.10"
 ignore_missing_imports = true
@@ -67,6 +70,9 @@ hide_error_codes = false
 allow_redefinition = true
 check_untyped_defs = true
 plugins = ["pydantic.mypy"]
+
+[tool.ruff]
+line-length = 108
 
 [tool.ruff.lint]
 extend-select = [

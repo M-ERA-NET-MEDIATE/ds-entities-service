@@ -11,18 +11,14 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from entities_service.service.backend import Backends
 
-MongoDsn = Annotated[
-    MultiHostUrl, UrlConstraints(allowed_schemes=["mongodb", "mongodb+srv"])
-]
+MongoDsn = Annotated[MultiHostUrl, UrlConstraints(allowed_schemes=["mongodb", "mongodb+srv"])]
 """Support MongoDB schemes with hidden port (no default port)."""
 
 
 class ServiceSettings(BaseSettings):
     """Service app configuration."""
 
-    model_config = SettingsConfigDict(
-        env_prefix="entities_service_", env_file=".env", extra="ignore"
-    )
+    model_config = SettingsConfigDict(env_prefix="entities_service_", env_file=".env", extra="ignore")
 
     debug: Annotated[bool, Field(description="Enable debug mode.")] = False
 
@@ -34,9 +30,9 @@ class ServiceSettings(BaseSettings):
     ] = Backends.MONGODB
 
     # Security
-    oauth2_provider: Annotated[
-        AnyHttpUrl, Field(description="OAuth2 provider base URL.")
-    ] = AnyHttpUrl("https://gitlab.sintef.no")
+    oauth2_provider: Annotated[AnyHttpUrl, Field(description="OAuth2 provider base URL.")] = AnyHttpUrl(
+        "https://gitlab.sintef.no"
+    )
 
     roles_group: Annotated[str, Field(description="GitLab group for roles.")] = (
         "team4.0-authentication/entities-service"
@@ -62,25 +58,18 @@ class ServiceSettings(BaseSettings):
 
     mongo_user: Annotated[
         str,
-        Field(
-            description="Username for connecting to the MongoDB with read-only rights."
-        ),
+        Field(description="Username for connecting to the MongoDB with read-only rights."),
     ] = "guest"
 
     mongo_password: Annotated[
         SecretStr,
-        Field(
-            description="Password for connecting to the MongoDB with read-only rights."
-        ),
+        Field(description="Password for connecting to the MongoDB with read-only rights."),
     ] = SecretStr("guest")
 
     mongo_db: Annotated[
         str,
         Field(
-            description=(
-                "Name of the MongoDB database for storing entities in the Entities "
-                "Service."
-            ),
+            description="Name of the MongoDB database for storing entities in the Entities Service.",
         ),
     ] = "entities_service"
 
@@ -118,8 +107,7 @@ class ServiceSettings(BaseSettings):
         cache_dir = Path.home() / ".cache" / "ds-entities-service"
         if not info.field_name:
             raise ValueError(
-                "This validator can only be used for fields with a name, "
-                "i.e. not for root fields."
+                "This validator can only be used for fields with a name, i.e. not for root fields."
             )
         cache_file_name = info.field_name.replace("_file", "")
         cache_file = cache_dir / f"{cache_file_name}.pem"
