@@ -228,7 +228,9 @@ async def update_entities(
                     "Could not update entities: identities=[%s]",
                     ", ".join(get_uri(entity) for entity in entities),
                 )
-                LOGGER.error("Error happened when updating entity: identity=%s", identity)
+                LOGGER.error(
+                    "Error happened when updating entity: identity=%s", identity
+                )
                 LOGGER.exception(err)
                 raise write_fail_exception from err
 
@@ -292,7 +294,9 @@ async def patch_entities(
                 "Could not update entities: identities=[%s]",
                 ", ".join(get_uri(entity) for entity in entities),
             )
-            LOGGER.error("Error happened when updating entity: identity=%s", get_uri(entity))
+            LOGGER.error(
+                "Error happened when updating entity: identity=%s", get_uri(entity)
+            )
             LOGGER.exception(err)
             raise write_fail_exception from err
 

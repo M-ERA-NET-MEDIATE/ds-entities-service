@@ -35,7 +35,9 @@ def test_create_single_entity(
 
     # Create single entity
     with client() as client_:
-        response = client_.post(ENDPOINT, json=parameterized_entity.entity, headers=auth_header)
+        response = client_.post(
+            ENDPOINT, json=parameterized_entity.entity, headers=auth_header
+        )
 
     try:
         response_json = response.json()
@@ -45,7 +47,9 @@ def test_create_single_entity(
     # Check response
     assert response.status_code == 201, json.dumps(response_json, indent=2)
     assert isinstance(response_json, dict), json.dumps(response_json, indent=2)
-    assert response_json == parameterized_entity.entity, json.dumps(response_json, indent=2)
+    assert response_json == parameterized_entity.entity, json.dumps(
+        response_json, indent=2
+    )
 
 
 def test_create_multiple_entities(
