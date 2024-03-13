@@ -38,15 +38,15 @@ class ServiceSettings(BaseSettings):
         "team4.0-authentication/entities-service"
     )
 
-    deactivate_oauth: Annotated[
+    external_oauth: Annotated[
         bool,
         Field(
             description=(
-                "Deactivate OAuth2 authentication and authorization. "
-                "This should NEVER be used in production.",
+                "Whether or not to use proper OAuth2 authentication and authorization with an external "
+                " authority. An external OAuth2 authority should ALWAYS be used in production.",
             )
         ),
-    ] = False
+    ] = True
 
     # MongoDB backend settings
     mongo_uri: Annotated[
@@ -84,8 +84,8 @@ class ServiceSettings(BaseSettings):
         Path | None,
         Field(
             description=(
-                "File path to a X.509 certificate for connecting to the MongoDB "
-                "backend with write-access rights."
+                "File path to a X.509 certificate for connecting to the MongoDB backend with write-access "
+                "rights."
             ),
         ),
     ] = None
@@ -94,8 +94,8 @@ class ServiceSettings(BaseSettings):
         Path | None,
         Field(
             description=(
-                "File path to a CA certificate for connecting to the MongoDB backend "
-                "with write-access rights."
+                "File path to a CA certificate for connecting to the MongoDB backend with write-access "
+                "rights."
             ),
         ),
     ] = None

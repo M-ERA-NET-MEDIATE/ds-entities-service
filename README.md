@@ -171,9 +171,9 @@ Remember to set the following environment variables:
 
 - `ENTITIES_SERVICE_X509_CERTIFICATE_FILE=docker_security/test-server1.pem`
 - `ENTITIES_SERVICE_CA_FILE=docker_security/test-ca.pem`
-- `ENTITIES_SERVICE_DEACTIVATE_OAUTH=1`
+- `ENTITIES_SERVICE_EXTERNAL_OAUTH=0`
 
-> **Warning** Setting `ENTITIES_SERVICE_DEACTIVATE_OAUTH` will deactivate the OAuth2 authentication and should only be used for testing purposes.
+> **Warning** Setting `ENTITIES_SERVICE_EXTERNAL_OAUTH=0` will effectively deactivate the OAuth2 authentication and should only be used for testing purposes.
 
 ### Extra pytest markers
 

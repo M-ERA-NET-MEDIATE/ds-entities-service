@@ -34,7 +34,6 @@ if TYPE_CHECKING:
 
         def __call__(
             self,
-            auth_role: Literal["read", "write"] | None = None,
             raise_server_exceptions: bool = True,
         ) -> TestClient | Client: ...
 
@@ -47,6 +46,18 @@ if TYPE_CHECKING:
         """Protocol for the mock_auth_verification fixture."""
 
         def __call__(self, auth_role: Literal["read", "write"] | None = None) -> None: ...
+
+    class TokenMockFixture(Protocol):
+        """Protocol for the token_mock fixture."""
+
+        def __call__(self, auth_role: Literal["read", "write"] | None = None) -> str: ...
+
+    class AuthHeaderFixture(Protocol):
+        """Protocol for the auth_header fixture."""
+
+        def __call__(
+            self, auth_role: Literal["read", "write"] | None = None
+        ) -> dict[Literal["Authorization"], str]: ...
 
 
 class ParameterizeGetEntities(NamedTuple):
@@ -545,32 +556,56 @@ def _mock_lifespan(live_backend: bool, monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 @pytest.fixture()
-def token_mock() -> str:
+def token_mock() -> TokenMockFixture:
     """Return a mock token."""
-    return (
-        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJyb290IiwiaXNzIjoiaHR0cDovL29udG8tbnMuY29tL21ldGEi"
-        "LCJleHAiOjE3MDYxOTI1OTAsImNsaWVudF9pZCI6Imh0dHA6Ly9vbnRvLW5zLmNvbS9tZXRhIiwiaWF0IjoxNzA2MTkwNzkwf"
-        "Q.FzvzWyI_CNrLkHhr4oPRQ0XEY8H9DL442QD8tM8dhVM"
-    )
+
+    def _token_mock(auth_role: Literal["read", "write"] | None = None) -> str:
+        """Return a mock token related to an authorization role."""
+        if auth_role is None:
+            auth_role = "read"
+
+        if auth_role == "read":
+            return "read-users-token"
+
+        if auth_role == "write":
+            return (
+                "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJyb290IiwiaXNzIjoiaHR0cDovL29udG8tbnMuY29t"
+                "L21ldGEiLCJleHAiOjE3MDYxOTI1OTAsImNsaWVudF9pZCI6Imh0dHA6Ly9vbnRvLW5zLmNvbS9tZXRhIiwiaWF0I"
+                "joxNzA2MTkwNzkwfQ.FzvzWyI_CNrLkHhr4oPRQ0XEY8H9DL442QD8tM8dhVM"
+            )
+
+        pytest.fail("The authentication role must be either 'read' or 'write'.")
+
+    return _token_mock
 
 
 @pytest.fixture()
-def auth_header(token_mock: str) -> dict[Literal["Authorization"], str]:
+def auth_header(token_mock: TokenMockFixture) -> AuthHeaderFixture:
     """Return the authentication header."""
     from fastapi.security import HTTPAuthorizationCredentials
 
-    mock_credentials = HTTPAuthorizationCredentials(
-        scheme="Bearer",
-        credentials=token_mock,
-    )
-    return {"Authorization": f"{mock_credentials.scheme} {mock_credentials.credentials}"}
+    def _auth_header(
+        auth_role: Literal["read", "write"] | None = None
+    ) -> dict[Literal["Authorization"], str]:
+        """Return the user-related authentication header."""
+        if auth_role is None:
+            auth_role = "read"
+
+        mock_credentials = HTTPAuthorizationCredentials(
+            scheme="Bearer",
+            credentials=token_mock(auth_role),
+        )
+
+        return {"Authorization": f"{mock_credentials.scheme} {mock_credentials.credentials}"}
+
+    return _auth_header
 
 
 @pytest.fixture()
 def mock_auth_verification(
     httpx_mock: HTTPXMock,
     get_backend_user: GetBackendUserFixture,
-    auth_header: dict[Literal["Authorization"], str],
+    auth_header: AuthHeaderFixture,
     live_backend: bool,
 ) -> MockAuthVerification | None:
     """Mock authentication."""
@@ -637,7 +672,7 @@ def mock_auth_verification(
                 "https://gitlab.org/claims/groups/maintainer": [],
                 **groups_role_developer,
             },
-            match_headers=auth_header,
+            match_headers=auth_header(auth_role),
         )
 
     return _mock_auth_verification
@@ -651,9 +686,7 @@ def client(live_backend: bool) -> ClientFixture:
     from fastapi.testclient import TestClient
     from httpx import Client
 
-    def _client(
-        raise_server_exceptions: bool = True,
-    ) -> TestClient | Client:
+    def _client(raise_server_exceptions: bool = True) -> TestClient | Client:
         """Return the test client with the given authentication role."""
         if not live_backend:
             from entities_service.main import APP
