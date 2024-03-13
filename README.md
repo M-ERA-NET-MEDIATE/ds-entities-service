@@ -167,7 +167,13 @@ docker compose up -d
 pytest --live-backend
 ```
 
-Remember to set the `ENTITIES_SERVICE_X509_CERTIFICATE_FILE` and `ENTITIES_SERVICE_CA_FILE` environment variables to `docker_security/test-server1.pem` and `docker_security/test-ca.pem`, respectively.
+Remember to set the following environment variables:
+
+- `ENTITIES_SERVICE_X509_CERTIFICATE_FILE=docker_security/test-server1.pem`
+- `ENTITIES_SERVICE_CA_FILE=docker_security/test-ca.pem`
+- `ENTITIES_SERVICE_DEACTIVATE_OAUTH=1`
+
+> **Warning** Setting `ENTITIES_SERVICE_DEACTIVATE_OAUTH` will deactivate the OAuth2 authentication and should only be used for testing purposes.
 
 ### Extra pytest markers
 

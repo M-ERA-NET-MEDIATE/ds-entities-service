@@ -24,12 +24,7 @@ class ServiceSettings(BaseSettings):
         env_prefix="entities_service_", env_file=".env", extra="ignore"
     )
 
-    debug: Annotated[
-        bool,
-        Field(
-            description="Enable debug mode.",
-        ),
-    ] = False
+    debug: Annotated[bool, Field(description="Enable debug mode.")] = False
 
     backend: Annotated[
         Backends,
@@ -46,6 +41,16 @@ class ServiceSettings(BaseSettings):
     roles_group: Annotated[str, Field(description="GitLab group for roles.")] = (
         "team4.0-authentication/entities-service"
     )
+
+    deactivate_oauth: Annotated[
+        bool,
+        Field(
+            description=(
+                "Deactivate OAuth2 authentication and authorization. "
+                "This should NEVER be used in production.",
+            )
+        ),
+    ] = False
 
     # MongoDB backend settings
     mongo_uri: Annotated[

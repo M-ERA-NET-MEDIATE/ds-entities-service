@@ -13,9 +13,7 @@ if TYPE_CHECKING:
     from ...conftest import ClientFixture, MockAuthVerification, ParameterizeGetEntities
 
 
-pytestmark = pytest.mark.skip_if_live_backend(
-    "OAuth2 verification cannot be mocked on external backend."
-)
+pytestmark = pytest.mark.usefixtures("_empty_backend_collection")
 
 
 ENDPOINT = "/entities"
@@ -24,27 +22,30 @@ ENDPOINT = "/entities"
 def test_create_single_entity(
     client: ClientFixture,
     parameterized_entity: ParameterizeGetEntities,
-    mock_auth_verification: MockAuthVerification,
+    mock_auth_verification: MockAuthVerification | None,
     auth_header: dict[Literal["Authorization"], str],
+    live_backend: bool,
 ) -> None:
     """Test creating a single entity."""
-    # Setup mock responses for OAuth2 verification
-    mock_auth_verification(auth_role="write")
+    import json
+
+    if not live_backend:
+        # Setup mock responses for OAuth2 verification
+        mock_auth_verification(auth_role="write")
 
     # Create single entity
-    with client(auth_role="write") as client_:
-        response = client_.post(
-            ENDPOINT,
-            json=parameterized_entity.entity,
-            headers=auth_header,
-        )
+    with client() as client_:
+        response = client_.post(ENDPOINT, json=parameterized_entity.entity, headers=auth_header)
 
-    response_json = response.json()
+    try:
+        response_json = response.json()
+    except json.JSONDecodeError:
+        pytest.fail(f"Failed to decode response: {response.content!r}")
 
     # Check response
-    assert response.status_code == 201, response_json
-    assert isinstance(response_json, dict), response_json
-    assert response_json == parameterized_entity.entity, response_json
+    assert response.status_code == 201, json.dumps(response_json, indent=2)
+    assert isinstance(response_json, dict), json.dumps(response_json, indent=2)
+    assert response_json == parameterized_entity.entity, json.dumps(response_json, indent=2)
 
 
 def test_create_multiple_entities(

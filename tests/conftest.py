@@ -623,8 +623,12 @@ def mock_auth_verification(
     httpx_mock: HTTPXMock,
     get_backend_user: GetBackendUserFixture,
     auth_header: dict[Literal["Authorization"], str],
-) -> MockAuthVerification:
+    live_backend: bool,
+) -> MockAuthVerification | None:
     """Mock authentication."""
+    if live_backend:
+        return None
+
     from entities_service.service.config import CONFIG
 
     # OpenID configuration
@@ -712,19 +716,14 @@ def mock_auth_verification(
 
 
 @pytest.fixture()
-def client(
-    live_backend: bool, auth_header: dict[Literal["Authorization"], str]
-) -> ClientFixture:
+def client(live_backend: bool) -> ClientFixture:
     """Return the test client."""
     import os
 
     from fastapi.testclient import TestClient
     from httpx import Client
 
-    def _client(
-        auth_role: Literal["read", "write"] | None = None,
-        raise_server_exceptions: bool = True,
-    ) -> TestClient | Client:
+    def _client(raise_server_exceptions: bool = True,) -> TestClient | Client:
         """Return the test client with the given authentication role."""
         if not live_backend:
             from entities_service.main import APP
@@ -732,15 +731,8 @@ def client(
             return TestClient(
                 app=APP,
                 raise_server_exceptions=raise_server_exceptions,
+                follow_redirects=True,
             )
-
-        if auth_role is None:
-            auth_role = "read"
-
-        assert auth_role in ("read", "write"), (
-            f"Invalid authentication role {auth_role!r}. Must be either 'read' or "
-            "'write'."
-        )
 
         host, port = os.getenv("ENTITIES_SERVICE_HOST", "localhost"), os.getenv(
             "ENTITIES_SERVICE_PORT", "8000"
@@ -753,7 +745,24 @@ def client(
 
         return Client(
             base_url=f"http://{host}:{port}",
-            headers=auth_header,
+            follow_redirects=True,
         )
 
     return _client
+
+
+@pytest.fixture()
+def non_mocked_hosts(live_backend: bool) -> list[str]:
+    """Return the non-mocked hosts."""
+    import os
+
+    host, port = os.getenv("ENTITIES_SERVICE_HOST", "localhost"), os.getenv(
+        "ENTITIES_SERVICE_PORT", "8000"
+    )
+
+    hosts = [host]
+
+    if port:
+        hosts.append(f"{host}:{port}")
+
+    return hosts if live_backend else []

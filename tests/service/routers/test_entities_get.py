@@ -54,14 +54,14 @@ def test_get_entity_instance(
 
 
 def test_get_entity_not_found(client: ClientFixture) -> None:
-    """Test that the route returns a Not Found (404) for non existant URIs."""
+    """Test that the route returns a Not Found (404) for non existent URIs."""
     from fastapi import status
 
-    namespace, version, name = "http://onto-ns.com/meta", "0.0", "NonExistantEntity"
+    namespace, version, name = "http://onto-ns.com/meta", "0.0", "NonExistentEntity"
     with client() as client_:
         response = client_.get(f"{ENDPOINT}/{namespace}/{version}/{name}", timeout=5)
 
-    assert not response.is_success, "Non existant (valid) URI returned an OK response!"
+    assert not response.is_success, "Non existent (valid) URI returned an OK response!"
     assert (
         response.status_code == status.HTTP_404_NOT_FOUND
     ), f"Response:\n\n{response.json()}"

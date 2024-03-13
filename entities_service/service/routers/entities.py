@@ -10,7 +10,6 @@ from fastapi import (
     Body,
     Depends,
     HTTPException,
-    Path,
     Query,
     Response,
     status,
@@ -36,11 +35,11 @@ URIStrictType = Annotated[str, Field(pattern=URI_REGEX.pattern)]
 
 @ROUTER.get(
     "/",
-    response_model=list[VersionedSOFTEntity],
+    response_model=list[VersionedSOFTEntity] | VersionedSOFTEntity,
     response_model_by_alias=True,
     response_model_exclude_unset=True,
-    summary="Retrieve one or more Entities.",
-    response_description="Retrieved Entities.",
+    summary="Retrieve one or more Entity.",
+    response_description="Retrieved Entity or Entities.",
 )
 async def get_entities(
     identities: Annotated[
@@ -69,7 +68,7 @@ async def get_entities(
             alias="dim",
         ),
     ] = None,
-) -> list[dict[str, Any]]:
+) -> list[dict[str, Any]] | dict[str, Any]:
     """Retrieve one or more Entities.
 
     An inclusive search will be performed based the provided identities, properties,
@@ -85,6 +84,8 @@ async def get_entities(
     )
 
     if entities:
+        if len(entities) == 1:
+            return entities[0]
         return entities
 
     LOGGER.error(
@@ -93,6 +94,7 @@ async def get_entities(
         ", ".join(properties) if properties else "None",
         ", ".join(dimensions) if dimensions else "None",
     )
+
     raise HTTPException(
         status_code=status.HTTP_404_NOT_FOUND,
         detail=f"Could not find entities: identities={identities}",
@@ -125,10 +127,10 @@ async def create_entities(
     write_fail_exception = HTTPException(
         status_code=status.HTTP_502_BAD_GATEWAY,
         detail=(
-            "Could not create entit{suffix_entit} with uri{suffix_uri}: {uris}".format(
-                suffix_entit="y" if len(entities) == 1 else "ies",
-                suffix_uri="" if len(entities) == 1 else "s",
-                uris=", ".join(get_uri(entity) for entity in entities),
+            "Could not create entit"
+            "{suffix} with identit{suffix}: {identities}".format(
+                suffix="y" if len(entities) == 1 else "ies",
+                identities=", ".join(get_uri(entity) for entity in entities),
             )
         ),
     )
@@ -139,7 +141,7 @@ async def create_entities(
         created_entities = entities_backend.create(entities)
     except entities_backend.write_access_exception as err:
         LOGGER.error(
-            "Could not create entities: uris=%s",
+            "Could not create entities: identities=[%s]",
             ", ".join(get_uri(entity) for entity in entities),
         )
         LOGGER.exception(err)
@@ -173,6 +175,7 @@ async def update_entities(
     if isinstance(entities, list):
         # Check if there are any entities to update
         if not entities:
+            response.status_code = status.HTTP_204_NO_CONTENT
             return None
     else:
         entities = [entities]
@@ -181,10 +184,9 @@ async def update_entities(
         status_code=status.HTTP_502_BAD_GATEWAY,
         detail=(
             "Could not put/update entit"
-            "{suffix_entit} with uri{suffix_uri}: {uris}".format(
-                suffix_entit="y" if len(entities) == 1 else "ies",
-                suffix_uri="" if len(entities) == 1 else "s",
-                uris=", ".join(get_uri(entity) for entity in entities),
+            "{suffix} with identit{suffix}: {identities}".format(
+                suffix="y" if len(entities) == 1 else "ies",
+                identities=", ".join(get_uri(entity) for entity in entities),
             )
         ),
     )
@@ -200,32 +202,33 @@ async def update_entities(
             created_entities = entities_backend.create(new_entities)
         except entities_backend.write_access_exception as err:
             LOGGER.error(
-                "Could not create entities: uris=%s",
+                "Could not create entities: identities=[%s]",
                 ", ".join(get_uri(entity) for entity in new_entities),
             )
             LOGGER.exception(err)
             raise write_fail_exception from err
 
-    if (
-        created_entities is None
-        or (len(new_entities) == 1 and isinstance(created_entities, list))
-        or (len(new_entities) > 1 and not isinstance(created_entities, list))
-    ):
-        raise write_fail_exception
+        if (
+            created_entities is None
+            or (len(new_entities) == 1 and isinstance(created_entities, list))
+            or (len(new_entities) > 1 and not isinstance(created_entities, list))
+        ):
+            raise write_fail_exception
 
     # Update existing entities
     for entity in entities:
         if entity in new_entities:
             continue
 
-        if get_uri(entity) in entities_backend:
+        if (identity := get_uri(entity)) in entities_backend:
             try:
-                entities_backend.update(get_uri(entity), entity)
+                entities_backend.update(identity, entity)
             except entities_backend.write_access_exception as err:
                 LOGGER.error(
-                    "Could not update entities: uris=%s",
+                    "Could not update entities: identities=[%s]",
                     ", ".join(get_uri(entity) for entity in entities),
                 )
+                LOGGER.error("Error happened when updating entity: identity=%s", identity)
                 LOGGER.exception(err)
                 raise write_fail_exception from err
 
@@ -261,10 +264,9 @@ async def patch_entities(
         status_code=status.HTTP_502_BAD_GATEWAY,
         detail=(
             "Could not patch/update entit"
-            "{suffix_entit} with uri{suffix_uri}: {uris}".format(
-                suffix_entit="y" if len(entities) == 1 else "ies",
-                suffix_uri="" if len(entities) == 1 else "s",
-                uris=", ".join(get_uri(entity) for entity in entities),
+            "{suffix} with identit{suffix}: {identities}".format(
+                suffix="y" if len(entities) == 1 else "ies",
+                identities=", ".join(get_uri(entity) for entity in entities),
             )
         ),
     )
@@ -277,7 +279,7 @@ async def patch_entities(
     ]
     if non_existing_entities:
         LOGGER.error(
-            "Cannot patch non-existant entities: uris=%s",
+            "Cannot patch non-existent entities: identities=[%s]",
             ", ".join(get_uri(entity) for entity in non_existing_entities),
         )
         raise write_fail_exception
@@ -287,9 +289,10 @@ async def patch_entities(
             entities_backend.update(get_uri(entity), entity)
         except entities_backend.write_access_exception as err:
             LOGGER.error(
-                "Could not update entities: uris=%s",
+                "Could not update entities: identities=[%s]",
                 ", ".join(get_uri(entity) for entity in entities),
             )
+            LOGGER.error("Error happened when updating entity: identity=%s", get_uri(entity))
             LOGGER.exception(err)
             raise write_fail_exception from err
 
@@ -298,11 +301,11 @@ async def patch_entities(
 
 @ROUTER.delete(
     "/",
-    response_model=list[URIStrictType] | None,
+    response_model=list[URIStrictType] | URIStrictType,
     status_code=status.HTTP_200_OK,
     dependencies=[Depends(verify_token)],
     summary="Delete one or more Entities.",
-    response_description="Deleted Entity identities.",
+    response_description="Deleted Entity identity or identities.",
 )
 async def delete_entities(
     identities_body: Annotated[
@@ -320,7 +323,7 @@ async def delete_entities(
             alias="id",
         ),
     ] = None,
-) -> list[URIStrictType]:
+) -> list[URIStrictType] | URIStrictType:
     """Delete one or more Entities."""
     identities: set[URIStrictType] = set()
 
@@ -352,242 +355,14 @@ async def delete_entities(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail=(
                 "Could not delete entit"
-                "{suffix_entit} with uri{suffix_uri}: {uris}".format(
-                    suffix_entit="y" if len(identities) == 1 else "ies",
-                    suffix_uri="" if len(identities) == 1 else "s",
-                    uris=", ".join(str(identity) for identity in identities),
+                "{suffix} with identit{suffix}: {identities}".format(
+                    suffix="y" if len(identities) == 1 else "ies",
+                    identities=", ".join(str(identity) for identity in identities),
                 )
             ),
         ) from err
+
+    if len(identities) == 1:
+        return identities.pop()
 
     return sorted(identities)
-
-
-@ROUTER.get(
-    "/{identity:path}",
-    response_model=VersionedSOFTEntity,
-    response_model_by_alias=True,
-    response_model_exclude_unset=True,
-    summary="Retrieve an Entity.",
-    response_description="Retrieved Entity.",
-)
-async def get_entity(
-    identity: Annotated[
-        URIStrictType,
-        Path(
-            title="Entity identity",
-            description="The identity (URI/IRI) of the entity to retrieve.",
-        ),
-    ],
-) -> dict[str, Any]:
-    """Retrieve an entity."""
-    entity = get_backend().read(identity)
-
-    if entity is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Could not find entity: uri={identity}",
-        )
-    return entity
-
-
-@ROUTER.post(
-    "/{identity:path}",
-    response_model=VersionedSOFTEntity,
-    response_model_by_alias=True,
-    response_model_exclude_unset=True,
-    status_code=status.HTTP_201_CREATED,
-    dependencies=[Depends(verify_token)],
-    summary="Create an Entity.",
-    response_description="Created Entity.",
-)
-async def create_entity(
-    identity: Annotated[
-        URIStrictType,
-        Path(
-            title="Entity identity",
-            description="The identity (URI/IRI) of the entity to create.",
-        ),
-    ],
-    entity: VersionedSOFTEntity,
-) -> dict[str, Any]:
-    """Create an entity."""
-    entities_backend = get_backend(CONFIG.backend, auth_level="write")
-
-    write_fail_exception = HTTPException(
-        status_code=status.HTTP_502_BAD_GATEWAY,
-        detail=f"Could not create entity: uri={identity}",
-    )
-
-    try:
-        created_entity = entities_backend.create([entity])
-    except entities_backend.write_access_exception as err:
-        LOGGER.error("Could not create entity: uri=%s", identity)
-        LOGGER.exception(err)
-        raise write_fail_exception from err
-
-    if not isinstance(created_entity, dict) or get_uri(created_entity) != identity:
-        raise write_fail_exception
-
-    return created_entity
-
-
-@ROUTER.put(
-    "/{identity:path}",
-    response_model=VersionedSOFTEntity,
-    response_model_by_alias=True,
-    response_model_exclude_unset=True,
-    status_code=status.HTTP_201_CREATED,
-    dependencies=[Depends(verify_token)],
-    summary="Replace or create an Entity.",
-    response_description="Created (not replaced) Entity.",
-)
-async def update_entity(
-    identity: Annotated[
-        URIStrictType,
-        Path(
-            title="Entity identity",
-            description="The identity (URI/IRI) of the entity to update.",
-        ),
-    ],
-    entity: VersionedSOFTEntity,
-    response: Response,
-) -> VersionedSOFTEntity | None:
-    """Update or create an entity."""
-    entities_backend = get_backend(CONFIG.backend, auth_level="write")
-
-    if identity != get_uri(entity):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Entity identity mismatch: uri={identity} != {get_uri(entity)}",
-        )
-
-    # Create new entity
-    if str(identity) not in entities_backend:
-        try:
-            entities_backend.create([entity])
-        except entities_backend.write_access_exception as err:
-            LOGGER.error("Could not create entity: uri=%s", identity)
-            LOGGER.exception(err)
-            raise HTTPException(
-                status_code=status.HTTP_502_BAD_GATEWAY,
-                detail=f"Could not create entity: uri={identity}",
-            ) from err
-
-        return entity
-
-    # Update existing entity
-    try:
-        entities_backend.update(identity, entity)
-    except entities_backend.write_access_exception as err:
-        LOGGER.error("Could not update entity: uri=%s", identity)
-        LOGGER.exception(err)
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=f"Could not update entity: uri={identity}",
-        ) from err
-
-    response.status_code = status.HTTP_204_NO_CONTENT
-    return None
-
-
-@ROUTER.patch(
-    "/{identity:path}",
-    response_model=None,
-    response_model_by_alias=True,
-    response_model_exclude_unset=True,
-    status_code=status.HTTP_204_NO_CONTENT,
-    dependencies=[Depends(verify_token)],
-    summary="Update an entity.",
-    response_description="No content.",
-)
-async def patch_entity(
-    identity: Annotated[
-        URIStrictType,
-        Path(
-            title="Entity identity",
-            description="The identity (URI/IRI) of the entity to update.",
-        ),
-    ],
-    entity: dict[str, Any],
-) -> None:
-    """Update an entity."""
-    entities_backend = get_backend(CONFIG.backend, auth_level="write")
-
-    if (
-        "uri" in entity
-        and entity["uri"] != identity
-        or (
-            "namespace" in entity
-            and (
-                uri := (
-                    f"{entity['namespace'].rstrip('/')}"
-                    f"/{entity.get('version')}/{entity.get('name')}"
-                )
-            )
-            != identity
-        )
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=(
-                f"Entity identity mismatch: uri={identity} != {entity.get('uri', uri)}"
-            ),
-        )
-
-    if str(identity) not in entities_backend:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Could not find entity to update: uri={identity}",
-        )
-
-    try:
-        entities_backend.update(identity, entity)
-    except entities_backend.write_access_exception as err:
-        LOGGER.error("Could not update entity: uri=%s", identity)
-        LOGGER.exception(err)
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=f"Could not update entity: uri={identity}",
-        ) from err
-
-    return
-
-
-@ROUTER.delete(
-    "/{identity:path}",
-    response_model=URIStrictType,
-    status_code=status.HTTP_200_OK,
-    dependencies=[Depends(verify_token)],
-    summary="Delete an Entity.",
-    response_description="Deleted Entity's identity.",
-)
-async def delete_entity(
-    identity: Annotated[
-        URIStrictType,
-        Path(
-            title="Entity identity",
-            description="The identity (URI/IRI) of the entity to delete.",
-        ),
-    ],
-) -> URIStrictType:
-    """Delete an entity."""
-    entities_backend = get_backend(CONFIG.backend, auth_level="write")
-
-    if identity not in entities_backend:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Could not find entity to delete: uri={identity}",
-        )
-
-    try:
-        entities_backend.delete([identity])
-    except entities_backend.write_access_exception as err:
-        LOGGER.error("Could not delete entity: uri=%s", identity)
-        LOGGER.exception(err)
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=f"Could not delete entity: uri={identity}",
-        ) from err
-
-    return identity

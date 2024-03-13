@@ -24,10 +24,10 @@ def get_uri(entity: VersionedSOFTEntity | dict[str, Any]) -> str:
     if "uri" in entity:
         return entity["uri"]
 
-    if not all(key in entity for key in ("namespace", "version", "name")):
+    if not all((key in entity and isinstance(entity[key], str)) for key in ("namespace", "version", "name")):
         raise ValueError(
             "Entity must have either a URI or all of namespace, version, and name "
             "defined."
         )
 
-    return f"{entity['namespace']}/{entity['version']}/{entity['name']}"
+    return f"{entity['namespace'].rstrip('/')}/{entity['version']}/{entity['name']}"

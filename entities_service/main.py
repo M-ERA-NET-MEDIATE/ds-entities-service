@@ -23,7 +23,7 @@ LOGGER = logging.getLogger("entities_service")
 
 # Application lifespan function
 @asynccontextmanager
-async def lifespan(_: FastAPI):
+async def lifespan(app: FastAPI):
     """Add lifespan events to the application."""
     # Initialize logger
     setup_logger()
@@ -32,6 +32,17 @@ async def lifespan(_: FastAPI):
 
     # Initialize backend
     get_backend(CONFIG.backend, auth_level="write").initialize()
+
+    # Deactivate OAuth2 if requested
+    if CONFIG.deactivate_oauth:
+        from entities_service.service.security import verify_token
+
+        LOGGER.warning(
+            "Deactivating OAuth2 authentication and authorization. "
+            "This should NEVER be used in production."
+        )
+
+        app.dependency_overrides[verify_token] = lambda: None
 
     # Run application
     yield
