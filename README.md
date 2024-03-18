@@ -142,18 +142,12 @@ For using it with Docker, use the `--env-file .env` argument when calling `docke
 
 ## Testing
 
-The service is tested using `pytest` and can be tested against a local MongoDB server and Entities Service instance or against a mock MongoDB server and Entities Service instance utilizing [Starlette's TestClient](https://fastapi.tiangolo.com/reference/testclient/#test-client-testclient).
+The service is tested using `pytest` and can be tested against a local MongoDB server and Entities Service instance.
 
 To run the tests, first install the test dependencies:
 
 ```shell
 pip install -U -e .[testing]
-```
-
-Then run the tests (for mock MongoDB ([`mongomock`](https://github.com/mongomock/mongomock)) and Entities Service):
-
-```shell
-pytest
 ```
 
 To run the tests against a live backend, you can pull, build, and run the [Docker Compose file](docker-compose.yml):
@@ -173,7 +167,13 @@ docker compose up -d
 pytest --live-backend
 ```
 
-Remember to set the `ENTITIES_SERVICE_X509_CERTIFICATE_FILE` and `ENTITIES_SERVICE_CA_FILE` environment variables to `docker_security/test-server1.pem` and `docker_security/test-ca.pem`, respectively.
+Remember to set the following environment variables:
+
+- `ENTITIES_SERVICE_X509_CERTIFICATE_FILE=docker_security/test-server1.pem`
+- `ENTITIES_SERVICE_CA_FILE=docker_security/test-ca.pem`
+- `ENTITIES_SERVICE_EXTERNAL_OAUTH=0`
+
+> **Warning** Setting `ENTITIES_SERVICE_EXTERNAL_OAUTH=0` will effectively deactivate the OAuth2 authentication and should only be used for testing purposes.
 
 ### Extra pytest markers
 
@@ -200,7 +200,7 @@ There are some custom pytest markers:
   A reason can be specified as an argument to the marker, e.g.:
 
   ```python
-  @pytest.mark.skip_if_not_live_backend(reason="Indexing is not supported by mongomock")
+  @pytest.mark.skip_if_not_live_backend(reason="OAuth2 cannot be mocked from the real backend")
   def test_something():
       ...
   ```

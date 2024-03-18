@@ -86,8 +86,7 @@ class Backend(ABC):
             item_or_errors = soft_entity(return_errors=True, **item)
             if isinstance(item_or_errors, list):
                 LOGGER.error(
-                    "item given to __contains__ is malformed, not a SOFT entity.\n"
-                    "Item: %r\nErrors: %s",
+                    "item given to __contains__ is malformed, not a SOFT entity.\nItem: %r\nErrors: %s",
                     item,
                     item_or_errors,
                 )
@@ -126,9 +125,7 @@ class Backend(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def read(
-        self, entity_identity: AnyHttpUrl | str
-    ) -> dict[str, Any] | None:  # pragma: no cover
+    def read(self, entity_identity: AnyHttpUrl | str) -> dict[str, Any] | None:  # pragma: no cover
         """Read an entity from the backend."""
         raise NotImplementedError
 
@@ -142,9 +139,7 @@ class Backend(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def delete(
-        self, entity_identities: Iterable[AnyHttpUrl | str]
-    ) -> None:  # pragma: no cover
+    def delete(self, entity_identities: Iterable[AnyHttpUrl | str]) -> None:  # pragma: no cover
         """Delete one or more entities in the backend."""
         raise NotImplementedError
 

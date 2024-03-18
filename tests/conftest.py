@@ -34,23 +34,30 @@ if TYPE_CHECKING:
 
         def __call__(
             self,
-            auth_role: Literal["read", "write"] | None = None,
             raise_server_exceptions: bool = True,
         ) -> TestClient | Client: ...
 
     class GetBackendUserFixture(Protocol):
         """Protocol for the get_backend_user fixture."""
 
-        def __call__(
-            self, auth_role: Literal["read", "write"] | None = None
-        ) -> UserDict: ...
+        def __call__(self, auth_role: Literal["read", "write"] | None = None) -> UserDict: ...
 
     class MockAuthVerification(Protocol):
         """Protocol for the mock_auth_verification fixture."""
 
+        def __call__(self, auth_role: Literal["read", "write"] | None = None) -> None: ...
+
+    class TokenMockFixture(Protocol):
+        """Protocol for the token_mock fixture."""
+
+        def __call__(self, auth_role: Literal["read", "write"] | None = None) -> str: ...
+
+    class AuthHeaderFixture(Protocol):
+        """Protocol for the auth_header fixture."""
+
         def __call__(
             self, auth_role: Literal["read", "write"] | None = None
-        ) -> None: ...
+        ) -> dict[Literal["Authorization"], str]: ...
 
 
 class ParameterizeGetEntities(NamedTuple):
@@ -80,15 +87,9 @@ def pytest_configure(config: pytest.Config) -> None:
     """Configure pytest - set ENTITIES_SERVICE_BACKEND env var."""
     import os
 
-    # Set the environment variable for the MongoDB database name
-    live_backend: bool = config.getoption("--live-backend")
-    os.environ["ENTITIES_SERVICE_BACKEND"] = "mongodb" if live_backend else "mongomock"
-
     # These are only really (properly) used when running with --live-backend,
     # but it's fine to set them here, since they are not checked when running without.
-    os.environ["ENTITIES_SERVICE_X509_CERTIFICATE_FILE"] = (
-        "docker_security/test-client.pem"
-    )
+    os.environ["ENTITIES_SERVICE_X509_CERTIFICATE_FILE"] = "docker_security/test-client.pem"
     os.environ["ENTITIES_SERVICE_CA_FILE"] = "docker_security/test-ca.pem"
 
     # Add extra markers
@@ -104,9 +105,7 @@ def pytest_configure(config: pytest.Config) -> None:
     )
 
 
-def pytest_collection_modifyitems(
-    config: pytest.Config, items: list[pytest.Item]
-) -> None:
+def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
     """Called after collection has been performed. May filter or re-order the items
     in-place."""
     if config.getoption("--live-backend"):
@@ -119,10 +118,9 @@ def pytest_collection_modifyitems(
                 marker: pytest.Mark = item.keywords["skip_if_live_backend"]
 
                 if marker.args:
-                    assert len(marker.args) == 1, (
-                        "The 'skip_if_live_backend' marker can only have one "
-                        "argument."
-                    )
+                    assert (
+                        len(marker.args) == 1
+                    ), "The 'skip_if_live_backend' marker can only have one argument."
 
                     reason = marker.args[0]
                 elif marker.kwargs and "reason" in marker.kwargs:
@@ -130,16 +128,12 @@ def pytest_collection_modifyitems(
                 else:
                     reason = default_reason
 
-                assert isinstance(
-                    reason, str
-                ), "The reason for skipping the test must be a string."
+                assert isinstance(reason, str), "The reason for skipping the test must be a string."
 
                 # The marker does not have a reason
-                item.add_marker(
-                    pytest.mark.skip(reason=prefix_reason.format(reason=reason))
-                )
+                item.add_marker(pytest.mark.skip(reason=prefix_reason.format(reason=reason)))
     else:
-        # If the tests are run with the mock backend, skip the tests marked with
+        # If the tests are not run with a live backend, skip the tests marked with
         # 'skip_if_not_live_backend'
         prefix_reason = "No live backend: {reason}"
         default_reason = "Test is skipped when not using a live backend"
@@ -148,10 +142,9 @@ def pytest_collection_modifyitems(
                 marker: pytest.Mark = item.keywords["skip_if_not_live_backend"]
 
                 if marker.args:
-                    assert len(marker.args) == 1, (
-                        "The 'skip_if_not_live_backend' marker can only have one "
-                        "argument."
-                    )
+                    assert (
+                        len(marker.args) == 1
+                    ), "The 'skip_if_not_live_backend' marker can only have one argument."
 
                     reason = marker.args[0]
                 elif marker.kwargs and "reason" in marker.kwargs:
@@ -159,14 +152,10 @@ def pytest_collection_modifyitems(
                 else:
                     reason = default_reason
 
-                assert isinstance(
-                    reason, str
-                ), "The reason for skipping the test must be a string."
+                assert isinstance(reason, str), "The reason for skipping the test must be a string."
 
                 # The marker does not have a reason
-                item.add_marker(
-                    pytest.mark.skip(reason=prefix_reason.format(reason=reason))
-                )
+                item.add_marker(pytest.mark.skip(reason=prefix_reason.format(reason=reason)))
 
 
 def pytest_sessionstart(session: pytest.Session) -> None:
@@ -188,9 +177,7 @@ def pytest_sessionstart(session: pytest.Session) -> None:
     # Unpack `valid_entities.yaml` to `valid_entities/*.json`
     static_dir = (Path(__file__).parent / "static").resolve()
 
-    entities: list[dict[str, Any]] = yaml.safe_load(
-        (static_dir / "valid_entities.yaml").read_text()
-    )
+    entities: list[dict[str, Any]] = yaml.safe_load((static_dir / "valid_entities.yaml").read_text())
 
     valid_entities_dir = static_dir / "valid_entities"
     if valid_entities_dir.exists():
@@ -206,16 +193,13 @@ def pytest_sessionstart(session: pytest.Session) -> None:
         if name is None:
             uri: str | None = entity.get("uri")
             if uri is None:
-                raise ValueError(
-                    "Could not retrieve neither uri and name from test entity."
-                )
+                raise ValueError("Could not retrieve neither uri and name from test entity.")
             name = uri.split("/")[-1]
 
         json_file = valid_entities_dir / f"{name}.json"
         if json_file.exists():
             raise FileExistsError(
-                f"Could not unpack 'valid_entities.yaml' to '{json_file}'. File "
-                "already exists."
+                f"Could not unpack 'valid_entities.yaml' to '{json_file}'. File already exists."
             )
 
         json_file.write_text(json.dumps(entity))
@@ -229,9 +213,7 @@ def pytest_sessionstart(session: pytest.Session) -> None:
     local_env_file = Path(session.startpath).resolve() / ".env"
 
     if local_env_file.exists():
-        temporary_env_file = (
-            Path(session.startpath).resolve() / ".env.temp_while_testing"
-        )
+        temporary_env_file = Path(session.startpath).resolve() / ".env.temp_while_testing"
         if temporary_env_file.exists():
             raise FileExistsError(
                 "Could not temporarily rename local '.env' file to "
@@ -241,14 +223,10 @@ def pytest_sessionstart(session: pytest.Session) -> None:
         shutil.move(local_env_file, temporary_env_file)
 
         if local_env_file.exists() or not temporary_env_file.exists():
-            raise FileNotFoundError(
-                "Could not move local '.env' file to a temporary naming."
-            )
+            raise FileNotFoundError("Could not move local '.env' file to a temporary naming.")
 
 
-def pytest_sessionfinish(
-    session: pytest.Session, exitstatus: int  # noqa: ARG001
-) -> None:
+def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:  # noqa: ARG001
     """Called after whole test run finished, right before returning the exit status to
     the system.
 
@@ -267,10 +245,9 @@ def pytest_sessionfinish(
     if valid_entities_dir.exists():
         shutil.rmtree(valid_entities_dir)
 
-    assert not valid_entities_dir.exists(), (
-        f"Could not remove '{valid_entities_dir}'. "
-        "Directory still exists after removal."
-    )
+    assert (
+        not valid_entities_dir.exists()
+    ), f"Could not remove '{valid_entities_dir}'. Directory still exists after removal."
 
     # Rename '.env.temp_while_testing' to '.env'
     if session.config.getoption("--live-backend"):
@@ -315,9 +292,7 @@ def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
         """Return the version and name part of a uri."""
         namespace = "http://onto-ns.com/meta"
 
-        match = re.match(
-            rf"^{re.escape(namespace)}/(?P<version>[^/]+)/(?P<name>[^/]+)$", uri
-        )
+        match = re.match(rf"^{re.escape(namespace)}/(?P<version>[^/]+)/(?P<name>[^/]+)$", uri)
         assert match is not None, (
             f"Could not retrieve version and name from {uri!r}. "
             "URI must be of the form: "
@@ -343,9 +318,7 @@ def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
 
     static_dir = (Path(__file__).parent / "static").resolve()
 
-    entities: list[dict[str, Any]] = yaml.safe_load(
-        (static_dir / "valid_entities.yaml").read_text()
-    )
+    entities: list[dict[str, Any]] = yaml.safe_load((static_dir / "valid_entities.yaml").read_text())
 
     for entity in entities:
         uri = entity.get("uri") or get_uri(entity)
@@ -364,17 +337,12 @@ def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
 
         # SOFT7
         else:
-            for property_name, property_value in list(
-                backend_entity["properties"].items()
-            ):
+            for property_name, property_value in list(backend_entity["properties"].items()):
                 backend_entity["properties"][property_name] = {
-                    key.replace("$ref", "ref"): value
-                    for key, value in property_value.items()
+                    key.replace("$ref", "ref"): value for key, value in property_value.items()
                 }
 
-        results.append(
-            ParameterizeGetEntities(entity, version, name, uri, backend_entity)
-        )
+        results.append(ParameterizeGetEntities(entity, version, name, uri, backend_entity))
 
     metafunc.parametrize(
         "parameterized_entity",
@@ -410,10 +378,6 @@ def live_backend(request: pytest.FixtureRequest) -> bool:
                 stacklevel=1,
             )
 
-    # Sanity check - the ENTITIES_SERVICE_BACKEND should be set to 'pymongo' if
-    # the tests are run with a live backend, and 'mongomock' otherwise
-    assert os.getenv("ENTITIES_SERVICE_BACKEND") == "mongodb" if value else "mongomock"
-
     return value
 
 
@@ -436,9 +400,7 @@ def get_backend_user() -> GetBackendUserFixture:
     """
     from entities_service.service.config import CONFIG
 
-    def _get_backend_user(
-        auth_role: Literal["read", "write"] | None = None
-    ) -> UserDict:
+    def _get_backend_user(auth_role: Literal["read", "write"] | None = None) -> UserDict:
         """Return the backend user for the given authentication role."""
         if auth_role is None:
             auth_role = "read"
@@ -477,19 +439,43 @@ def get_backend_user() -> GetBackendUserFixture:
 
 
 @pytest.fixture(scope="session", autouse=True)
-def _mongo_test_collection(
-    static_dir: Path, live_backend: bool, get_backend_user: GetBackendUserFixture
-) -> None:
-    """Add MongoDB test data to the chosen backend."""
+def _mongo_backend_users(live_backend: bool, get_backend_user: GetBackendUserFixture) -> None:
+    """Add MongoDB test users."""
+    if not live_backend:
+        return
+
+    from entities_service.service.backend import get_backend
+
+    backend: MongoDBBackend = get_backend(
+        settings={
+            "mongo_username": "root",
+            "mongo_password": "root",
+        },
+    )
+    admin_db = backend._collection.database.client["admin"]
+
+    existing_users: list[str] = [
+        user["user"] for user in admin_db.command("usersInfo", usersInfo=1)["users"]
+    ]
+
+    for auth_role in ("read", "write"):
+        user_info = get_backend_user(auth_role)
+        if user_info["username"] not in existing_users:
+            admin_db.command(
+                "createUser",
+                createUser=user_info["username"],
+                pwd=user_info["password"],
+                roles=user_info["roles"],
+            )
+
+
+@pytest.fixture()
+def backend_test_data(static_dir: Path) -> list[dict[str, Any]]:
+    """Return the test data for the backend."""
     import yaml
 
-    from entities_service.service.backend import Backends, get_backend
-    from entities_service.service.config import CONFIG
-
     # Convert all '$ref' to 'ref' in the valid_entities.yaml file
-    entities: list[dict[str, Any]] = yaml.safe_load(
-        (static_dir / "valid_entities.yaml").read_text()
-    )
+    entities: list[dict[str, Any]] = yaml.safe_load((static_dir / "valid_entities.yaml").read_text())
     for entity in entities:
         # SOFT5
         if isinstance(entity["properties"], list):
@@ -506,74 +492,22 @@ def _mongo_test_collection(
                 }
 
         else:
-            raise TypeError(
-                f"Invalid type for entity['properties']: {type(entity['properties'])}"
-            )
+            raise TypeError(f"Invalid type for entity['properties']: {type(entity['properties'])}")
 
-    assert CONFIG.backend == (
-        Backends.MONGODB if live_backend else Backends.MONGOMOCK
-    ), (
-        "The backend should be set to 'mongodb' if the tests are run with a live "
-        "backend, and 'mongomock' otherwise."
-    )
-
-    if live_backend:
-        # Add test users to the database
-        backend: MongoDBBackend = get_backend(
-            settings={
-                "mongo_username": "root",
-                "mongo_password": "root",
-            },
-        )
-        admin_db = backend._collection.database.client["admin"]
-
-        existing_users: list[str] = [
-            user["user"] for user in admin_db.command("usersInfo", usersInfo=1)["users"]
-        ]
-
-        for auth_role in ("read", "write"):
-            user_info = get_backend_user(auth_role)
-            if user_info["username"] not in existing_users:
-                admin_db.command(
-                    "createUser",
-                    createUser=user_info["username"],
-                    pwd=user_info["password"],
-                    roles=user_info["roles"],
-                )
+    return entities
 
 
 @pytest.fixture(autouse=True)
 def _reset_mongo_test_collection(
-    get_backend_user: GetBackendUserFixture, static_dir: Path
+    get_backend_user: GetBackendUserFixture,
+    backend_test_data: list[dict[str, Any]],
+    live_backend: bool,
 ) -> None:
     """Purge the MongoDB test collection."""
-    import yaml
+    if not live_backend:
+        return
 
     from entities_service.service.backend import get_backend
-
-    # Convert all '$ref' to 'ref' in the valid_entities.yaml file
-    entities: list[dict[str, Any]] = yaml.safe_load(
-        (static_dir / "valid_entities.yaml").read_text()
-    )
-    for entity in entities:
-        # SOFT5
-        if isinstance(entity["properties"], list):
-            for index, property_value in enumerate(list(entity["properties"])):
-                entity["properties"][index] = {
-                    key.replace("$", ""): value for key, value in property_value.items()
-                }
-
-        # SOFT7
-        elif isinstance(entity["properties"], dict):
-            for property_name, property_value in list(entity["properties"].items()):
-                entity["properties"][property_name] = {
-                    key.replace("$", ""): value for key, value in property_value.items()
-                }
-
-        else:
-            raise TypeError(
-                f"Invalid type for entity['properties']: {type(entity['properties'])}"
-            )
 
     backend_user = get_backend_user("write")
 
@@ -585,7 +519,28 @@ def _reset_mongo_test_collection(
         },
     )
     backend._collection.delete_many({})
-    backend._collection.insert_many(entities)
+    backend._collection.insert_many(backend_test_data)
+
+
+@pytest.fixture()
+def _empty_backend_collection(live_backend: bool, get_backend_user: GetBackendUserFixture) -> None:
+    """Empty the backend collection."""
+    if not live_backend:
+        return
+
+    from entities_service.service.backend import get_backend
+
+    backend_user = get_backend_user("write")
+
+    backend: MongoDBBackend = get_backend(
+        auth_level="write",
+        settings={
+            "mongo_username": backend_user["username"],
+            "mongo_password": backend_user["password"],
+        },
+    )
+    backend._collection.delete_many({})
+    assert backend._collection.count_documents({}) == 0
 
 
 @pytest.fixture(autouse=True)
@@ -601,77 +556,73 @@ def _mock_lifespan(live_backend: bool, monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 @pytest.fixture()
-def _empty_backend_collection(
-    live_backend: bool, get_backend_user: GetBackendUserFixture
-) -> None:
-    """Empty the backend collection."""
-    from entities_service.service.backend import get_backend
-
-    backend_settings = {}
-    if live_backend:
-        backend_user = get_backend_user("write")
-        backend_settings = {
-            "mongo_username": backend_user["username"],
-            "mongo_password": backend_user["password"],
-        }
-
-    backend: MongoDBBackend = get_backend(settings=backend_settings)
-    backend._collection.delete_many({})
-    assert backend._collection.count_documents({}) == 0
-
-
-@pytest.fixture()
-def token_mock() -> str:
+def token_mock() -> TokenMockFixture:
     """Return a mock token."""
-    return (
-        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJyb290IiwiaXNzIjoiaHR0cDovL29u"
-        "dG8tbnMuY29tL21ldGEiLCJleHAiOjE3MDYxOTI1OTAsImNsaWVudF9pZCI6Imh0dHA6Ly9vbnRvL"
-        "W5zLmNvbS9tZXRhIiwiaWF0IjoxNzA2MTkwNzkwfQ.FzvzWyI_CNrLkHhr4oPRQ0XEY8H9DL442QD"
-        "8tM8dhVM"
-    )
+
+    def _token_mock(auth_role: Literal["read", "write"] | None = None) -> str:
+        """Return a mock token related to an authorization role."""
+        if auth_role is None:
+            auth_role = "read"
+
+        if auth_role == "read":
+            return "read-users-token"
+
+        if auth_role == "write":
+            return (
+                "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJyb290IiwiaXNzIjoiaHR0cDovL29udG8tbnMuY29t"
+                "L21ldGEiLCJleHAiOjE3MDYxOTI1OTAsImNsaWVudF9pZCI6Imh0dHA6Ly9vbnRvLW5zLmNvbS9tZXRhIiwiaWF0I"
+                "joxNzA2MTkwNzkwfQ.FzvzWyI_CNrLkHhr4oPRQ0XEY8H9DL442QD8tM8dhVM"
+            )
+
+        pytest.fail("The authentication role must be either 'read' or 'write'.")
+
+    return _token_mock
 
 
 @pytest.fixture()
-def auth_header(token_mock: str) -> dict[Literal["Authorization"], str]:
+def auth_header(token_mock: TokenMockFixture) -> AuthHeaderFixture:
     """Return the authentication header."""
     from fastapi.security import HTTPAuthorizationCredentials
 
-    mock_credentials = HTTPAuthorizationCredentials(
-        scheme="Bearer",
-        credentials=token_mock,
-    )
-    return {
-        "Authorization": f"{mock_credentials.scheme} {mock_credentials.credentials}"
-    }
+    def _auth_header(
+        auth_role: Literal["read", "write"] | None = None
+    ) -> dict[Literal["Authorization"], str]:
+        """Return the user-related authentication header."""
+        if auth_role is None:
+            auth_role = "read"
+
+        mock_credentials = HTTPAuthorizationCredentials(
+            scheme="Bearer",
+            credentials=token_mock(auth_role),
+        )
+
+        return {"Authorization": f"{mock_credentials.scheme} {mock_credentials.credentials}"}
+
+    return _auth_header
 
 
 @pytest.fixture()
 def mock_auth_verification(
     httpx_mock: HTTPXMock,
     get_backend_user: GetBackendUserFixture,
-    auth_header: dict[Literal["Authorization"], str],
-) -> MockAuthVerification:
+    auth_header: AuthHeaderFixture,
+    live_backend: bool,
+) -> MockAuthVerification | None:
     """Mock authentication."""
+    if live_backend:
+        return None
+
     from entities_service.service.config import CONFIG
 
     # OpenID configuration
     httpx_mock.add_response(
-        url=(
-            f"{str(CONFIG.oauth2_provider).rstrip('/')}"
-            "/.well-known/openid-configuration"
-        ),
+        url=f"{str(CONFIG.oauth2_provider).rstrip('/')}/.well-known/openid-configuration",
         json={
             "issuer": str(CONFIG.oauth2_provider).rstrip("/"),
-            "authorization_endpoint": (
-                f"{str(CONFIG.oauth2_provider).rstrip('/')}/oauth/authorize"
-            ),
+            "authorization_endpoint": f"{str(CONFIG.oauth2_provider).rstrip('/')}/oauth/authorize",
             "token_endpoint": f"{str(CONFIG.oauth2_provider).rstrip('/')}/oauth/token",
-            "userinfo_endpoint": (
-                f"{str(CONFIG.oauth2_provider).rstrip('/')}/oauth/userinfo"
-            ),
-            "jwks_uri": (
-                f"{str(CONFIG.oauth2_provider).rstrip('/')}/oauth/discovery/keys"
-            ),
+            "userinfo_endpoint": f"{str(CONFIG.oauth2_provider).rstrip('/')}/oauth/userinfo",
+            "jwks_uri": f"{str(CONFIG.oauth2_provider).rstrip('/')}/oauth/discovery/keys",
             "response_types_supported": [
                 "code",
             ],
@@ -688,9 +639,7 @@ def mock_auth_verification(
         },
     )
 
-    def _mock_auth_verification(
-        auth_role: Literal["read", "write"] | None = None
-    ) -> None:
+    def _mock_auth_verification(auth_role: Literal["read", "write"] | None = None) -> None:
         """Mock authentication."""
         if auth_role is None:
             auth_role = "read"
@@ -715,59 +664,38 @@ def mock_auth_verification(
                 "name": backend_user["username"],
                 "nickname": backend_user["username"],
                 "preferred_username": backend_user["username"],
-                "website": (
-                    f"{str(CONFIG.oauth2_provider).rstrip('/')}"
-                    f"/{backend_user['username']}"
-                ),
-                "profile": (
-                    f"{str(CONFIG.oauth2_provider).rstrip('/')}"
-                    f"/{backend_user['username']}"
-                ),
-                "picture": (
-                    f"{str(CONFIG.oauth2_provider).rstrip('/')}"
-                    f"/{backend_user['username']}"
-                ),
+                "website": f"{str(CONFIG.oauth2_provider).rstrip('/')}/{backend_user['username']}",
+                "profile": f"{str(CONFIG.oauth2_provider).rstrip('/')}/{backend_user['username']}",
+                "picture": f"{str(CONFIG.oauth2_provider).rstrip('/')}/{backend_user['username']}",
                 "groups": [CONFIG.roles_group],
                 "https://gitlab.org/claims/groups/owner": [],
                 "https://gitlab.org/claims/groups/maintainer": [],
                 **groups_role_developer,
             },
-            match_headers=auth_header,
+            match_headers=auth_header(auth_role),
         )
 
     return _mock_auth_verification
 
 
 @pytest.fixture()
-def client(
-    live_backend: bool, auth_header: dict[Literal["Authorization"], str]
-) -> ClientFixture:
+def client(live_backend: bool) -> ClientFixture:
     """Return the test client."""
     import os
 
     from fastapi.testclient import TestClient
     from httpx import Client
 
-    from entities_service.main import APP
-
-    def _client(
-        auth_role: Literal["read", "write"] | None = None,
-        raise_server_exceptions: bool = True,
-    ) -> TestClient | Client:
+    def _client(raise_server_exceptions: bool = True) -> TestClient | Client:
         """Return the test client with the given authentication role."""
         if not live_backend:
+            from entities_service.main import APP
+
             return TestClient(
                 app=APP,
                 raise_server_exceptions=raise_server_exceptions,
+                follow_redirects=True,
             )
-
-        if auth_role is None:
-            auth_role = "read"
-
-        assert auth_role in ("read", "write"), (
-            f"Invalid authentication role {auth_role!r}. Must be either 'read' or "
-            "'write'."
-        )
 
         host, port = os.getenv("ENTITIES_SERVICE_HOST", "localhost"), os.getenv(
             "ENTITIES_SERVICE_PORT", "8000"
@@ -780,7 +708,22 @@ def client(
 
         return Client(
             base_url=f"http://{host}:{port}",
-            headers=auth_header,
+            follow_redirects=True,
         )
 
     return _client
+
+
+@pytest.fixture()
+def non_mocked_hosts(live_backend: bool) -> list[str]:
+    """Return the non-mocked hosts."""
+    import os
+
+    host, port = os.getenv("ENTITIES_SERVICE_HOST", "localhost"), os.getenv("ENTITIES_SERVICE_PORT", "8000")
+
+    hosts = [host]
+
+    if port:
+        hosts.append(f"{host}:{port}")
+
+    return hosts if live_backend else []

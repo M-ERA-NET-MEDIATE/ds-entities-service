@@ -31,25 +31,20 @@ class Backends(StrEnum):
 
     MONGODB = "mongodb"
 
-    # Testing
-    MONGOMOCK = "mongomock"
-
     def get_class(self) -> type[Backend]:
         """Get the backend class."""
-        if self in (self.MONGODB, self.MONGOMOCK):
+        if self == self.MONGODB:
             from entities_service.service.backend.mongodb import MongoDBBackend
 
             return MongoDBBackend
 
         raise NotImplementedError(f"Backend {self} not implemented")
 
-    def get_auth_level_settings(
-        self, auth_level: Literal["read", "write"] = "read"
-    ) -> dict[str, Any]:
+    def get_auth_level_settings(self, auth_level: Literal["read", "write"] = "read") -> dict[str, Any]:
         """Get the settings for the auth level."""
         from entities_service.service.config import CONFIG
 
-        if self in (self.MONGODB, self.MONGOMOCK):
+        if self == self.MONGODB:
             if auth_level == "read":
                 return {
                     "auth_level": auth_level,
@@ -59,10 +54,7 @@ class Backends(StrEnum):
 
             if auth_level == "write":
                 if CONFIG.x509_certificate_file is None:
-                    raise ValueError(
-                        "Cannot use 'write' auth level without a X.509 certificate "
-                        "file."
-                    )
+                    raise ValueError("Cannot use 'write' auth level without a X.509 certificate file.")
 
                 return {
                     "auth_level": auth_level,
@@ -71,9 +63,7 @@ class Backends(StrEnum):
                     "mongo_ca_file": CONFIG.ca_file,
                 }
 
-            raise ValueError(
-                f"Unknown auth level: {auth_level!r} (valid: 'read', 'write')"
-            )
+            raise ValueError(f"Unknown auth level: {auth_level!r} (valid: 'read', 'write')")
 
         raise NotImplementedError(f"Backend {self} not implemented")
 

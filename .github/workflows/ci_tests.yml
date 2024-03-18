@@ -44,9 +44,11 @@ jobs:
       ENTITIES_SERVICE_MONGO_URI: mongodb://localhost:27017
       ENTITIES_SERVICE_X509_CERTIFICATE_FILE: docker_security/test-client.pem
       ENTITIES_SERVICE_CA_FILE: docker_security/test-ca.pem
+      ENTITIES_SERVICE_EXTERNAL_OAUTH: 0
       # These are used in the Dockerfile as well as in pytest
       ENTITIES_SERVICE_HOST: localhost
       ENTITIES_SERVICE_PORT: 8000
+      STOP_TIME: 3
 
     steps:
       - name: Checkout ${{ github.repository }}
@@ -105,9 +107,10 @@ jobs:
             --env ENTITIES_SERVICE_MONGO_URI \
             --env ENTITIES_SERVICE_X509_CERTIFICATE_FILE \
             --env ENTITIES_SERVICE_CA_FILE \
+            --env ENTITIES_SERVICE_EXTERNAL_OAUTH \
             --env PORT=${ENTITIES_SERVICE_PORT} \
             --env RUN_TIME=40 \
-            --env STOP_TIME=3 \
+            --env STOP_TIME \
             --name "ds-entities-service" \
             --network "host" \
             --volume "${PWD}:/app" \
@@ -140,12 +143,22 @@ jobs:
           # stopping mechanism.
           touch stop_gunicorn
 
-          sleep 3  # Wait for the service to stop
+          sleep ${STOP_TIME}  # Wait for the service to stop
 
-          mv .coverage .coverage.pytest
-          coverage combine --data-file=.coverage.final --rcfile=pyproject.toml .coverage.pytest .coverage.docker
-          coverage xml --data-file=.coverage.final --rcfile=pyproject.toml -o coverage.xml
-          coverage report --data-file=.coverage.final --rcfile=pyproject.toml --show-missing --skip-covered --skip-empty
+          {
+            mv .coverage .coverage.pytest &&
+            coverage combine --data-file=.coverage.final --rcfile=pyproject.toml .coverage.pytest .coverage.docker &&
+            coverage xml --data-file=.coverage.final --rcfile=pyproject.toml -o coverage.xml &&
+            coverage report --data-file=.coverage.final --rcfile=pyproject.toml --show-missing --skip-covered --skip-empty
+          } || {
+            echo "Failed to collect coverage data! Here's the Docker logs for the service:" &&
+            docker logs ds-entities-service &&
+
+            echo -e "\nAnd the service log:" &&
+            cat logs/entities_service.log &&
+
+            exit 1
+          }
 
       - name: Upload coverage
         if: github.repository_owner == 'M-ERA-NET-MEDIATE'

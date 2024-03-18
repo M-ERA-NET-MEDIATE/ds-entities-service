@@ -158,9 +158,7 @@ class GitLabUserInfo(BaseModel):
     As well as the `groups` claim, which is a list of groups the user is a member of.
     """
 
-    sub: Annotated[
-        str, Field(description="Subject - Identifier for the End-User at the Issuer.")
-    ]
+    sub: Annotated[str, Field(description="Subject - Identifier for the End-User at the Issuer.")]
     name: Annotated[
         str | None,
         Field(
@@ -197,28 +195,20 @@ class GitLabUserInfo(BaseModel):
         list[str],
         Field(
             alias="https://gitlab.org/claims/groups/owner",
-            description=(
-                "Names of the groups the user is a direct member of with Owner role."
-            ),
+            description="Names of the groups the user is a direct member of with Owner role.",
         ),
     ] = []
     groups_maintainer: Annotated[
         list[str],
         Field(
             alias="https://gitlab.org/claims/groups/maintainer",
-            description=(
-                "Names of the groups the user is a direct member of with Maintainer "
-                "role."
-            ),
+            description="Names of the groups the user is a direct member of with Maintainer role.",
         ),
     ] = []
     groups_developer: Annotated[
         list[str],
         Field(
             alias="https://gitlab.org/claims/groups/developer",
-            description=(
-                "Names of the groups the user is a direct member of with Developer "
-                "role."
-            ),
+            description="Names of the groups the user is a direct member of with Developer role.",
         ),
     ] = []

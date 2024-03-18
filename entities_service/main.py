@@ -4,26 +4,24 @@ from __future__ import annotations
 
 import logging
 from contextlib import asynccontextmanager
-from typing import TYPE_CHECKING
+from typing import Annotated
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi.security import HTTPAuthorizationCredentials
 
 from entities_service import __version__
 from entities_service.service.backend import get_backend
 from entities_service.service.config import CONFIG
 from entities_service.service.logger import setup_logger
 from entities_service.service.routers import get_routers
-
-if TYPE_CHECKING:  # pragma: no cover
-    pass
-
+from entities_service.service.security import SECURITY_SCHEME
 
 LOGGER = logging.getLogger("entities_service")
 
 
 # Application lifespan function
 @asynccontextmanager
-async def lifespan(_: FastAPI):
+async def lifespan(app: FastAPI):
     """Add lifespan events to the application."""
     # Initialize logger
     setup_logger()
@@ -32,6 +30,41 @@ async def lifespan(_: FastAPI):
 
     # Initialize backend
     get_backend(CONFIG.backend, auth_level="write").initialize()
+
+    # Deactivate OAuth2 if requested
+    if not CONFIG.external_oauth:
+        from entities_service.service.security import verify_token
+
+        LOGGER.warning(
+            "Effectively deactivating OAuth2 authentication and authorization. This should NEVER be used "
+            "in production."
+        )
+
+        async def verify_test_token(
+            credentials: Annotated[HTTPAuthorizationCredentials, Depends(SECURITY_SCHEME)]
+        ) -> None:
+            """Verify a test token."""
+            credentials_exception = HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Could not validate credentials. Please log in.",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+            if not credentials.credentials:
+                raise credentials_exception
+
+            if credentials.scheme != "Bearer":
+                raise credentials_exception
+
+            if credentials.credentials != (
+                "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJyb290IiwiaXNzIjoiaHR0cDovL29udG8tbnMuY29t"
+                "L21ldGEiLCJleHAiOjE3MDYxOTI1OTAsImNsaWVudF9pZCI6Imh0dHA6Ly9vbnRvLW5zLmNvbS9tZXRhIiwiaWF0I"
+                "joxNzA2MTkwNzkwfQ.FzvzWyI_CNrLkHhr4oPRQ0XEY8H9DL442QD8tM8dhVM"
+            ):
+                credentials_exception.status_code = status.HTTP_403_FORBIDDEN
+                raise credentials_exception
+
+        app.dependency_overrides[verify_token] = verify_test_token
 
     # Run application
     yield

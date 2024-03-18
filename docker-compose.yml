@@ -13,6 +13,7 @@ services:
       ENTITIES_SERVICE_MONGO_URI: "mongodb://mongodb:27017"
       ENTITIES_SERVICE_X509_CERTIFICATE_FILE: "docker_security/test-client.pem"
       ENTITIES_SERVICE_CA_FILE: "docker_security/test-ca.pem"
+      ENTITIES_SERVICE_EXTERNAL_OAUTH:
     depends_on:
       mongodb:
         condition: service_healthy

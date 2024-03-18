@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import logging
 from json import JSONDecodeError
-from typing import TYPE_CHECKING, Annotated
+from typing import Annotated
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -19,9 +19,6 @@ from entities_service.models.auth import (
     OpenIDConfiguration,
 )
 from entities_service.service.config import CONFIG
-
-if TYPE_CHECKING:  # pragma: no cover
-    pass
 
 # to get a string like this run:
 # openssl rand -hex 32
@@ -38,8 +35,7 @@ async def get_openid_config() -> OpenIDConfiguration:
     async with AsyncClient() as client:
         try:
             response = await client.get(
-                f"{str(CONFIG.oauth2_provider).rstrip('/')}"
-                "/.well-known/openid-configuration"
+                f"{str(CONFIG.oauth2_provider).rstrip('/')}/.well-known/openid-configuration"
             )
         except HTTPError as exc:
             raise ValueError("Could not get OpenID configuration.") from exc
@@ -78,9 +74,7 @@ async def verify_token(
         try:
             response = await client.get(
                 str(openid_config.userinfo_endpoint),
-                headers={
-                    "Authorization": f"{credentials.scheme} {credentials.credentials}"
-                },
+                headers={"Authorization": f"{credentials.scheme} {credentials.credentials}"},
             )
         except HTTPError as exc:
             LOGGER.error("Could not get user info from OAuth2 provider.")

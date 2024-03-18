@@ -38,7 +38,6 @@ dependencies = [
 testing = [
     "cryptography ~=42.0",
     "dlite-python ~=0.5.1; python_version < '3.12'",
-    "mongomock ~=4.1",
     "pytest ~=8.0",
     "pytest-cov ~=4.1",
     "pytest-httpx ~=0.30.0",
@@ -59,6 +58,9 @@ Source = "https://github.com/M-ERA-NET-MEDIATE/ds-entities-service"
 "Issue Tracker" = "https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/issues"
 Changelog = "https://M-ERA-NET-MEDIATE.github.io/ds-entities-service/latest/CHANGELOG"
 
+[tool.black]
+line-length = 108
+
 [tool.mypy]
 python_version = "3.10"
 ignore_missing_imports = true
@@ -68,6 +70,9 @@ hide_error_codes = false
 allow_redefinition = true
 check_untyped_defs = true
 plugins = ["pydantic.mypy"]
+
+[tool.ruff]
+line-length = 108
 
 [tool.ruff.lint]
 extend-select = [
@@ -115,9 +120,6 @@ addopts = "-rs --cov=entities_service --cov-config=pyproject.toml --cov-report=t
 filterwarnings = [
     # Treat all warnings as errors
     "error",
-
-    # mongomock uses pkg_resources
-    "ignore:.*pkg_resources is deprecated as an API.*:DeprecationWarning",
 
     # Passing app directly to httpx client is deprecated - TestClient still does this
     "ignore:.*The 'app' shortcut is now deprecated.*:DeprecationWarning",

@@ -94,11 +94,7 @@ def test_get_uri(static_dir: Path) -> None:
     entity.version = "0.1"
     entity.name = "Cat"
 
-    assert (
-        get_uri(entity)
-        == f"{entity.namespace}/{entity.version}/{entity.name}"
-        == expected_uri
-    )
+    assert get_uri(entity) == f"{entity.namespace}/{entity.version}/{entity.name}" == expected_uri
 
 
 def test_get_version(static_dir: Path) -> None:
@@ -148,9 +144,7 @@ def test_get_version(static_dir: Path) -> None:
         ("1.0.0", "1.0.1"),
     ],
 )
-def test_get_updated_version(
-    static_dir: Path, version: str, expected_updated_version: str
-) -> None:
+def test_get_updated_version(static_dir: Path, version: str, expected_updated_version: str) -> None:
     """Test get_updated_version function.
 
     Current logic:
@@ -186,15 +180,11 @@ def test_get_updated_version_errors(static_dir: Path) -> None:
 
     # Check a ValueError is raised if the version is not a numeric string
     entity.version = "one"
-    with pytest.raises(
-        ValueError, match=r"^Cannot parse version to get updated version.*"
-    ):
+    with pytest.raises(ValueError, match=r"^Cannot parse version to get updated version.*"):
         get_updated_version(entity)
 
     # Check a ValueError is raised if the version is not a simple MAJOR.MINOR.PATCH
     # styling
     entity.version = "1.2.3.4"
-    with pytest.raises(
-        ValueError, match=r"^Cannot parse version to get updated version.*"
-    ):
+    with pytest.raises(ValueError, match=r"^Cannot parse version to get updated version.*"):
         get_updated_version(entity)
