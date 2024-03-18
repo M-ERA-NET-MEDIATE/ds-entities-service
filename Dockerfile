@@ -6,7 +6,10 @@ COPY entities_service entities_service/
 COPY pyproject.toml LICENSE README.md ./
 
 # Install dependencies
-RUN python -m pip install -U pip && \
+RUN apt-get update && \
+  apt-get install -y procps && \
+  rm -rf /var/lib/apt/lists/* && \
+  python -m pip install -U pip && \
   pip install -U setuptools wheel && \
   pip install -U -e .[server]
 

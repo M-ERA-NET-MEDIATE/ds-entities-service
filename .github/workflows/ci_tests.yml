@@ -146,9 +146,9 @@ jobs:
           sleep ${STOP_TIME}  # Wait for the service to stop
 
           {
-            mv .coverage .coverage.pytest
-            coverage combine --data-file=.coverage.final --rcfile=pyproject.toml .coverage.pytest .coverage.docker
-            coverage xml --data-file=.coverage.final --rcfile=pyproject.toml -o coverage.xml
+            mv .coverage .coverage.pytest &&
+            coverage combine --data-file=.coverage.final --rcfile=pyproject.toml .coverage.pytest .coverage.docker &&
+            coverage xml --data-file=.coverage.final --rcfile=pyproject.toml -o coverage.xml &&
             coverage report --data-file=.coverage.final --rcfile=pyproject.toml --show-missing --skip-covered --skip-empty
           } || {
             echo "Failed to collect coverage data! Here's the Docker logs for the service:" &&
