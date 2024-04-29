@@ -17,7 +17,7 @@ repos:
   # To get an overview of them all as well as the ones used here, please see
   # https://github.com/pre-commit/pre-commit-hooks#hooks-available
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0
+    rev: v4.6.0
     hooks:
     - id: check-toml
       name: Check TOML
@@ -36,7 +36,7 @@ repos:
   # More information can be found in its source repository:
   # https://github.com/DavidAnson/markdownlint-cli2
   - repo: https://github.com/DavidAnson/markdownlint-cli2
-    rev: v0.12.1
+    rev: v0.13.0
     hooks:
     - id: markdownlint-cli2
       name: markdownlint
@@ -47,15 +47,15 @@ repos:
 
   # Black is a code style and formatter
   # It works on files in-place
-  - repo: https://github.com/ambv/black
-    rev: 24.2.0
+  - repo: https://github.com/psf/black
+    rev: 24.4.2
     hooks:
     - id: black
 
   # Ruff is a code style and formatter
   # It works on files in-place
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.2.1
+    rev: v0.4.2
     hooks:
     - id: ruff
       args:
@@ -65,7 +65,7 @@ repos:
   # Pyupgrade is a code upgrade tool
   # It works on files in-place
   - repo: https://github.com/asottile/pyupgrade
-    rev: v3.15.0
+    rev: v3.15.2
     hooks:
     - id: pyupgrade
       args: [--py310-plus]
@@ -74,7 +74,7 @@ repos:
   # More information can be found in its documentation:
   # https://bandit.readthedocs.io/en/latest/
   - repo: https://github.com/PyCQA/bandit
-    rev: 1.7.7
+    rev: 1.7.8
     hooks:
     - id: bandit
       args: ["-r"]
@@ -86,7 +86,7 @@ repos:
   # The project's documentation can be found at:
   # https://mypy.readthedocs.io/en/stable/index.html
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.8.0
+    rev: v1.10.0
     hooks:
     - id: mypy
       exclude: ^(docs/example|tests)/.*$
