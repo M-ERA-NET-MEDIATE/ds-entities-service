@@ -1,0 +1,13 @@
+name: CI - Activate auto-merging
+
+on:
+  pull_request_target:
+    branches: [main]
+
+jobs:
+  update-dependabot-branch:
+    name: External
+    uses: SINTEF/ci-cd/.github/workflows/ci_automerge_prs.yml@v2.7.4
+    if: github.repository_owner == 'M-ERA-NET-MEDIATE' && ( ( startsWith(github.event.pull_request.head.ref, 'dependabot/') && github.actor == 'dependabot[bot]' ) || ( github.event.pull_request.head.ref == 'pre-commit-ci-update-config' && github.actor == 'pre-commit-ci[bot]' ) )
+    secrets:
+      PAT: ${{ secrets.TEAM40_PAT }}
