@@ -123,6 +123,11 @@ filterwarnings = [
 
     # Passing app directly to httpx client is deprecated - TestClient still does this
     "ignore:.*The 'app' shortcut is now deprecated.*:DeprecationWarning",
+
+    # Starlette's TestClient does not properly close all memory streams.
+    # For more information see the discussion on GitHub:
+    # https://github.com/encode/starlette/discussions/2603
+    "ignore:.*MemoryObjectReceiveStream.*:pytest.PytestUnraisableExceptionWarning",
 ]
 
 [tool.coverage.run]
