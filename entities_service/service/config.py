@@ -43,7 +43,7 @@ class ServiceSettings(BaseSettings):
         Field(
             description=(
                 "Whether or not to use proper OAuth2 authentication and authorization with an external "
-                " authority. An external OAuth2 authority should ALWAYS be used in production.",
+                " authority. An external OAuth2 authority should ALWAYS be used in production."
             )
         ),
     ] = True
