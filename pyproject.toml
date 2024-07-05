@@ -37,7 +37,8 @@ dependencies = [
 [project.optional-dependencies]
 testing = [
     "cryptography ~=42.0",
-    "dlite-python ~=0.5.1; python_version < '3.12'",
+    "dlite-python ~=0.5.16",
+    "numpy <2",  # requirement for DLite v0.5.16, which does not support NumPy v2
     "pytest ~=8.0",
     "pytest-cov ~=5.0",
     "pytest-httpx ~=0.30.0",
