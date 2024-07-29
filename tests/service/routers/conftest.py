@@ -155,7 +155,7 @@ def _mock_backend(
             by_properties: list[str] | None = None,
             by_dimensions: list[str] | None = None,
             by_identity: list[AnyHttpUrl] | list[str] | None = None,
-        ) -> Generator[dict[str, Any], None, None]:
+        ) -> Generator[dict[str, Any]]:
             if raw_query is not None:
                 raise MockBackendError(f"Raw queries are not supported by {self.__class__.__name__}.")
 
