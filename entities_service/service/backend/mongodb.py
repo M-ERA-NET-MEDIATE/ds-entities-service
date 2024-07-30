@@ -338,7 +338,7 @@ class MongoDBBackend(Backend):
         by_properties: list[str] | None = None,
         by_dimensions: list[str] | None = None,
         by_identity: list[AnyHttpUrl] | list[str] | None = None,
-    ) -> Generator[dict[str, Any], None, None]:
+    ) -> Generator[dict[str, Any]]:
         """Search for entities.
 
         If `raw_query` is given, it will be used as the query. Otherwise, the

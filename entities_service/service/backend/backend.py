@@ -151,7 +151,7 @@ class Backend(ABC):
         by_properties: list[str] | None = None,
         by_dimensions: list[str] | None = None,
         by_identity: list[str] | None = None,
-    ) -> Generator[dict[str, Any], None, None]:  # pragma: no cover
+    ) -> Generator[dict[str, Any]]:  # pragma: no cover
         """Search for entities.
 
         If `raw_query` is given, it will be used as the query. Otherwise, the

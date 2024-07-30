@@ -12,7 +12,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from fastapi import APIRouter
 
 
-def get_routers() -> Generator[APIRouter, None, None]:
+def get_routers() -> Generator[APIRouter]:
     """Get the routers."""
     this_dir = Path(__file__).parent.resolve()
 
