@@ -8,7 +8,6 @@ services:
     ports:
       - "${ENTITIES_SERVICE_PORT:-8000}:80"
     environment:
-      ENTITIES_SERVICE_BASE_URL: "${ENTITIES_SERVICE_HOST:-http://onto-ns.com/meta}"
       ENTITIES_SERVICE_BACKEND: mongodb
       ENTITIES_SERVICE_MONGO_URI: "mongodb://mongodb:27017"
       ENTITIES_SERVICE_X509_CERTIFICATE_FILE: "docker_security/test-client.pem"
@@ -22,6 +21,7 @@ services:
       - entities_service_net
     volumes:
       - "${PWD}:/app"
+    user: "1000:1000"  # To ensure files created in the container are owned by the host user
     stop_grace_period: 1s
 
   mongodb:

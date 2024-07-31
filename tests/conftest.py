@@ -297,7 +297,7 @@ def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
             f"Could not retrieve version and name from {uri!r}. "
             "URI must be of the form: "
             f"{namespace}/{{version}}/{{name}}\n\n"
-            "Hint: Did you (inadvertently) set the base_url to something?"
+            "Hint: The namespace part of the URI is hard-coded in the pytest configuration."
         )
 
         return match.group("version") or "", match.group("name") or ""
@@ -360,10 +360,7 @@ def live_backend(request: pytest.FixtureRequest) -> bool:
     import os
     import warnings
 
-    required_environment_variables = (
-        "ENTITIES_SERVICE_HOST",
-        "ENTITIES_SERVICE_PORT",
-    )
+    required_environment_variables = ("ENTITIES_SERVICE_PORT",)
 
     value = request.config.getoption("--live-backend")
 
@@ -722,19 +719,11 @@ def client(live_backend: bool) -> ClientFixture:
                 follow_redirects=True,
             )
 
-        host, port = os.getenv("ENTITIES_SERVICE_HOST", "localhost"), os.getenv(
-            "ENTITIES_SERVICE_PORT", "8000"
-        )
+        port = os.getenv("ENTITIES_SERVICE_PORT", "8000")
 
-        base_url = f"http://{host}"
+        base_url = f"http://localhost{':' + port if port else ''}"
 
-        if port:
-            base_url += f":{port}"
-
-        return Client(
-            base_url=f"http://{host}:{port}",
-            follow_redirects=True,
-        )
+        return Client(base_url=base_url, follow_redirects=True)
 
     return _client
 
@@ -744,11 +733,11 @@ def non_mocked_hosts(live_backend: bool) -> list[str]:
     """Return the non-mocked hosts."""
     import os
 
-    host, port = os.getenv("ENTITIES_SERVICE_HOST", "localhost"), os.getenv("ENTITIES_SERVICE_PORT", "8000")
+    port = os.getenv("ENTITIES_SERVICE_PORT", "8000")
 
-    hosts = [host]
+    hosts = ["localhost"]
 
     if port:
-        hosts.append(f"{host}:{port}")
+        hosts.append(f"localhost:{port}")
 
     return hosts if live_backend else []
