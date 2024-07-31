@@ -56,11 +56,7 @@ async def lifespan(app: FastAPI):
             if credentials.scheme != "Bearer":
                 raise credentials_exception
 
-            if credentials.credentials != (
-                "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJyb290IiwiaXNzIjoiaHR0cDovL29udG8tbnMuY29t"
-                "L21ldGEiLCJleHAiOjE3MDYxOTI1OTAsImNsaWVudF9pZCI6Imh0dHA6Ly9vbnRvLW5zLmNvbS9tZXRhIiwiaWF0I"
-                "joxNzA2MTkwNzkwfQ.FzvzWyI_CNrLkHhr4oPRQ0XEY8H9DL442QD8tM8dhVM"
-            ):
+            if credentials.credentials != CONFIG.test_token.get_secret_value():
                 credentials_exception.status_code = status.HTTP_403_FORBIDDEN
                 raise credentials_exception
 

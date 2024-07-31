@@ -48,6 +48,20 @@ class ServiceSettings(BaseSettings):
         ),
     ] = True
 
+    test_token: Annotated[
+        SecretStr,
+        Field(
+            description=(
+                "Test token for bypassing OAuth2 authentication and authorization. This should NEVER be "
+                "used in production."
+            )
+        ),
+    ] = SecretStr(
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJyb290IiwiaXNzIjoiaHR0cDovL29udG8tbnMuY29t"
+        "L21ldGEiLCJleHAiOjE3MDYxOTI1OTAsImNsaWVudF9pZCI6Imh0dHA6Ly9vbnRvLW5zLmNvbS9tZXRhIiwiaWF0I"
+        "joxNzA2MTkwNzkwfQ.FzvzWyI_CNrLkHhr4oPRQ0XEY8H9DL442QD8tM8dhVM"
+    )
+
     # MongoDB backend settings
     mongo_uri: Annotated[
         MongoDsn,

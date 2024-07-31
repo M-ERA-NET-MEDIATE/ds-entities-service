@@ -561,6 +561,11 @@ def token_mock() -> TokenMockFixture:
 
     def _token_mock(auth_role: Literal["read", "write"] | None = None) -> str:
         """Return a mock token related to an authorization role."""
+        import os
+        from pathlib import Path
+
+        import dotenv
+
         if auth_role is None:
             auth_role = "read"
 
@@ -568,10 +573,30 @@ def token_mock() -> TokenMockFixture:
             return "read-users-token"
 
         if auth_role == "write":
+            # This will return the token from either:
+            #
+            # 1. The environment variable ENTITIES_SERVICE_TEST_TOKEN
+            # 2. The .env file in the root directory
+            # 3. Or use a hard-coded default token (the same as is the default for the configuration
+            #    option, but that is not used directly here to avoid the import).
+            #
+            # in that order of descending priority.
+            # Therefore, if the live backend is not created using the `.env` file, this should default to
+            # the default, and if this is not used either, one must manually set the environment variable
+            # to be used when running pytest, for example:
+            #
+            #     $ ENTITIES_SERVICE_TEST_TOKEN=your_token pytest --live-backend
+            #
             return (
-                "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJyb290IiwiaXNzIjoiaHR0cDovL29udG8tbnMuY29t"
-                "L21ldGEiLCJleHAiOjE3MDYxOTI1OTAsImNsaWVudF9pZCI6Imh0dHA6Ly9vbnRvLW5zLmNvbS9tZXRhIiwiaWF0I"
-                "joxNzA2MTkwNzkwfQ.FzvzWyI_CNrLkHhr4oPRQ0XEY8H9DL442QD8tM8dhVM"
+                os.getenv("ENTITIES_SERVICE_TEST_TOKEN")
+                or dotenv.get_key(
+                    Path(__file__).resolve().parent.parent / ".env", "ENTITIES_SERVICE_TEST_TOKEN"
+                )
+                or (
+                    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJyb290IiwiaXNzIjoiaHR0cDovL29udG8tbnMuY29t"
+                    "L21ldGEiLCJleHAiOjE3MDYxOTI1OTAsImNsaWVudF9pZCI6Imh0dHA6Ly9vbnRvLW5zLmNvbS9tZXRhIiwiaWF0I"
+                    "joxNzA2MTkwNzkwfQ.FzvzWyI_CNrLkHhr4oPRQ0XEY8H9DL442QD8tM8dhVM"
+                )
             )
 
         pytest.fail("The authentication role must be either 'read' or 'write'.")

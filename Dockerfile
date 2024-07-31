@@ -1,4 +1,4 @@
-FROM python:3.10-slim as base
+FROM python:3.12-slim AS base
 
 WORKDIR /app
 
@@ -14,7 +14,7 @@ RUN apt-get update && \
   pip install -U -e .[server]
 
 ## DEVELOPMENT target
-FROM base as development
+FROM base AS development
 
 # Copy over the self-signed certificates for development
 COPY docker_security docker_security/
@@ -28,7 +28,7 @@ ENV ENTITIES_SERVICE_DEBUG=1
 ENTRYPOINT gunicorn --bind "0.0.0.0:${PORT}" --log-level debug --workers 1 --worker-class entities_service.uvicorn.UvicornWorker --reload entities_service.main:APP
 
 ## PRODUCTION target
-FROM base as production
+FROM base AS production
 
 ENV PORT=80
 EXPOSE ${PORT}

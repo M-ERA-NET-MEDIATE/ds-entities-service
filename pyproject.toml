@@ -116,7 +116,7 @@ isort.required-imports = ["from __future__ import annotations"]
 ]
 
 [tool.pytest.ini_options]
-minversion = "7.4"
+minversion = "8.0"
 addopts = "-rs --cov=entities_service --cov-config=pyproject.toml --cov-report=term-missing:skip-covered --no-cov-on-fail"
 filterwarnings = [
     # Treat all warnings as errors

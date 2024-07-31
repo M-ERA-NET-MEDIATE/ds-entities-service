@@ -1,4 +1,4 @@
-version: "3"
+name: entities_service
 
 services:
   entities_service:
@@ -22,7 +22,7 @@ services:
       - entities_service_net
     volumes:
       - "${PWD}:/app"
-    user: "1000:1000"
+    stop_grace_period: 1s
 
   mongodb:
     image: mongo:7
@@ -47,6 +47,26 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
+  mongodb_gui:
+    image: mongo-express:1
+    restart: always
+    ports:
+      - "${MONGO_GUI_PORT:-8081}:8081"
+    environment:
+      ME_CONFIG_MONGODB_SERVER: mongodb
+      ME_CONFIG_MONGODB_PORT: 27017
+      ME_CONFIG_MONGODB_ENABLE_ADMIN: "true"
+      ME_CONFIG_MONGODB_ADMINUSERNAME: root
+      ME_CONFIG_MONGODB_ADMINPASSWORD: root
+      ME_CONFIG_BASICAUTH_USERNAME: admin
+      ME_CONFIG_BASICAUTH_PASSWORD: admin
+    networks:
+      - entities_service_net
+    depends_on:
+      mongodb:
+        condition: service_healthy
+        restart: true
 
 networks:
   entities_service_net:
