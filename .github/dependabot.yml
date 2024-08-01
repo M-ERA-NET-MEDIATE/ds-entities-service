@@ -21,5 +21,10 @@ updates:
     - skip_changelog
   groups:
     pyproject:
+      applies-to: "version-updates"
+      patterns:
+        - "*"
+    pyproject-security:
+      applies-to: "security-updates"
       patterns:
         - "*"
