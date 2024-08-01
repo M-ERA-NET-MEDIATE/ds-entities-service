@@ -111,62 +111,6 @@ async def get_entities(
     dependencies=[Depends(verify_token)],
     summary="Create one or more Entities.",
     response_description="Created Entity or Entities.",
-    # Manually add 422 - Validation Error to the OpenAPI documentation.
-    # This is because it is not automatically added when using the `request` parameter straight up.
-    responses={
-        422: {
-            "description": "Validation Error",
-            "content": {
-                "application/json": {"schema": {"$ref": "#/components/schemas/HTTPValidationError"}}
-            },
-        }
-    },
-    # Manually add the request body to the OpenAPI documentation.
-    # This is to explicitly support multiple content types (application/json and application/yaml).
-    openapi_extra={
-        "requestBody": {
-            "required": True,
-            "description": "The entity/-ies to create.",
-            "content": {
-                "application/json": {
-                    "schema": {
-                        "anyOf": [
-                            {
-                                "type": "array",
-                                "items": {
-                                    "anyOf": [
-                                        {"$ref": "#/components/schemas/SOFT7Entity"},
-                                        {"$ref": "#/components/schemas/SOFT5Entity"},
-                                    ]
-                                },
-                            },
-                            {"$ref": "#/components/schemas/SOFT7Entity"},
-                            {"$ref": "#/components/schemas/SOFT5Entity"},
-                        ],
-                        "title": "Entities",
-                    }
-                },
-                "application/yaml": {
-                    "schema": {
-                        "anyOf": [
-                            {
-                                "type": "array",
-                                "items": {
-                                    "anyOf": [
-                                        {"$ref": "#/components/schemas/SOFT7Entity"},
-                                        {"$ref": "#/components/schemas/SOFT5Entity"},
-                                    ]
-                                },
-                            },
-                            {"$ref": "#/components/schemas/SOFT7Entity"},
-                            {"$ref": "#/components/schemas/SOFT5Entity"},
-                        ],
-                        "title": "Entities",
-                    }
-                },
-            },
-        },
-    },
 )
 async def create_entities(
     request: YamlRequest,
@@ -241,10 +185,26 @@ async def create_entities(
     response_description="Created (not replaced) Entity or Entities.",
 )
 async def update_entities(
-    entities: list[VersionedSOFTEntity] | VersionedSOFTEntity,
+    request: YamlRequest,
     response: Response,
 ) -> list[dict[str, Any]] | dict[str, Any] | None:
     """Replace and/or create one or more Entities."""
+    # Parse entities from request
+    try:
+        entities = await request.parse_entities()
+    except ValidationError as err:
+        LOGGER.error("Could not validate entities from request.")
+        LOGGER.exception(err)
+        raise RequestValidationError(errors=err.errors(), body=await request.body()) from err
+    except (ValueError, TypeError) as err:
+        LOGGER.error("Could not parse entities from request.")
+        LOGGER.exception(err)
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Invalid entities provided. Cannot parse request.",
+        ) from err
+
+    # Check client-sent content
     if isinstance(entities, list):
         # Check if there are any entities to update
         if not entities:
@@ -320,10 +280,20 @@ async def update_entities(
     summary="Update one or more Entities.",
     response_description="No content.",
 )
-async def patch_entities(
-    entities: list[dict[str, Any]] | dict[str, Any],
-) -> None:
+async def patch_entities(request: YamlRequest) -> None:
     """Update one or more Entities."""
+    # Parse entities from request
+    try:
+        entities = await request.parse_partial_entities()
+    except (ValueError, TypeError) as err:
+        LOGGER.error("Could not parse (partial) entities from request.")
+        LOGGER.exception(err)
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Invalid (partial) entities provided. Cannot parse request.",
+        ) from err
+
+    # Check client-sent content
     if isinstance(entities, list):
         # Check if there are any entities to update
         if not entities:
