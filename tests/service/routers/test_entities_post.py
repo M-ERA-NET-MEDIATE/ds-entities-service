@@ -206,7 +206,7 @@ def test_user_with_no_write_access(
         ), response_json
 
 
-@pytest.mark.skip_if_live_backend("Cannot mock create method in backend of live backend.")
+@pytest.mark.skip_if_live_backend("Cannot mock write error in live backend.")
 def test_backend_write_error_exception(
     static_dir: Path,
     client: ClientFixture,
@@ -260,7 +260,7 @@ def test_backend_write_error_exception(
     ), json.dumps(response_json, indent=2)
 
 
-@pytest.mark.skip_if_live_backend("Cannot mock create method in backend of live backend.")
+@pytest.mark.skip_if_live_backend("Cannot mock create returns bad value in live backend.")
 def test_backend_create_returns_bad_value(
     client: ClientFixture,
     parameterized_entity: ParameterizeGetEntities,
