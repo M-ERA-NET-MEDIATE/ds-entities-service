@@ -34,7 +34,7 @@ ROUTER = APIRouter(
 )
 
 URIStrictType = Annotated[str, Field(pattern=URI_REGEX.pattern)]
-EmptyList: type[list[Any]] = conlist(type(Any), min_length=0, max_length=0)
+EmptyList: type[list[Any]] = conlist(Any, min_length=0, max_length=0)  # type: ignore[arg-type]
 
 
 @ROUTER.get(
