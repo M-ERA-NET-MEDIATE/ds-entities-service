@@ -15,9 +15,10 @@ from fastapi import (
     status,
 )
 from fastapi.exceptions import RequestValidationError
-from pydantic import Field, ValidationError
+from pydantic import Field, ValidationError, conlist
 
 from entities_service.models import URI_REGEX, VersionedSOFTEntity
+from entities_service.models.service_errors import HTTPError
 from entities_service.service.backend import get_backend
 from entities_service.service.config import CONFIG
 from entities_service.service.requests import YamlRequest, YamlRoute
@@ -29,11 +30,11 @@ LOGGER = logging.getLogger(__name__)
 ROUTER = APIRouter(
     prefix="/entities",
     tags=["Entities"],
-    responses={404: {"description": "Entites not found"}},
     route_class=YamlRoute,
 )
 
 URIStrictType = Annotated[str, Field(pattern=URI_REGEX.pattern)]
+EmptyList: type[list[Any]] = conlist(type(Any), min_length=0, max_length=0)
 
 
 @ROUTER.get(
@@ -43,6 +44,7 @@ URIStrictType = Annotated[str, Field(pattern=URI_REGEX.pattern)]
     response_model_exclude_unset=True,
     summary="Retrieve one or more Entity.",
     response_description="Retrieved Entity or Entities.",
+    responses={404: {"description": "Entites not found", "model": HTTPError}},
 )
 async def get_entities(
     identities: Annotated[
@@ -111,11 +113,15 @@ async def get_entities(
     dependencies=[Depends(verify_token)],
     summary="Create one or more Entities.",
     response_description="Created Entity or Entities.",
+    responses={
+        200: {"description": "There are no Entities to replace or create", "model": EmptyList},
+        502: {"description": "Internal write error", "model": HTTPError},
+    },
 )
 async def create_entities(
     request: YamlRequest,
     response: Response,
-) -> list[dict[str, Any]] | dict[str, Any] | None:
+) -> list[dict[str, Any]] | dict[str, Any]:
     """Create one or more Entities."""
     # Parse entities from request
     try:
@@ -136,8 +142,8 @@ async def create_entities(
     if isinstance(entities, list):
         # Check if there are any entities to create
         if not entities:
-            response.status_code = status.HTTP_204_NO_CONTENT
-            return None
+            response.status_code = status.HTTP_200_NO_CONTENT
+            return []
     else:
         entities = [entities]
 
@@ -183,6 +189,11 @@ async def create_entities(
     dependencies=[Depends(verify_token)],
     summary="Replace and/or create one or more Entities.",
     response_description="Created (not replaced) Entity or Entities.",
+    responses={
+        200: {"description": "There are no Entities to replace or create", "model": EmptyList},
+        204: {"description": "Replaced (not created) Entity or Entitites"},
+        502: {"description": "Internal write error", "model": HTTPError},
+    },
 )
 async def update_entities(
     request: YamlRequest,
@@ -208,8 +219,8 @@ async def update_entities(
     if isinstance(entities, list):
         # Check if there are any entities to update
         if not entities:
-            response.status_code = status.HTTP_204_NO_CONTENT
-            return None
+            response.status_code = status.HTTP_200_OK
+            return []
     else:
         entities = [entities]
 
@@ -278,9 +289,13 @@ async def update_entities(
     status_code=status.HTTP_204_NO_CONTENT,
     dependencies=[Depends(verify_token)],
     summary="Update one or more Entities.",
-    response_description="No content.",
+    response_description="Updated Entity or Entities.",
+    responses={
+        200: {"description": "There are no Entities to update", "model": EmptyList},
+        502: {"description": "Internal write error", "model": HTTPError},
+    },
 )
-async def patch_entities(request: YamlRequest) -> None:
+async def patch_entities(request: YamlRequest, response: Response) -> list[Any] | None:
     """Update one or more Entities."""
     # Parse entities from request
     try:
@@ -297,7 +312,8 @@ async def patch_entities(request: YamlRequest) -> None:
     if isinstance(entities, list):
         # Check if there are any entities to update
         if not entities:
-            return
+            response.status_code = status.HTTP_200_OK
+            return []
     else:
         entities = [entities]
 
@@ -335,7 +351,7 @@ async def patch_entities(request: YamlRequest) -> None:
             LOGGER.exception(err)
             raise write_fail_exception from err
 
-    return
+    return None
 
 
 @ROUTER.delete(
@@ -345,6 +361,10 @@ async def patch_entities(request: YamlRequest) -> None:
     dependencies=[Depends(verify_token)],
     summary="Delete one or more Entities.",
     response_description="Deleted Entity identity or identities.",
+    responses={
+        400: {"description": "No Entity identities provided", "model": HTTPError},
+        502: {"description": "Internal write error", "model": HTTPError},
+    },
 )
 async def delete_entities(
     identities_body: Annotated[
