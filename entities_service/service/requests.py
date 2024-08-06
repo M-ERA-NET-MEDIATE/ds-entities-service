@@ -94,13 +94,9 @@ class YamlRequest(Request):
         for content_type in self.headers.getlist("Content-Type"):
             # Handle YAML (Content-Type: application/yaml)
             if "application/yaml" in content_type or content_type.endswith("+yaml"):
-                yaml_docs = await self.yaml()
                 parsed_entities: list[VersionedSOFTEntity] = []
 
-                for yaml_doc in yaml_docs:
-                    if not isinstance(yaml_doc, dict):
-                        raise TypeError("Invalid entities provided. Cannot be parsed as dicts.")
-
+                for yaml_doc in await self.yaml():
                     parsed_entities.extend(await self._raw_to_entities(yaml_doc))
 
                 return parsed_entities[0] if len(parsed_entities) == 1 else parsed_entities
@@ -119,13 +115,9 @@ class YamlRequest(Request):
                 "No 'Content-Type' header found in the request. Falling back to parsing body using the "
                 "YAML parser as it is a super-set of JSON (expecting content to be either JSON or YAML)."
             )
-            yaml_docs = await self.yaml()
             parsed_entities = []
 
-            for yaml_doc in yaml_docs:
-                if not isinstance(yaml_doc, dict):
-                    raise TypeError("Invalid entities provided. Cannot be parsed as dicts.")
-
+            for yaml_doc in await self.yaml():
                 parsed_entities.extend(await self._raw_to_entities(yaml_doc))
 
             return parsed_entities[0] if len(parsed_entities) == 1 else parsed_entities
@@ -138,10 +130,9 @@ class YamlRequest(Request):
         for content_type in self.headers.getlist("Content-Type"):
             # Handle YAML (Content-Type: application/yaml)
             if "application/yaml" in content_type or content_type.endswith("+yaml"):
-                yaml_docs = await self.yaml()
                 parsed_entities: list[dict[str, Any]] = []
 
-                for yaml_doc in yaml_docs:
+                for yaml_doc in await self.yaml():
                     if isinstance(yaml_doc, dict):
                         parsed_entities.append(yaml_doc)
                     elif isinstance(yaml_doc, list) and all(
@@ -177,10 +168,9 @@ class YamlRequest(Request):
                 "No 'Content-Type' header found in the request. Falling back to parsing body using the "
                 "YAML parser as it is a super-set of JSON (expecting content to be either JSON or YAML)."
             )
-            yaml_docs = await self.yaml()
             parsed_entities = []
 
-            for yaml_doc in yaml_docs:
+            for yaml_doc in await self.yaml():
                 if isinstance(yaml_doc, dict):
                     parsed_entities.append(yaml_doc)
                 elif isinstance(yaml_doc, list) and all(
