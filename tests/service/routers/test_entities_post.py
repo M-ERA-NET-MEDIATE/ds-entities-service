@@ -91,8 +91,6 @@ def test_create_no_entities(
     live_backend: bool,
 ) -> None:
     """Test creating no entities."""
-    from json import JSONDecodeError
-
     if not live_backend:
         # Setup mock responses for OAuth2 verification
         mock_auth_verification(auth_role="write")
@@ -102,11 +100,9 @@ def test_create_no_entities(
         response = client_.post(ENDPOINT, json=[], headers=auth_header(auth_role="write"))
 
     # Check response
-    assert response.content == b"", response.content
-    assert response.status_code == 204, response.content
-
-    with pytest.raises(JSONDecodeError):
-        response.json()
+    assert response.content == b"[]", response.content
+    assert response.json() == [], response.json()
+    assert response.status_code == 200, response.content
 
 
 def test_create_invalid_entity(
@@ -206,7 +202,7 @@ def test_user_with_no_write_access(
         ), response_json
 
 
-@pytest.mark.skip_if_live_backend("Cannot mock create method in backend of live backend.")
+@pytest.mark.skip_if_live_backend("Cannot mock write error in live backend.")
 def test_backend_write_error_exception(
     static_dir: Path,
     client: ClientFixture,
@@ -260,7 +256,7 @@ def test_backend_write_error_exception(
     ), json.dumps(response_json, indent=2)
 
 
-@pytest.mark.skip_if_live_backend("Cannot mock create method in backend of live backend.")
+@pytest.mark.skip_if_live_backend("Cannot mock create returns bad value in live backend.")
 def test_backend_create_returns_bad_value(
     client: ClientFixture,
     parameterized_entity: ParameterizeGetEntities,

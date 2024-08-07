@@ -52,8 +52,8 @@ class ServiceSettings(BaseSettings):
         SecretStr,
         Field(
             description=(
-                "Test token for bypassing OAuth2 authentication and authorization. This should NEVER be "
-                "used in production."
+                "Test token when bypassing OAuth2 authentication and authorization. This should NEVER be "
+                "used in production and will only be used if `external_oauth` is `True`."
             )
         ),
     ] = SecretStr(
