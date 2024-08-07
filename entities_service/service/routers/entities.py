@@ -142,7 +142,7 @@ async def create_entities(
     if isinstance(entities, list):
         # Check if there are any entities to create
         if not entities:
-            response.status_code = status.HTTP_200_NO_CONTENT
+            response.status_code = status.HTTP_200_OK
             return []
     else:
         entities = [entities]

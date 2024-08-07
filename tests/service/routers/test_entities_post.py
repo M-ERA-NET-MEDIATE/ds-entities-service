@@ -91,8 +91,6 @@ def test_create_no_entities(
     live_backend: bool,
 ) -> None:
     """Test creating no entities."""
-    from json import JSONDecodeError
-
     if not live_backend:
         # Setup mock responses for OAuth2 verification
         mock_auth_verification(auth_role="write")
@@ -102,11 +100,9 @@ def test_create_no_entities(
         response = client_.post(ENDPOINT, json=[], headers=auth_header(auth_role="write"))
 
     # Check response
-    assert response.content == b"", response.content
-    assert response.status_code == 204, response.content
-
-    with pytest.raises(JSONDecodeError):
-        response.json()
+    assert response.content == b"[]", response.content
+    assert response.json() == [], response.json()
+    assert response.status_code == 200, response.content
 
 
 def test_create_invalid_entity(
