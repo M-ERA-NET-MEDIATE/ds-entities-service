@@ -18,11 +18,8 @@ python -m pip install -U pip
 pip install -U -e .
 
 # Install (using pip from SINTEF's GitLab)
-# Note: Replace <your-personal-access-token> with your personal access token (with
-#       `read_api` scope) or a deploy token (with `read_packages_registry` scope)
-#       from GitLab
 python -m pip install -U pip
-pip install ds-entities-service --index-url https://__token__:<your-personal-access-token>@gitlab.sintef.no/api/v4/groups/22279/-/packages/pypi/simple
+pip install ds-entities-service --index-url https://gitlab.sintef.no/api/v4/projects/17883/packages/pypi/simple
 ```
 
 > **Important**: If using this service locally alongside [DLite](https://github.com/SINTEF/dlite), it is important to note that issues may occur if [NumPy](https://numpy.org) v2 is used.
