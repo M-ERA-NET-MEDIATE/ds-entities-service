@@ -12,8 +12,7 @@ from fastapi.responses import JSONResponse
 from fastapi.routing import APIRoute
 from fastapi.utils import generate_unique_id
 from pydantic import ValidationError
-
-from entities_service.models import soft_entity
+from s7 import get_entity
 
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Callable, Coroutine, Sequence
@@ -23,9 +22,8 @@ if TYPE_CHECKING:  # pragma: no cover
     from fastapi import IncEx, params
     from fastapi.datastructures import DefaultPlaceholder
     from pydantic_core import ErrorDetails
+    from s7 import SOFT7Entity
     from starlette.routing import BaseRoute
-
-    from entities_service.models import VersionedSOFTEntity
 
 
 LOGGER = logging.getLogger(__name__)
@@ -44,35 +42,43 @@ class YamlRequest(Request):
 
     async def _raw_to_entities(
         self, raw_entities: list[dict[str, Any]] | dict[str, Any]
-    ) -> list[VersionedSOFTEntity]:
-        """Convert raw entities to VersionedSOFTEntity instances.
+    ) -> list[SOFT7Entity]:
+        """Convert raw entities to SOFT7Entity instances.
 
         Expect the raw entities to be a list of dictionaries or a single dictionary.
         It should always be equivalent to a single YAML document (if parsed as YAML).
+
+        Note, if only `pydantic.ValidationError`s are raised, the error messages are combined into a single
+        `pydantic.ValidationError` instance, which is then raised.
+
         """
+        errors: list[ValidationError] = []
+        parsed_entities: list[SOFT7Entity] = []
+
         if isinstance(raw_entities, list):
             if not all(isinstance(raw_entity, dict) for raw_entity in raw_entities):
                 raise TypeError("Invalid entities provided. Cannot be parsed as dicts.")
 
-            parsed_entities = [soft_entity(return_errors=True, **raw_entity) for raw_entity in raw_entities]
+            for raw_entity in raw_entities:
+                try:
+                    parsed_entities.append(get_entity(raw_entity))
+                except ValidationError as exc:
+                    errors.append(exc)
 
         elif isinstance(raw_entities, dict):
-            parsed_entities = [soft_entity(return_errors=True, **raw_entities)]
+            try:
+                parsed_entities = [get_entity(raw_entities)]
+            except ValidationError as exc:
+                errors.append(exc)
 
         else:
             raise TypeError("Invalid entities provided. Cannot be parsed individually as dicts.")
 
-        # Handle any ValidationErrors
-        errors: list[ValidationError] = []
-        for parsed_entity in parsed_entities:
-            if isinstance(parsed_entity, list):
-                # It is not an entity, but rather a list of ValidationErrors
-                errors.extend(parsed_entity)
-
+        # Handle any caught ValidationErrors
         if errors:
             line_errors: list[ErrorDetails] = []
-            for validation_errors in errors:
-                line_errors.extend(validation_errors.errors())
+            for validation_error in errors:
+                line_errors.extend(validation_error.errors())
 
             raise ValidationError.from_exception_data(
                 title=errors[0].title,
@@ -84,17 +90,15 @@ class YamlRequest(Request):
             )
 
         # Return entities, since no errors were found
-        # Ignoring mypy's warning here, as we _know_ that parsed_entities is a list of only
-        # VersionedSOFTEntity objects.
-        return parsed_entities  # type: ignore[return-value]
+        return parsed_entities
 
-    async def parse_entities(self) -> list[VersionedSOFTEntity] | VersionedSOFTEntity:
+    async def parse_entities(self) -> list[SOFT7Entity] | SOFT7Entity:
         """Parse and return the request body as SOFT entities."""
         # Parse entities based on the Content-Type header
         for content_type in self.headers.getlist("Content-Type"):
             # Handle YAML (Content-Type: application/yaml)
             if "application/yaml" in content_type or content_type.endswith("+yaml"):
-                parsed_entities: list[VersionedSOFTEntity] = []
+                parsed_entities: list[SOFT7Entity] = []
 
                 for yaml_doc in await self.yaml():
                     parsed_entities.extend(await self._raw_to_entities(yaml_doc))
@@ -245,7 +249,7 @@ class YamlRoute(APIRoute):
             # Extend the OpenAPI specification with YAML support
             openapi_extra = openapi_extra or {}
 
-            # This is equivalent to the Python type: `list[VersionedSOFTEntity] | VersionedSOFTEntity`
+            # This is equivalent to the Python type: `list[SOFT7Entity] | SOFT7Entity`
             entities_type_schema = (
                 [
                     {
@@ -256,17 +260,8 @@ class YamlRoute(APIRoute):
                 ]
                 if is_patch
                 else [
-                    {
-                        "type": "array",
-                        "items": {
-                            "anyOf": [
-                                {"$ref": "#/components/schemas/SOFT7Entity"},
-                                {"$ref": "#/components/schemas/SOFT5Entity"},
-                            ]
-                        },
-                    },
+                    {"type": "array", "items": {"$ref": "#/components/schemas/SOFT7Entity"}},
                     {"$ref": "#/components/schemas/SOFT7Entity"},
-                    {"$ref": "#/components/schemas/SOFT5Entity"},
                 ]
             )
 

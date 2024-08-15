@@ -16,8 +16,9 @@ from fastapi import (
 )
 from fastapi.exceptions import RequestValidationError
 from pydantic import Field, ValidationError, conlist
+from s7 import SOFT7Entity
 
-from entities_service.models import URI_REGEX, VersionedSOFTEntity
+from entities_service.models import URI_REGEX
 from entities_service.models.service_errors import HTTPError
 from entities_service.service.backend import get_backend
 from entities_service.service.config import CONFIG
@@ -39,7 +40,7 @@ EmptyList: type[list[Any]] = conlist(Any, min_length=0, max_length=0)  # type: i
 
 @ROUTER.get(
     "/",
-    response_model=list[VersionedSOFTEntity] | VersionedSOFTEntity,
+    response_model=list[SOFT7Entity] | SOFT7Entity,
     response_model_by_alias=True,
     response_model_exclude_unset=True,
     summary="Retrieve one or more Entity.",
@@ -106,7 +107,7 @@ async def get_entities(
 
 @ROUTER.post(
     "/",
-    response_model=list[VersionedSOFTEntity] | VersionedSOFTEntity | None,
+    response_model=list[SOFT7Entity] | SOFT7Entity | None,
     response_model_by_alias=True,
     response_model_exclude_unset=True,
     status_code=status.HTTP_201_CREATED,
@@ -182,7 +183,7 @@ async def create_entities(
 
 @ROUTER.put(
     "/",
-    response_model=list[VersionedSOFTEntity] | VersionedSOFTEntity | None,
+    response_model=list[SOFT7Entity] | SOFT7Entity | None,
     response_model_by_alias=True,
     response_model_exclude_unset=True,
     status_code=status.HTTP_201_CREATED,

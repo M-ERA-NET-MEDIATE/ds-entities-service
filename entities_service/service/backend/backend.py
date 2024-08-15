@@ -7,14 +7,9 @@ from abc import ABC, abstractmethod
 from collections.abc import Iterable
 from typing import TYPE_CHECKING
 
-from pydantic import BaseModel
-
-from entities_service.models import (
-    SOFTModelTypes,
-    VersionedSOFTEntity,
-    get_uri,
-    soft_entity,
-)
+from pydantic import BaseModel, ValidationError
+from s7 import SOFT7Entity, get_entity
+from s7.exceptions import S7EntityError
 
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Generator, Iterator
@@ -82,23 +77,24 @@ class Backend(ABC):
     # Container protocol methods
     def __contains__(self, item: Any) -> bool:
         if isinstance(item, dict):
-            # Convert to SOFT Entity
-            item_or_errors = soft_entity(return_errors=True, **item)
-            if isinstance(item_or_errors, list):
+            # Convert to SOFT7 Entity
+            try:
+                item = get_entity(item)
+            except (ValidationError, S7EntityError) as error:
                 LOGGER.error(
-                    "item given to __contains__ is malformed, not a SOFT entity.\nItem: %r\nErrors: %s",
+                    "item given to __contains__ is malformed, not a SOFT7 entity.\nItem: %r\nError: %s",
                     item,
-                    item_or_errors,
+                    error,
                 )
                 return False
-            item = item_or_errors
 
         if isinstance(item, str):
-            # Expect it to be a URI - let the backend handle validation
+            # Expect it to be a TEAM4.0-style URL - let the backend handle validation
             return self.read(item) is not None
 
-        if isinstance(item, SOFTModelTypes):
-            return self.read(get_uri(item)) is not None
+        if isinstance(item, SOFT7Entity):
+            # NOTE: We currently expect all identities to be TEAM4.0-style URLs
+            return self.read(item.identity) is not None
 
         return False
 
@@ -119,7 +115,7 @@ class Backend(ABC):
     # Backend methods (CRUD)
     @abstractmethod
     def create(
-        self, entities: Iterable[VersionedSOFTEntity | dict[str, Any]]
+        self, entities: Iterable[SOFT7Entity | dict[str, Any]]
     ) -> list[dict[str, Any]] | dict[str, Any] | None:  # pragma: no cover
         """Create an entity in the backend."""
         raise NotImplementedError
@@ -133,7 +129,7 @@ class Backend(ABC):
     def update(
         self,
         entity_identity: AnyHttpUrl | str,
-        entity: VersionedSOFTEntity | dict[str, Any],
+        entity: SOFT7Entity | dict[str, Any],
     ) -> None:  # pragma: no cover
         """Update an entity in the backend."""
         raise NotImplementedError

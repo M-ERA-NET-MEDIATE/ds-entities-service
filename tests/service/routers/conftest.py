@@ -13,8 +13,7 @@ if TYPE_CHECKING:
     from typing import Any
 
     from pydantic import AnyHttpUrl
-
-    from entities_service.models import VersionedSOFTEntity
+    from s7 import SOFT7Entity
 
 
 @pytest.fixture(autouse=True)
@@ -85,12 +84,13 @@ def _mock_backend(
             pass
 
         def create(
-            self, entities: Iterable[VersionedSOFTEntity | dict[str, Any]]
+            self, entities: Iterable[SOFT7Entity | dict[str, Any]]
         ) -> list[dict[str, Any]] | dict[str, Any] | None:
             """Create entities.
 
             For testing purposes:
-            - Raise an error if entities is not part of the `valid_entities.yaml` file.
+            - Raise an error if entities is/are not part of the `valid_entities.yaml` file.
+
             """
             valid_entities: list[dict[str, Any]] = yaml.safe_load(
                 (static_dir / "valid_entities.yaml").read_text()
@@ -105,7 +105,9 @@ def _mock_backend(
             if not all(entity in valid_prepared_entities for entity in entities):
                 raise MockBackendError(
                     "One or more entities are not part of the `valid_entities.yaml` "
-                    "file. Will act like the entities can not be created."
+                    "file. Will act like the entities can not be created.\n"
+                    f"Entities: {entities}\n"
+                    f"Valid entities: {valid_prepared_entities}"
                 )
 
             if not entities:
@@ -128,7 +130,7 @@ def _mock_backend(
         def update(
             self,
             entity_identity: AnyHttpUrl | str,
-            entity: VersionedSOFTEntity | dict[str, Any],
+            entity: SOFT7Entity | dict[str, Any],
         ) -> None:
             if URI_REGEX.match(str(entity_identity)) is None:
                 raise MockBackendError(f"Invalid entity URI: {entity_identity}")

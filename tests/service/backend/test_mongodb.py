@@ -93,10 +93,10 @@ def test_create(mongo_backend: GetMongoBackend, parameterized_entity: Parameteri
     backend = mongo_backend("write")
 
     # Create a single entity
-    entity_from_backend = backend.create([parameterized_entity.backend_entity])
+    entity_from_backend = backend.create([parameterized_entity.parsed_entity])
 
     assert isinstance(entity_from_backend, dict)
-    assert entity_from_backend == parameterized_entity.backend_entity
+    assert entity_from_backend == parameterized_entity.parsed_entity
 
     # Create multiple entities
     raw_entities = [
@@ -120,7 +120,7 @@ def test_create(mongo_backend: GetMongoBackend, parameterized_entity: Parameteri
         },
     ]
 
-    assert parameterized_entity.backend_entity not in raw_entities
+    assert parameterized_entity.parsed_entity not in raw_entities
 
     entities_from_backend = backend.create(raw_entities)
 
@@ -134,10 +134,10 @@ def test_read(mongo_backend: GetMongoBackend, parameterized_entity: Parameterize
     """Test the read method."""
     backend = mongo_backend("read")
 
-    entity_from_backend = backend.read(parameterized_entity.uri)
+    entity_from_backend = backend.read(parameterized_entity.identity)
 
     assert isinstance(entity_from_backend, dict)
-    assert entity_from_backend == parameterized_entity.backend_entity
+    assert entity_from_backend == parameterized_entity.parsed_entity
 
 
 def test_update(mongo_backend: GetMongoBackend, parameterized_entity: ParameterizeGetEntities) -> None:
@@ -149,7 +149,7 @@ def test_update(mongo_backend: GetMongoBackend, parameterized_entity: Parameteri
     backend = mongo_backend("write")
 
     # Change current entity
-    changed_raw_entity = deepcopy(parameterized_entity.backend_entity)
+    changed_raw_entity = deepcopy(parameterized_entity.parsed_entity)
 
     if isinstance(changed_raw_entity["properties"], dict):
         assert "test" not in changed_raw_entity["properties"]
@@ -170,21 +170,21 @@ def test_update(mongo_backend: GetMongoBackend, parameterized_entity: Parameteri
         pytest.fail("Unknown properties type / entity format")
 
     # Apply the change
-    backend.update(parameterized_entity.uri, changed_raw_entity)
+    backend.update(parameterized_entity.identity, changed_raw_entity)
 
     # Retrieve the entity again
     entity_from_backend = backend._collection.find_one(
         {
             "$or": [
-                URI_REGEX.match(parameterized_entity.uri).groupdict(),
-                {"uri": parameterized_entity.uri},
+                URI_REGEX.match(parameterized_entity.identity).groupdict(),
+                {"uri": parameterized_entity.identity},
             ]
         },
         projection={"_id": False},
     )
 
     assert isinstance(entity_from_backend, dict)
-    assert entity_from_backend != parameterized_entity.backend_entity
+    assert entity_from_backend != parameterized_entity.parsed_entity
     assert entity_from_backend == changed_raw_entity
 
 
@@ -198,28 +198,28 @@ def test_delete(mongo_backend: GetMongoBackend, parameterized_entity: Parameteri
     entity_from_backend = backend._collection.find_one(
         {
             "$or": [
-                URI_REGEX.match(parameterized_entity.uri).groupdict(),
-                {"uri": parameterized_entity.uri},
+                URI_REGEX.match(parameterized_entity.identity).groupdict(),
+                {"uri": parameterized_entity.identity},
             ]
         },
         projection={"_id": False},
     )
 
     assert isinstance(entity_from_backend, dict)
-    assert entity_from_backend == parameterized_entity.backend_entity
+    assert entity_from_backend == parameterized_entity.parsed_entity
 
     # Check the current number of entities
     number_of_entities = len(backend)
 
     # Delete the entity
-    backend.delete([parameterized_entity.uri])
+    backend.delete([parameterized_entity.identity])
 
     # Check that the entity is gone
     entity_from_backend = backend._collection.find_one(
         {
             "$or": [
-                URI_REGEX.match(parameterized_entity.uri).groupdict(),
-                {"uri": parameterized_entity.uri},
+                URI_REGEX.match(parameterized_entity.identity).groupdict(),
+                {"uri": parameterized_entity.identity},
             ]
         },
         projection={"_id": False},
@@ -243,15 +243,15 @@ def test_search(mongo_backend: GetMongoBackend, parameterized_entity: Parameteri
         backend.search(
             {
                 "$or": [
-                    URI_REGEX.match(parameterized_entity.uri).groupdict(),
-                    {"uri": parameterized_entity.uri},
+                    URI_REGEX.match(parameterized_entity.identity).groupdict(),
+                    {"uri": parameterized_entity.identity},
                 ]
             }
         )
     )
 
     assert len(entities_from_backend) == 1
-    assert entities_from_backend[0] == parameterized_entity.backend_entity
+    assert entities_from_backend[0] == parameterized_entity.parsed_entity
 
     # Search for all entities
     number_of_entities = len(backend)
@@ -259,7 +259,7 @@ def test_search(mongo_backend: GetMongoBackend, parameterized_entity: Parameteri
 
     assert len(entities_from_backend) == number_of_entities
     assert all(isinstance(_, dict) for _ in entities_from_backend)
-    assert parameterized_entity.backend_entity in entities_from_backend
+    assert parameterized_entity.parsed_entity in entities_from_backend
 
 
 def test_count(mongo_backend: GetMongoBackend, parameterized_entity: ParameterizeGetEntities) -> None:
@@ -277,8 +277,8 @@ def test_count(mongo_backend: GetMongoBackend, parameterized_entity: Parameteriz
         backend.count(
             {
                 "$or": [
-                    URI_REGEX.match(parameterized_entity.uri).groupdict(),
-                    {"uri": parameterized_entity.uri},
+                    URI_REGEX.match(parameterized_entity.identity).groupdict(),
+                    {"uri": parameterized_entity.identity},
                 ]
             }
         )
@@ -292,7 +292,7 @@ def test_contains(mongo_backend: GetMongoBackend, parameterized_entity: Paramete
 
     assert 42 not in backend
 
-    assert parameterized_entity.uri in backend
+    assert parameterized_entity.identity in backend
     assert parameterized_entity.entity in backend
 
 
@@ -301,7 +301,7 @@ def test_iter(mongo_backend: GetMongoBackend, parameterized_entity: Parameterize
     backend = mongo_backend("read")
 
     entities = list(backend)
-    assert parameterized_entity.backend_entity in entities
+    assert parameterized_entity.parsed_entity in entities
 
     assert len(entities) == backend._collection.count_documents({})
 

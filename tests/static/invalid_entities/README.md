@@ -46,7 +46,36 @@ Error message from pydantic as of 18.12.2023 (pydantic==2.5.2):
 
 ## `Cat.json`
 
-`Cat.json` is an invalid SOFT entity because the `uri` is malformed.
+_Edit_: As of using the [soft7](https://github.com/SINTEF/soft7) package, the `uri` namespace and TEAM4.0-specific URL validation is not performed.
+Therefore, this file is now a valid SOFT7 entity and is therefore removed.
+The original `Cat.json` content was:
+
+```json
+{
+    "uri": "http://onto-ns.com/meta/Cat",
+    "meta": "http://onto-ns.com/meta/0.3/EntitySchema",
+    "description": "A cat.",
+    "dimensions": {},
+    "properties": {
+        "name": {
+            "type": "string",
+            "description": "Name of the cat."
+        },
+        "age": {
+            "type": "int",
+            "description": "Age of the cat."
+        },
+        "color": {
+            "type": "string",
+            "description": "Color of the cat."
+        }
+    }
+}
+```
+
+---
+
+`Cat.json` is an ~invalid~ SOFT entity because the `uri` is malformed.
 
 Since it is a SOFT7 entity, it will also show extra validation errors for the SOFT5Entity model.
 
@@ -75,7 +104,10 @@ properties
 ## `Cat5.json`
 
 `Cat5.json` _is_ a valid SOFT5 entity.
-But it will not pass validation, because the `uri` uses the wrong namespace, and the `meta` value does not use v0.3 of the EntitySchema.
+But it will not pass validation, because ~the `uri` uses the wrong namespace, and~ the `meta` value does not use v0.3 of the EntitySchema.
+
+_Edit_: As of using the [soft7](https://github.com/SINTEF/soft7) package, the `uri` namespace and TEAM4.0-specific URL validation is not performed.
+However, the `meta` value is still checked for the correct complete value, before being discarded in the parsed entity.
 
 Error message from pydantic as of 19.12.2023 (pydantic==2.5.2):
 

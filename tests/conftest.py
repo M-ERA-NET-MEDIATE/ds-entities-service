@@ -66,8 +66,8 @@ class ParameterizeGetEntities(NamedTuple):
     entity: dict[str, Any]
     version: str
     name: str
-    uri: str
-    backend_entity: dict[str, Any]
+    identity: str
+    parsed_entity: dict[str, Any]
 
 
 ## Pytest configuration functions and hooks ##
@@ -283,13 +283,12 @@ def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
         return
 
     import re
-    from copy import deepcopy
     from pathlib import Path
 
     import yaml
 
     def get_version_name(uri: str) -> tuple[str, str]:
-        """Return the version and name part of a uri."""
+        """Return the version and name part of a TEAM4.0-style URL."""
         namespace = "http://onto-ns.com/meta"
 
         match = re.match(rf"^{re.escape(namespace)}/(?P<version>[^/]+)/(?P<name>[^/]+)$", uri)
@@ -302,15 +301,15 @@ def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
 
         return match.group("version") or "", match.group("name") or ""
 
-    def get_uri(entity: dict[str, Any]) -> str:
-        """Return the uri for an entity."""
+    def get_team40_url(entity: dict[str, Any]) -> str:
+        """Return the TEAM4.0-style URL for an entity based on 'namespace', 'version', and 'name'."""
         namespace = entity.get("namespace")
         version = entity.get("version")
         name = entity.get("name")
 
         assert not any(
             _ is None for _ in (namespace, version, name)
-        ), "Could not retrieve namespace, version, and/or name from test entities."
+        ), "Could not retrieve 'namespace', 'version', and/or 'name' from test entities."
 
         return f"{namespace}/{version}/{name}"
 
@@ -319,30 +318,16 @@ def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
     static_dir = (Path(__file__).parent / "static").resolve()
 
     entities: list[dict[str, Any]] = yaml.safe_load((static_dir / "valid_entities.yaml").read_text())
+    scrubbed_entities: list[dict[str, Any]] = yaml.safe_load(
+        (static_dir / "valid_entities_soft7.yaml").read_text()
+    )
 
-    for entity in entities:
-        uri = entity.get("uri") or get_uri(entity)
+    for index, entity in enumerate(entities):
+        identity = entity.get("identity", entity.get("uri")) or get_team40_url(entity)
 
-        version, name = get_version_name(uri)
+        version, name = get_version_name(identity)
 
-        # Replace $ref with ref
-        backend_entity = deepcopy(entity)
-
-        # SOFT5
-        if isinstance(backend_entity["properties"], list):
-            backend_entity["properties"] = [
-                {key.replace("$ref", "ref"): value for key, value in property_.items()}
-                for property_ in backend_entity["properties"]
-            ]
-
-        # SOFT7
-        else:
-            for property_name, property_value in list(backend_entity["properties"].items()):
-                backend_entity["properties"][property_name] = {
-                    key.replace("$ref", "ref"): value for key, value in property_value.items()
-                }
-
-        results.append(ParameterizeGetEntities(entity, version, name, uri, backend_entity))
+        results.append(ParameterizeGetEntities(entity, version, name, identity, scrubbed_entities[index]))
 
     metafunc.parametrize(
         "parameterized_entity",

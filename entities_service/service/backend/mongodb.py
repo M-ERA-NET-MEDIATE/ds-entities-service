@@ -15,8 +15,9 @@ from pymongo.errors import (
     WriteConcernError,
     WriteError,
 )
+from s7 import SOFT7Entity, get_entity
 
-from entities_service.models import URI_REGEX, SOFTModelTypes, soft_entity
+from entities_service.models import URI_REGEX
 from entities_service.service.backend import Backends
 from entities_service.service.backend.backend import (
     Backend,
@@ -33,8 +34,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from pydantic import AnyHttpUrl
     from pymongo import MongoClient
     from pymongo.collection import Collection as MongoCollection
-
-    from entities_service.models import VersionedSOFTEntity
+    from s7 import SOFT7Entity
 
     class URIParts(TypedDict):
         """The parts of a SOFT entity URI."""
@@ -266,7 +266,7 @@ class MongoDBBackend(Backend):
         self._collection.create_index(["uri", "namespace", "version", "name"], unique=True, name="URI")
 
     def create(
-        self, entities: Iterable[VersionedSOFTEntity | dict[str, Any]]
+        self, entities: Iterable[SOFT7Entity | dict[str, Any]]
     ) -> list[dict[str, Any]] | dict[str, Any] | None:
         """Create one or more entities in the MongoDB."""
         LOGGER.info("Creating entities: %s", entities)
@@ -290,7 +290,7 @@ class MongoDBBackend(Backend):
     def update(
         self,
         entity_identity: AnyHttpUrl | str,
-        entity: VersionedSOFTEntity | dict[str, Any],
+        entity: SOFT7Entity | dict[str, Any],
     ) -> None:
         """Update an entity in the MongoDB."""
         entity = self._prepare_entity(entity)
@@ -426,39 +426,15 @@ class MongoDBBackend(Backend):
 
         return {"$or": [uri_parts, {"uri": uri}]}
 
-    def _prepare_entity(self, entity: VersionedSOFTEntity | dict[str, Any]) -> dict[str, Any]:
-        """Clean and prepare the entity for interactions with the MongoDB backend."""
+    def _prepare_entity(self, entity: SOFT7Entity | dict[str, Any]) -> dict[str, Any]:
+        """Prepare the entity for interactions with the MongoDB backend."""
         if isinstance(entity, dict):
-            uri = entity.get("uri", None) or (
-                f"{entity.get('namespace', '')}/{entity.get('version', '')}/{entity.get('name', '')}"
-            )
-            entity = soft_entity(
-                error_msg=f"Invalid entity given for {uri}.",
-                **entity,
-            )
+            entity = get_entity(entity)
 
-        if not isinstance(entity, SOFTModelTypes):
+        if not isinstance(entity, SOFT7Entity):
             raise TypeError(
-                "Entity must be a dict or a SOFTModelTypes for "
+                "Entity must be a dict or a SOFT7Entity for "
                 f"{self.__class__.__name__}, got a {type(entity)}."
             )
 
-        entity = entity.model_dump(by_alias=True, mode="json", exclude_unset=True)
-
-        # Convert all '$ref' to 'ref' in the entity
-        if isinstance(entity["properties"], list):  # SOFT5
-            for index, property_value in enumerate(list(entity["properties"])):
-                entity["properties"][index] = {
-                    key.replace("$", ""): value for key, value in property_value.items()
-                }
-
-        elif isinstance(entity["properties"], dict):  # SOFT7
-            for property_name, property_value in list(entity["properties"].items()):
-                entity["properties"][property_name] = {
-                    key.replace("$", ""): value for key, value in property_value.items()
-                }
-
-        else:
-            raise TypeError(f"Invalid entity properties type: {type(entity['properties'])}")
-
-        return entity
+        return entity.model_dump(mode="json", exclude_unset=True)

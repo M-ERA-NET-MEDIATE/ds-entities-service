@@ -23,7 +23,7 @@ def test_get_entity(
     from fastapi import status
 
     with client() as client_:
-        response = client_.get(ENDPOINT, params={"id": [parameterized_entity.uri]}, timeout=5)
+        response = client_.get(ENDPOINT, params={"id": [parameterized_entity.identity]}, timeout=5)
 
     try:
         resolved_entity = response.json()
@@ -35,7 +35,7 @@ def test_get_entity(
     ), f"Response: {json.dumps(resolved_entity, indent=2)}. Request: {response.request}"
     assert response.status_code == status.HTTP_200_OK, json.dumps(resolved_entity, indent=2)
 
-    assert resolved_entity == parameterized_entity.entity, json.dumps(resolved_entity, indent=2)
+    assert resolved_entity == parameterized_entity.parsed_entity, json.dumps(resolved_entity, indent=2)
 
 
 def test_get_entity_instance(
@@ -48,14 +48,21 @@ def test_get_entity_instance(
     from dlite import Instance
 
     with client() as client_:
-        response = client_.get(ENDPOINT, params={"id": [parameterized_entity.uri]}, timeout=5)
+        response = client_.get(ENDPOINT, params={"id": [parameterized_entity.identity]}, timeout=5)
 
     try:
         resolved_entity = response.json()
     except json.JSONDecodeError:
         pytest.fail(f"Response not JSON: {response.text}")
 
-    assert resolved_entity == parameterized_entity.entity, resolved_entity
+    assert resolved_entity == parameterized_entity.parsed_entity, resolved_entity
+
+    # Tweak resolved entity to be DLite compatible
+    resolved_entity["uri"] = resolved_entity.pop("identity")
+    for property_name, property_value in list(resolved_entity["properties"].items()):
+        if property_value["type"].startswith("http"):
+            resolved_entity["properties"][property_name]["$ref"] = property_value["type"]
+            resolved_entity["properties"][property_name]["type"] = "ref"
 
     Instance.from_dict(resolved_entity)
 
