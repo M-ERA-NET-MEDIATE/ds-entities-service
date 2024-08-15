@@ -53,15 +53,15 @@ def test_multiple_initialize(mongo_backend: GetMongoBackend) -> None:
     # Check current indices
     indices = backend._collection.index_information()
     assert len(indices) == 2, indices
-    assert "URI" in indices
+    assert "IDENTITY" in indices
     assert "_id_" in indices
 
-    # Initialize the backend again, ensuring the "URI" index is not recreated
+    # Initialize the backend again, ensuring the "IDENTITY" index is not recreated
     backend.initialize()
 
     indices = backend._collection.index_information()
     assert len(indices) == 2, indices
-    assert "URI" in indices
+    assert "IDENTITY" in indices
     assert "_id_" in indices
 
 
@@ -101,7 +101,7 @@ def test_create(mongo_backend: GetMongoBackend, parameterized_entity: Parameteri
     # Create multiple entities
     raw_entities = [
         {
-            "uri": "http://onto-ns.com/meta/1.0/Test",
+            "identity": "http://onto-ns.com/meta/1.0/Test",
             "properties": {
                 "test": {
                     "type": "string",
@@ -110,7 +110,7 @@ def test_create(mongo_backend: GetMongoBackend, parameterized_entity: Parameteri
             },
         },
         {
-            "uri": "http://onto-ns.com/meta/1.0/AnotherTest",
+            "identity": "http://onto-ns.com/meta/1.0/AnotherTest",
             "properties": {
                 "test": {
                     "type": "string",
@@ -177,7 +177,7 @@ def test_update(mongo_backend: GetMongoBackend, parameterized_entity: Parameteri
         {
             "$or": [
                 URI_REGEX.match(parameterized_entity.identity).groupdict(),
-                {"uri": parameterized_entity.identity},
+                {"identity": parameterized_entity.identity},
             ]
         },
         projection={"_id": False},
@@ -199,7 +199,7 @@ def test_delete(mongo_backend: GetMongoBackend, parameterized_entity: Parameteri
         {
             "$or": [
                 URI_REGEX.match(parameterized_entity.identity).groupdict(),
-                {"uri": parameterized_entity.identity},
+                {"identity": parameterized_entity.identity},
             ]
         },
         projection={"_id": False},
@@ -219,7 +219,7 @@ def test_delete(mongo_backend: GetMongoBackend, parameterized_entity: Parameteri
         {
             "$or": [
                 URI_REGEX.match(parameterized_entity.identity).groupdict(),
-                {"uri": parameterized_entity.identity},
+                {"identity": parameterized_entity.identity},
             ]
         },
         projection={"_id": False},
@@ -244,7 +244,7 @@ def test_search(mongo_backend: GetMongoBackend, parameterized_entity: Parameteri
             {
                 "$or": [
                     URI_REGEX.match(parameterized_entity.identity).groupdict(),
-                    {"uri": parameterized_entity.identity},
+                    {"identity": parameterized_entity.identity},
                 ]
             }
         )
@@ -278,7 +278,7 @@ def test_count(mongo_backend: GetMongoBackend, parameterized_entity: Parameteriz
             {
                 "$or": [
                     URI_REGEX.match(parameterized_entity.identity).groupdict(),
-                    {"uri": parameterized_entity.identity},
+                    {"identity": parameterized_entity.identity},
                 ]
             }
         )

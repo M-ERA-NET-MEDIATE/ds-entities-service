@@ -145,10 +145,10 @@ def test_create_invalid_entity(
 
     # Create single invalid entities
     for entity in entities:
-        uri = entity.get("uri", None) or (
+        identity = entity.get("uri", entity.get("identity", None)) or (
             f"{entity.get('namespace', '')}/{entity.get('version', '')}/{entity.get('name', '')}"
         )
-        error_message = f"Failed to create entity with uri {uri}"
+        error_message = f"Failed to create entity with identity {identity}"
 
         with client(raise_server_exceptions=False) as client_:
             response = client_.post(ENDPOINT, json=entity, headers=auth_header(auth_role="write"))
@@ -227,7 +227,7 @@ def test_backend_write_error_exception(
     mock_auth_verification(auth_role="write")
 
     valid_entity = {
-        "uri": "http://onto-ns.com/meta/1.0/ValidEntity",
+        "identity": "http://onto-ns.com/meta/1.0/ValidEntity",
         "description": "A valid entity not in 'valid_entities.yaml'.",
         "dimensions": {},
         "properties": {
@@ -256,7 +256,7 @@ def test_backend_write_error_exception(
     assert isinstance(response_json, dict), json.dumps(response_json, indent=2)
     assert "detail" in response_json, json.dumps(response_json, indent=2)
     assert response_json["detail"] == (
-        f"Could not create entity with identity: {valid_entity['uri']}"
+        f"Could not create entity with identity: {valid_entity['identity']}"
     ), json.dumps(response_json, indent=2)
 
 

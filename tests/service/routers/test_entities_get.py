@@ -68,7 +68,7 @@ def test_get_entity_instance(
 
 
 def test_get_entity_not_found(client: ClientFixture) -> None:
-    """Test that the route returns a Not Found (404) for non existent URIs."""
+    """Test that the route returns a Not Found (404) for non existent identities."""
     import json
 
     from fastapi import status
@@ -82,17 +82,17 @@ def test_get_entity_not_found(client: ClientFixture) -> None:
     except json.JSONDecodeError:
         pytest.fail(f"Response not JSON: {response.text}")
 
-    assert not response.is_success, "Non existent (valid) URI returned an OK response!"
+    assert not response.is_success, "Non existent (valid) identity returned an OK response!"
     assert (
         response.status_code == status.HTTP_404_NOT_FOUND
     ), f"Response:\n{json.dumps(response_json, indent=2)}"
 
 
-def test_get_entity_invalid_uri(client: ClientFixture) -> None:
+def test_get_entity_invalid_identity(client: ClientFixture) -> None:
     """Test that the service raises a pydantic ValidationError and returns an
-    Unprocessable Entity (422) for invalid URIs.
+    Unprocessable Entity (422) for invalid identities.
 
-    Test by reversing version and name in URI, thereby making it invalid.
+    Test by reversing version and name in identity, thereby making it invalid.
     """
     import json
 
@@ -107,7 +107,7 @@ def test_get_entity_invalid_uri(client: ClientFixture) -> None:
     except json.JSONDecodeError:
         pytest.fail(f"Response not JSON: {response.text}")
 
-    assert not response.is_success, "Invalid URI returned an OK response!"
+    assert not response.is_success, "Invalid identity returned an OK response!"
     assert (
         response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
     ), f"Response:\n{json.dumps(response_json, indent=2)}"

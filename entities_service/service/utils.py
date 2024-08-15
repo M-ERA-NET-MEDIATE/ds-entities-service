@@ -10,8 +10,8 @@ if TYPE_CHECKING:  # pragma: no cover
     from typing import Any
 
 
-def get_uri(entity: SOFT7Entity | dict[str, Any]) -> str:
-    """Get the URI of an entity."""
+def get_identity(entity: SOFT7Entity | dict[str, Any]) -> str:
+    """Get the identity of an entity."""
     if isinstance(entity, SOFT7Entity):
         return str(entity.identity)
 
