@@ -7,7 +7,7 @@ COPY pyproject.toml LICENSE README.md ./
 
 # Install dependencies
 RUN apt-get update && \
-  apt-get install -y procps && \
+  apt-get install -y git procps && \
   rm -rf /var/lib/apt/lists/* && \
   python -m pip install -U pip && \
   pip install -U setuptools wheel && \
