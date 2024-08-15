@@ -456,27 +456,7 @@ def backend_test_data(static_dir: Path) -> list[dict[str, Any]]:
     """Return the test data for the backend."""
     import yaml
 
-    # Convert all '$ref' to 'ref' in the valid_entities.yaml file
-    entities: list[dict[str, Any]] = yaml.safe_load((static_dir / "valid_entities.yaml").read_text())
-    for entity in entities:
-        # SOFT5
-        if isinstance(entity["properties"], list):
-            for index, property_value in enumerate(list(entity["properties"])):
-                entity["properties"][index] = {
-                    key.replace("$", ""): value for key, value in property_value.items()
-                }
-
-        # SOFT7
-        elif isinstance(entity["properties"], dict):
-            for property_name, property_value in list(entity["properties"].items()):
-                entity["properties"][property_name] = {
-                    key.replace("$", ""): value for key, value in property_value.items()
-                }
-
-        else:
-            raise TypeError(f"Invalid type for entity['properties']: {type(entity['properties'])}")
-
-    return entities
+    return yaml.safe_load((static_dir / "valid_entities_soft7.yaml").read_text())
 
 
 @pytest.fixture(autouse=True)
