@@ -451,7 +451,7 @@ def _mongo_backend_users(live_backend: bool, get_backend_user: GetBackendUserFix
             )
 
 
-@pytest.fixture()
+@pytest.fixture
 def backend_test_data(static_dir: Path) -> list[dict[str, Any]]:
     """Return the test data for the backend."""
     import yaml
@@ -484,7 +484,7 @@ def _reset_mongo_test_collection(
     backend._collection.insert_many(backend_test_data)
 
 
-@pytest.fixture()
+@pytest.fixture
 def _empty_backend_collection(live_backend: bool, get_backend_user: GetBackendUserFixture) -> None:
     """Empty the backend collection."""
     if not live_backend:
@@ -517,7 +517,7 @@ def _mock_lifespan(live_backend: bool, monkeypatch: pytest.MonkeyPatch) -> None:
         )
 
 
-@pytest.fixture()
+@pytest.fixture
 def token_mock() -> TokenMockFixture:
     """Return a mock token."""
 
@@ -566,7 +566,7 @@ def token_mock() -> TokenMockFixture:
     return _token_mock
 
 
-@pytest.fixture()
+@pytest.fixture
 def auth_header(token_mock: TokenMockFixture) -> AuthHeaderFixture:
     """Return the authentication header."""
     from fastapi.security import HTTPAuthorizationCredentials
@@ -588,7 +588,7 @@ def auth_header(token_mock: TokenMockFixture) -> AuthHeaderFixture:
     return _auth_header
 
 
-@pytest.fixture()
+@pytest.fixture
 def mock_auth_verification(
     httpx_mock: HTTPXMock,
     get_backend_user: GetBackendUserFixture,
@@ -665,7 +665,7 @@ def mock_auth_verification(
     return _mock_auth_verification
 
 
-@pytest.fixture()
+@pytest.fixture
 def client(live_backend: bool) -> ClientFixture:
     """Return the test client."""
     import os
@@ -693,7 +693,7 @@ def client(live_backend: bool) -> ClientFixture:
     return _client
 
 
-@pytest.fixture()
+@pytest.fixture
 def non_mocked_hosts(live_backend: bool) -> list[str]:
     """Return the non-mocked hosts."""
     import os

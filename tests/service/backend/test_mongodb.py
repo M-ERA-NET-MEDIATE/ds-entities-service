@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 pytestmark = pytest.mark.skip_if_not_live_backend(reason="Tests are only valid with a live backend.")
 
 
-@pytest.fixture()
+@pytest.fixture
 def mongo_backend(get_backend_user: GetBackendUserFixture) -> GetMongoBackend:
     """Get a MongoDB backend."""
 
