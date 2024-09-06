@@ -16,14 +16,15 @@ from fastapi import (
 )
 from fastapi.exceptions import RequestValidationError
 from pydantic import Field, ValidationError, conlist
+from s7 import SOFT7Entity
 
-from entities_service.models import URI_REGEX, VersionedSOFTEntity
+from entities_service.models import URI_REGEX
 from entities_service.models.service_errors import HTTPError
 from entities_service.service.backend import get_backend
 from entities_service.service.config import CONFIG
 from entities_service.service.requests import YamlRequest, YamlRoute
 from entities_service.service.security import verify_token
-from entities_service.service.utils import get_uri
+from entities_service.service.utils import get_identity
 
 LOGGER = logging.getLogger(__name__)
 
@@ -39,7 +40,7 @@ EmptyList: type[list[Any]] = conlist(Any, min_length=0, max_length=0)  # type: i
 
 @ROUTER.get(
     "/",
-    response_model=list[VersionedSOFTEntity] | VersionedSOFTEntity,
+    response_model=list[SOFT7Entity] | SOFT7Entity,
     response_model_by_alias=True,
     response_model_exclude_unset=True,
     summary="Retrieve one or more Entity.",
@@ -106,7 +107,7 @@ async def get_entities(
 
 @ROUTER.post(
     "/",
-    response_model=list[VersionedSOFTEntity] | VersionedSOFTEntity | None,
+    response_model=list[SOFT7Entity] | SOFT7Entity | None,
     response_model_by_alias=True,
     response_model_exclude_unset=True,
     status_code=status.HTTP_201_CREATED,
@@ -153,7 +154,7 @@ async def create_entities(
             "Could not create entit"
             "{suffix} with identit{suffix}: {identities}".format(
                 suffix="y" if len(entities) == 1 else "ies",
-                identities=", ".join(get_uri(entity) for entity in entities),
+                identities=", ".join(get_identity(entity) for entity in entities),
             )
         ),
     )
@@ -165,7 +166,7 @@ async def create_entities(
     except entities_backend.write_access_exception as err:
         LOGGER.error(
             "Could not create entities: identities=[%s]",
-            ", ".join(get_uri(entity) for entity in entities),
+            ", ".join(get_identity(entity) for entity in entities),
         )
         LOGGER.exception(err)
         raise write_fail_exception from err
@@ -182,7 +183,7 @@ async def create_entities(
 
 @ROUTER.put(
     "/",
-    response_model=list[VersionedSOFTEntity] | VersionedSOFTEntity | None,
+    response_model=list[SOFT7Entity] | SOFT7Entity | None,
     response_model_by_alias=True,
     response_model_exclude_unset=True,
     status_code=status.HTTP_201_CREATED,
@@ -230,14 +231,14 @@ async def update_entities(
             "Could not put/update entit"
             "{suffix} with identit{suffix}: {identities}".format(
                 suffix="y" if len(entities) == 1 else "ies",
-                identities=", ".join(get_uri(entity) for entity in entities),
+                identities=", ".join(get_identity(entity) for entity in entities),
             )
         ),
     )
 
     entities_backend = get_backend(CONFIG.backend, auth_level="write")
 
-    new_entities = [entity for entity in entities if get_uri(entity) not in entities_backend]
+    new_entities = [entity for entity in entities if get_identity(entity) not in entities_backend]
 
     if new_entities:
         try:
@@ -245,7 +246,7 @@ async def update_entities(
         except entities_backend.write_access_exception as err:
             LOGGER.error(
                 "Could not create entities: identities=[%s]",
-                ", ".join(get_uri(entity) for entity in new_entities),
+                ", ".join(get_identity(entity) for entity in new_entities),
             )
             LOGGER.exception(err)
             raise write_fail_exception from err
@@ -262,13 +263,13 @@ async def update_entities(
         if entity in new_entities:
             continue
 
-        if (identity := get_uri(entity)) in entities_backend:
+        if (identity := get_identity(entity)) in entities_backend:
             try:
                 entities_backend.update(identity, entity)
             except entities_backend.write_access_exception as err:
                 LOGGER.error(
                     "Could not update entities: identities=[%s]",
-                    ", ".join(get_uri(entity) for entity in entities),
+                    ", ".join(get_identity(entity) for entity in entities),
                 )
                 LOGGER.error("Error happened when updating entity: identity=%s", identity)
                 LOGGER.exception(err)
@@ -323,7 +324,7 @@ async def patch_entities(request: YamlRequest, response: Response) -> list[Any] 
             "Could not patch/update entit"
             "{suffix} with identit{suffix}: {identities}".format(
                 suffix="y" if len(entities) == 1 else "ies",
-                identities=", ".join(get_uri(entity) for entity in entities),
+                identities=", ".join(get_identity(entity) for entity in entities),
             )
         ),
     )
@@ -331,23 +332,23 @@ async def patch_entities(request: YamlRequest, response: Response) -> list[Any] 
     entities_backend = get_backend(CONFIG.backend, auth_level="write")
 
     # First, check all entities already exist
-    non_existing_entities = [entity for entity in entities if get_uri(entity) not in entities_backend]
+    non_existing_entities = [entity for entity in entities if get_identity(entity) not in entities_backend]
     if non_existing_entities:
         LOGGER.error(
             "Cannot patch non-existent entities: identities=[%s]",
-            ", ".join(get_uri(entity) for entity in non_existing_entities),
+            ", ".join(get_identity(entity) for entity in non_existing_entities),
         )
         raise write_fail_exception
 
     for entity in entities:
         try:
-            entities_backend.update(get_uri(entity), entity)
+            entities_backend.update(get_identity(entity), entity)
         except entities_backend.write_access_exception as err:
             LOGGER.error(
                 "Could not update entities: identities=[%s]",
-                ", ".join(get_uri(entity) for entity in entities),
+                ", ".join(get_identity(entity) for entity in entities),
             )
-            LOGGER.error("Error happened when updating entity: identity=%s", get_uri(entity))
+            LOGGER.error("Error happened when updating entity: identity=%s", get_identity(entity))
             LOGGER.exception(err)
             raise write_fail_exception from err
 
@@ -406,7 +407,7 @@ async def delete_entities(
         entities_backend.delete(identities)
     except entities_backend.write_access_exception as err:
         LOGGER.error(
-            "Could not delete entities: uri=%s",
+            "Could not delete entities: identity=%s",
             ", ".join(str(identity) for identity in identities),
         )
         LOGGER.exception(err)

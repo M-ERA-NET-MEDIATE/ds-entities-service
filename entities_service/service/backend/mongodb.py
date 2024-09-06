@@ -15,8 +15,9 @@ from pymongo.errors import (
     WriteConcernError,
     WriteError,
 )
+from s7 import SOFT7Entity, get_entity
 
-from entities_service.models import URI_REGEX, SOFTModelTypes, soft_entity
+from entities_service.models import URI_REGEX
 from entities_service.service.backend import Backends
 from entities_service.service.backend.backend import (
     Backend,
@@ -28,20 +29,12 @@ from entities_service.service.config import CONFIG, MongoDsn
 
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Generator, Iterable, Iterator
-    from typing import Any, TypedDict
+    from typing import Any
 
     from pydantic import AnyHttpUrl
     from pymongo import MongoClient
     from pymongo.collection import Collection as MongoCollection
-
-    from entities_service.models import VersionedSOFTEntity
-
-    class URIParts(TypedDict):
-        """The parts of a SOFT entity URI."""
-
-        namespace: str
-        version: str
-        name: str
+    from s7 import SOFT7Entity
 
 
 LOGGER = logging.getLogger(__name__)
@@ -244,29 +237,24 @@ class MongoDBBackend(Backend):
     def initialize(self) -> None:
         """Initialize the MongoDB backend."""
         # Check index exists
-        if "URI" in (indices := self._collection.index_information()):
-            if not indices["URI"].get("unique", False):
+        if "IDENTITY" in (indices := self._collection.index_information()):
+            if not indices["IDENTITY"].get("unique", False):
                 LOGGER.warning(
-                    "The URI index in the MongoDB collection is not unique. "
+                    "The IDENTITY index in the MongoDB collection is not unique. "
                     "This may cause problems when creating entities."
                 )
-            if indices["URI"].get("key", False) != [
-                ("uri", 1),
-                ("namespace", 1),
-                ("version", 1),
-                ("name", 1),
-            ]:
+            if indices["IDENTITY"].get("key", False) != [("identity", 1)]:
                 LOGGER.warning(
-                    "The URI index in the MongoDB collection is not as expected. "
+                    "The IDENTITY index in the MongoDB collection is not as expected. "
                     "This may cause problems when creating entities."
                 )
             return
 
-        # Create a unique index for the URI
-        self._collection.create_index(["uri", "namespace", "version", "name"], unique=True, name="URI")
+        # Create a unique index for the IDENTITY
+        self._collection.create_index(["identity"], unique=True, name="IDENTITY")
 
     def create(
-        self, entities: Iterable[VersionedSOFTEntity | dict[str, Any]]
+        self, entities: Iterable[SOFT7Entity | dict[str, Any]]
     ) -> list[dict[str, Any]] | dict[str, Any] | None:
         """Create one or more entities in the MongoDB."""
         LOGGER.info("Creating entities: %s", entities)
@@ -284,46 +272,26 @@ class MongoDBBackend(Backend):
 
     def read(self, entity_identity: AnyHttpUrl | str) -> dict[str, Any] | None:
         """Read an entity from the MongoDB."""
-        filter = self._single_uri_query(str(entity_identity))
+        filter = self._single_identity_query(str(entity_identity))
         return self._collection.find_one(filter, projection={"_id": False})
 
     def update(
         self,
         entity_identity: AnyHttpUrl | str,
-        entity: VersionedSOFTEntity | dict[str, Any],
+        entity: SOFT7Entity | dict[str, Any],
     ) -> None:
         """Update an entity in the MongoDB."""
         entity = self._prepare_entity(entity)
-        filter = self._single_uri_query(str(entity_identity))
+        filter = self._single_identity_query(str(entity_identity))
         self._collection.update_one(filter, {"$set": entity})
 
     def delete(self, entity_identities: Iterable[AnyHttpUrl | str]) -> None:
         """Delete one or more entities in the MongoDB."""
-        namespaces: list[str] = []
-        versions: list[str] = []
-        names: list[str] = []
-
         for identity in entity_identities:
-            if (match := URI_REGEX.match(str(identity))) is None:
-                raise MongoDBBackendError(f"Invalid entity URI: {identity}")
+            if URI_REGEX.match(str(identity)) is None:
+                raise MongoDBBackendError(f"Invalid entity identity: {identity}")
 
-            uri_parts: URIParts = match.groupdict()  # type: ignore[assignment]
-            namespaces.append(uri_parts["namespace"])
-            versions.append(uri_parts["version"])
-            names.append(uri_parts["name"])
-
-        filter = {
-            "$or": [
-                {"uri": {"$in": [str(identity) for identity in entity_identities]}},
-                {
-                    "$and": [
-                        {"namespace": {"$in": namespaces}},
-                        {"version": {"$in": versions}},
-                        {"name": {"$in": names}},
-                    ]
-                },
-            ],
-        }
+        filter = {"identity": {"$in": [str(identity) for identity in entity_identities]}}
 
         self._collection.delete_many(
             filter,
@@ -369,29 +337,13 @@ class MongoDBBackend(Backend):
                     ]
                 )
             if by_identity:
-                by_namespace: list[str] = []
-                by_version: list[str] = []
-                by_name: list[str] = []
-
                 for identity in by_identity:
-                    if (match := URI_REGEX.match(str(identity))) is None:
-                        raise ValueError(f"Invalid entity URI: {identity}")
-
-                    uri_parts: URIParts = match.groupdict()  # type: ignore[assignment]
-                    by_namespace.append(uri_parts["namespace"])
-                    by_version.append(uri_parts["version"])
-                    by_name.append(uri_parts["name"])
+                    if URI_REGEX.match(str(identity)) is None:
+                        raise ValueError(f"Invalid entity identity: {identity}")
 
                 query["$or"].extend(
                     [
-                        {"uri": {"$in": [str(identity) for identity in by_identity]}},
-                        {
-                            "$and": [
-                                {"namespace": {"$in": by_namespace}},
-                                {"version": {"$in": by_version}},
-                                {"name": {"$in": by_name}},
-                            ]
-                        },
+                        {"identity": {"$in": [str(identity) for identity in by_identity]}},
                     ]
                 )
 
@@ -414,51 +366,22 @@ class MongoDBBackend(Backend):
         return self._collection.count_documents(query)
 
     # MongoDBBackend specific methods
-    def _single_uri_query(self, uri: str) -> dict[str, Any]:
-        """Build a query for a single URI."""
-        if (match := URI_REGEX.match(uri)) is not None:
-            uri_parts: URIParts = match.groupdict()  # type: ignore[assignment]
-        else:
-            raise ValueError(f"Invalid entity URI: {uri}")
+    def _single_identity_query(self, identity: str) -> dict[str, Any]:
+        """Build a query for a single identity."""
+        if URI_REGEX.match(identity) is None:
+            raise ValueError(f"Invalid entity identity: {identity}")
 
-        if not all(uri_parts.values()):
-            raise ValueError(f"Invalid entity URI: {uri}")
+        return {"identity": identity}
 
-        return {"$or": [uri_parts, {"uri": uri}]}
-
-    def _prepare_entity(self, entity: VersionedSOFTEntity | dict[str, Any]) -> dict[str, Any]:
-        """Clean and prepare the entity for interactions with the MongoDB backend."""
+    def _prepare_entity(self, entity: SOFT7Entity | dict[str, Any]) -> dict[str, Any]:
+        """Prepare the entity for interactions with the MongoDB backend."""
         if isinstance(entity, dict):
-            uri = entity.get("uri", None) or (
-                f"{entity.get('namespace', '')}/{entity.get('version', '')}/{entity.get('name', '')}"
-            )
-            entity = soft_entity(
-                error_msg=f"Invalid entity given for {uri}.",
-                **entity,
-            )
+            entity = get_entity(entity)
 
-        if not isinstance(entity, SOFTModelTypes):
+        if not isinstance(entity, SOFT7Entity):
             raise TypeError(
-                "Entity must be a dict or a SOFTModelTypes for "
+                "Entity must be a dict or a SOFT7Entity for "
                 f"{self.__class__.__name__}, got a {type(entity)}."
             )
 
-        entity = entity.model_dump(by_alias=True, mode="json", exclude_unset=True)
-
-        # Convert all '$ref' to 'ref' in the entity
-        if isinstance(entity["properties"], list):  # SOFT5
-            for index, property_value in enumerate(list(entity["properties"])):
-                entity["properties"][index] = {
-                    key.replace("$", ""): value for key, value in property_value.items()
-                }
-
-        elif isinstance(entity["properties"], dict):  # SOFT7
-            for property_name, property_value in list(entity["properties"].items()):
-                entity["properties"][property_name] = {
-                    key.replace("$", ""): value for key, value in property_value.items()
-                }
-
-        else:
-            raise TypeError(f"Invalid entity properties type: {type(entity['properties'])}")
-
-        return entity
+        return entity.model_dump(mode="json", exclude_unset=True)

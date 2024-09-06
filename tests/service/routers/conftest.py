@@ -13,8 +13,7 @@ if TYPE_CHECKING:
     from typing import Any
 
     from pydantic import AnyHttpUrl
-
-    from entities_service.models import VersionedSOFTEntity
+    from s7 import SOFT7Entity
 
 
 @pytest.fixture(autouse=True)
@@ -40,7 +39,7 @@ def _mock_backend(
         BackendWriteAccessError,
     )
     from entities_service.service.backend.mongodb import MongoDBBackend
-    from entities_service.service.utils import get_uri
+    from entities_service.service.utils import get_identity
 
     class MockBackendError(BackendError):
         """Mock backend error."""
@@ -62,7 +61,7 @@ def _mock_backend(
             super(MongoDBBackend, self).__init__(settings=settings)
 
             self.__test_data: list[dict[str, Any]] = backend_test_data
-            self.__test_data_uris: list[str] = [get_uri(entity) for entity in self.__test_data]
+            self.__test_data_uris: list[str] = [get_identity(entity) for entity in self.__test_data]
 
         def __str__(self) -> str:
             return super(MongoDBBackend, self).__str__()
@@ -85,12 +84,13 @@ def _mock_backend(
             pass
 
         def create(
-            self, entities: Iterable[VersionedSOFTEntity | dict[str, Any]]
+            self, entities: Iterable[SOFT7Entity | dict[str, Any]]
         ) -> list[dict[str, Any]] | dict[str, Any] | None:
             """Create entities.
 
             For testing purposes:
-            - Raise an error if entities is not part of the `valid_entities.yaml` file.
+            - Raise an error if entities is/are not part of the `valid_entities.yaml` file.
+
             """
             valid_entities: list[dict[str, Any]] = yaml.safe_load(
                 (static_dir / "valid_entities.yaml").read_text()
@@ -100,12 +100,14 @@ def _mock_backend(
             ]
 
             entities = [self._prepare_entity(entity) for entity in entities]
-            entity_identities = [get_uri(entity) for entity in entities]
+            entity_identities = [get_identity(entity) for entity in entities]
 
             if not all(entity in valid_prepared_entities for entity in entities):
                 raise MockBackendError(
                     "One or more entities are not part of the `valid_entities.yaml` "
-                    "file. Will act like the entities can not be created."
+                    "file. Will act like the entities can not be created.\n"
+                    f"Entities: {entities}\n"
+                    f"Valid entities: {valid_prepared_entities}"
                 )
 
             if not entities:
@@ -128,10 +130,10 @@ def _mock_backend(
         def update(
             self,
             entity_identity: AnyHttpUrl | str,
-            entity: VersionedSOFTEntity | dict[str, Any],
+            entity: SOFT7Entity | dict[str, Any],
         ) -> None:
             if URI_REGEX.match(str(entity_identity)) is None:
-                raise MockBackendError(f"Invalid entity URI: {entity_identity}")
+                raise MockBackendError(f"Invalid entity identity: {entity_identity}")
 
             entity = self._prepare_entity(entity)
 
@@ -142,7 +144,7 @@ def _mock_backend(
 
         def delete(self, entity_identities: Iterable[AnyHttpUrl | str]) -> None:
             if any(URI_REGEX.match(str(identity)) is None for identity in entity_identities):
-                raise MockBackendError("One or more invalid entity URIs given.")
+                raise MockBackendError("One or more invalid entity identities given.")
 
             for identity in entity_identities:
                 if identity in self.__test_data_uris:
