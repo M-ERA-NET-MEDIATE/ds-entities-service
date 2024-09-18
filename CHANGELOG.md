@@ -2,17 +2,28 @@
 
 ## [Unreleased](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/tree/HEAD)
 
-[Full Changelog](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/compare/v0.2.0...HEAD)
+[Full Changelog](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/compare/v0.2.1...HEAD)
 
-## Use `soft7` package for entity management
+## Ensure v0.2.1 of `soft7` is used
 
-Use the [`soft7`](https://pypi.org/project/soft7) package to validate and handle entities. Specifically, exchange the local pydantic models with those defined in the `soft7` package.
+Minor patch update to ensure at minimum v0.2.1 of the `soft7` package is used.
 
-**Important**: This introduces a "breaking" change. This means the `uri` (or now `identity`) value is no longer so strictly guarded and validated. There is now no error if the namespace or composition is malformed according to the TEAM4.0-style URLs, i.e., if the namespace does not start with `http://onto-ns.com/meta`.
+## [v0.2.1](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/tree/v0.2.1) (2024-09-18)
 
-### Miscellaneous
+[Full Changelog](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/compare/v0.2.0...v0.2.1)
 
-Update several development and support files.
+## Ensure v0.2.1 of `soft7` is used
+
+Minor patch update to ensure at minimum v0.2.1 of the `soft7` package is used.
+
+**Closed issues:**
+
+- Exclude CHANGELOG from pre-commit hooks [\#48](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/issues/48)
+
+**Merged pull requests:**
+
+- Exclude `CHANGELOG.md` from relevant pre-commit hooks [\#49](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/49) ([CasperWA](https://github.com/CasperWA))
+- \[pre-commit.ci\] pre-commit autoupdate [\#47](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/47) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
 
 ## [v0.2.0](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/tree/v0.2.0) (2024-09-12)
 
