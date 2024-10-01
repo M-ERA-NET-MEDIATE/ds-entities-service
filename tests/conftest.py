@@ -688,7 +688,7 @@ def client(live_backend: bool) -> ClientFixture:
 
         base_url = f"http://localhost{':' + port if port else ''}"
 
-        return Client(base_url=base_url, follow_redirects=True)
+        return Client(base_url=base_url, follow_redirects=True, timeout=10)
 
     return _client
 
