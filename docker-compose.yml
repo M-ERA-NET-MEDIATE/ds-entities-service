@@ -25,7 +25,7 @@ services:
     stop_grace_period: 1s
 
   mongodb:
-    image: mongo:7
+    image: mongo:8
     restart: always
     ports:
       - "${MONGO_PORT:-27017}:27017"
