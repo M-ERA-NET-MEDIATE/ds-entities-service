@@ -13,7 +13,10 @@ if TYPE_CHECKING:
     from ...conftest import AuthHeaderFixture, ClientFixture, MockAuthVerification, ParameterizeGetEntities
 
 
-pytestmark = pytest.mark.usefixtures("_empty_backend_collection")
+pytestmark = [
+    pytest.mark.usefixtures("_empty_backend_collection"),
+    pytest.mark.httpx_mock(can_send_already_matched_responses=True),
+]
 
 
 ENDPOINT = "/entities"
