@@ -32,7 +32,7 @@ LOGGER = logging.getLogger(__name__)
 
 async def get_openid_config() -> OpenIDConfiguration:
     """Get the OpenID configuration."""
-    async with AsyncClient() as client:
+    async with AsyncClient(timeout=10) as client:
         try:
             response = await client.get(
                 f"{str(CONFIG.oauth2_provider).rstrip('/')}/.well-known/openid-configuration"
@@ -70,7 +70,7 @@ async def verify_token(
         LOGGER.error("OpenID configuration does not contain a userinfo endpoint.")
         raise credentials_exception
 
-    async with AsyncClient() as client:
+    async with AsyncClient(timeout=10) as client:
         try:
             response = await client.get(
                 str(openid_config.userinfo_endpoint),
