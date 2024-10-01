@@ -43,7 +43,7 @@ testing = [
     "numpy <2",  # requirement for DLite v0.5.16, which does not support NumPy v2
     "pytest ~=8.0",
     "pytest-cov ~=5.0",
-    "pytest-httpx ~=0.30.0",
+    "pytest-httpx ~=0.32.0",
 ]
 server = [
     "gunicorn ~=23.0",
