@@ -89,7 +89,7 @@ docker run --rm -d \
   -p "27017:27017" \
   -v "${PWD}/.github/docker_init/create_x509_user.js:/docker-entrypoint-initdb.d/0_create_x509_user.js" \
   -v "${PWD}/docker_security:/mongo_tls" \
-  mongo:7 \
+  mongo:8 \
   --tlsMode allowTLS --tlsCertificateKeyFile /mongo_tls/test-server1.pem --tlsCAFile /mongo_tls/
 ```
 

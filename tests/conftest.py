@@ -109,8 +109,11 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
     """Called after collection has been performed. May filter or re-order the items
     in-place."""
     if config.getoption("--live-backend"):
-        # If the tests are run with a live backend, skip the tests marked with
-        # 'skip_if_live_backend'
+        import os
+
+        # If the tests are run with a live backend, do the following:
+        # - skip the tests marked with 'skip_if_live_backend'
+        # - add non-mocked hosts list to the httpx_mock marker
         prefix_reason = "Live backend used: {reason}"
         default_reason = "Test is skipped when using a live backend"
         for item in items:
@@ -130,8 +133,28 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
 
                 assert isinstance(reason, str), "The reason for skipping the test must be a string."
 
-                # The marker does not have a reason
+                # Add the skip marker to the test
                 item.add_marker(pytest.mark.skip(reason=prefix_reason.format(reason=reason)))
+
+            # HTTPX non-mocked hosts
+            entities_service_port = os.getenv("ENTITIES_SERVICE_PORT", "8000")
+            non_mocked_hosts = ["localhost"]
+            if entities_service_port:
+                non_mocked_hosts.append(f"localhost:{entities_service_port}")
+
+            # Handle the case of the httpx_mock marker already being present
+            if "httpx_mock" in item.keywords:
+                marker: pytest.Mark = item.keywords["httpx_mock"]
+
+                # The marker already has non-mocked hosts - ignore
+                if "non_mocked_hosts" in marker.kwargs:
+                    continue
+
+                # Add the non-mocked hosts to the marker
+                item.add_marker(pytest.mark.httpx_mock(non_mocked_hosts=non_mocked_hosts))
+            else:
+                # Add the httpx_mock marker with the non-mocked hosts
+                item.add_marker(pytest.mark.httpx_mock(non_mocked_hosts=non_mocked_hosts))
     else:
         # If the tests are not run with a live backend, skip the tests marked with
         # 'skip_if_not_live_backend'
@@ -691,18 +714,3 @@ def client(live_backend: bool) -> ClientFixture:
         return Client(base_url=base_url, follow_redirects=True, timeout=10)
 
     return _client
-
-
-@pytest.fixture
-def non_mocked_hosts(live_backend: bool) -> list[str]:
-    """Return the non-mocked hosts."""
-    import os
-
-    port = os.getenv("ENTITIES_SERVICE_PORT", "8000")
-
-    hosts = ["localhost"]
-
-    if port:
-        hosts.append(f"localhost:{port}")
-
-    return hosts if live_backend else []
