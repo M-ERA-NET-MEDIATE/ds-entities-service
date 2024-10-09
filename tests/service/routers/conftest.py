@@ -13,7 +13,6 @@ if TYPE_CHECKING:
     from typing import Any
 
     from pydantic import AnyHttpUrl
-    from pytest_httpx import HTTPXMock
     from s7 import SOFT7Entity
 
 
@@ -210,27 +209,3 @@ def _mock_backend(
             return len(self.__test_data)
 
     monkeypatch.setattr("entities_service.service.backend.mongodb.MongoDBBackend", MockBackend)
-
-
-@pytest.fixture(autouse=True)
-def _set_ds_auth_required_settings(
-    monkeypatch: pytest.MonkeyPatch, httpx_mock: HTTPXMock, caplog: pytest.LogCaptureFixture
-) -> None:
-    """Set the required settings for DataSpaces-Auth."""
-    # Required settings for DataSpaces-Auth
-    monkeypatch.setenv("DS_AUTH_AUTHORIZATION_URL", "http://example.com/auth")
-    monkeypatch.setenv("DS_AUTH_TOKEN_URL", "http://example.com/token")
-    monkeypatch.setenv("DS_AUTH_CERTS_URL", "http://example.com/certs")
-    monkeypatch.setenv("DS_AUTH_SCOPES", '["openid","profile","email"]')
-
-    # Mock call to OpenID configuration URL
-    mock_openid_config_url = "http://example.com/test-realm/.well-known/openid-configuration"
-    monkeypatch.setenv("DS_AUTH_OPENID_CONFIG_URL", mock_openid_config_url)
-    httpx_mock.add_response(
-        url=mock_openid_config_url,
-        status_code=404,
-        text="Testing",
-    )
-
-    # Ignore error log from "failing to get OpenID configuration" in DataSpaces-Auth
-    caplog.set_level(100, logger="dataspaces_auth.fastapi._settings")

@@ -35,7 +35,7 @@ if bool(int(os.getenv("DS_ENTITIES_SERVICE_DISABLE_AUTH_ROLE_CHECKS", "0"))):
             env_vars_to_unset.add(composed_env_var)
 
         if "url" in env_var:
-            os.environ[composed_env_var] = "http://example.org"
+            os.environ[composed_env_var] = "https://semanticmatter.com"
         else:
             os.environ[composed_env_var] = '["openid","profile","email"]'
 
@@ -60,7 +60,7 @@ if bool(int(os.getenv("DS_ENTITIES_SERVICE_DISABLE_AUTH_ROLE_CHECKS", "0"))):
         },
         # Required fields (for the model)
         preferred_username="test_user",
-        iss="http://example.com",
+        iss="https://semanticmatter.com",
         exp=1234567890,
         aud=["test_client"],
         sub="test_user",
