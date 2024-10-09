@@ -57,7 +57,7 @@ jobs:
       DS_ENTITIES_SERVICE_MONGO_URI: mongodb://localhost:27017
       DS_ENTITIES_SERVICE_X509_CERTIFICATE_FILE: docker_security/test-client.pem
       DS_ENTITIES_SERVICE_CA_FILE: docker_security/test-ca.pem
-      DS_ENTITIES_SERVICE_EXTERNAL_OAUTH: 0
+      DS_ENTITIES_SERVICE_DISABLE_AUTH_ROLE_CHECKS: 1
       # These are used in the Dockerfile as well as in pytest
       DS_ENTITIES_SERVICE_PORT: 7000
       STOP_TIME: 3
@@ -81,8 +81,8 @@ jobs:
           cd docker_security && ${{ github.workspace }}/.github/docker_init/setup_mongo_security.sh
           cd ${{ github.workspace }}
 
-          # Pull mongo:7 image and run it
-          docker pull mongo:7
+          # Pull mongo:8 image and run it
+          docker pull mongo:8
           docker run --rm -d \
             --env MONGO_INITDB_ROOT_USERNAME=root \
             --env MONGO_INITDB_ROOT_PASSWORD=root \
@@ -90,7 +90,7 @@ jobs:
             --network "host" \
             --volume "${{ github.workspace }}/.github/docker_init/create_x509_user.js:/docker-entrypoint-initdb.d/0_create_x509_user.js" \
             --volume "${{ github.workspace }}/docker_security:/mongo_tls" \
-            mongo:7 \
+            mongo:8 \
             --tlsMode allowTLS --tlsCertificateKeyFile /mongo_tls/test-server1.pem --tlsCAFile /mongo_tls/test-ca.pem
           sleep 10  # Wait for the database to start
 
@@ -119,7 +119,7 @@ jobs:
             --env DS_ENTITIES_SERVICE_MONGO_URI \
             --env DS_ENTITIES_SERVICE_X509_CERTIFICATE_FILE \
             --env DS_ENTITIES_SERVICE_CA_FILE \
-            --env DS_ENTITIES_SERVICE_EXTERNAL_OAUTH \
+            --env DS_ENTITIES_SERVICE_DISABLE_AUTH_ROLE_CHECKS \
             --env PORT=${DS_ENTITIES_SERVICE_PORT} \
             --env RUN_TIME=40 \
             --env STOP_TIME \
