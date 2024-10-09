@@ -19,7 +19,7 @@ LOGGER = logging.getLogger("entities_service")
 
 # Handle testing
 env_vars: set[str] = set()
-if bool(os.getenv("DS_ENTITIES_SERVICE_DISABLE_AUTH_ROLE_CHECKS", "0")):
+if bool(int(os.getenv("DS_ENTITIES_SERVICE_DISABLE_AUTH_ROLE_CHECKS", "0"))):
     from entities_service.models import DSAPIRole
 
     # Set mandatory settings for DataSpaces-Auth
@@ -81,7 +81,7 @@ async def lifespan(app: FastAPI):  # noqa: ARG001
     # Initialize backend
     get_backend(CONFIG.backend, auth_level="write").initialize()
 
-    if bool(os.getenv("DS_ENTITIES_SERVICE_DISABLE_AUTH_ROLE_CHECKS", "0")):
+    if bool(int(os.getenv("DS_ENTITIES_SERVICE_DISABLE_AUTH_ROLE_CHECKS", "0"))):
         LOGGER.debug(
             "Running in test mode.\n"
             "    - External OAuth2 authentication is disabled!\n"
