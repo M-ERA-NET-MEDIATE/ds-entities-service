@@ -10,12 +10,13 @@ if TYPE_CHECKING:
     from pathlib import Path
     from typing import Any
 
-    from ...conftest import AuthHeaderFixture, ClientFixture, MockAuthVerification, ParameterizeGetEntities
+    from ...conftest import ClientFixture, ParameterizeGetEntities
 
 
 pytestmark = [
     pytest.mark.usefixtures("_empty_backend_collection"),
     pytest.mark.httpx_mock(can_send_already_matched_responses=True),
+    pytest.mark.httpx_mock(assert_all_responses_were_requested=False),
 ]
 
 
@@ -25,22 +26,13 @@ ENDPOINT = "/entities"
 def test_create_single_entity(
     client: ClientFixture,
     parameterized_entity: ParameterizeGetEntities,
-    mock_auth_verification: MockAuthVerification | None,
-    auth_header: AuthHeaderFixture,
-    live_backend: bool,
 ) -> None:
     """Test creating a single entity."""
     import json
 
-    if not live_backend:
-        # Setup mock responses for OAuth2 verification
-        mock_auth_verification(auth_role="write")
-
     # Create single entity
-    with client() as client_:
-        response = client_.post(
-            ENDPOINT, json=parameterized_entity.entity, headers=auth_header(auth_role="write")
-        )
+    with client(allowed_role="entities:write") as client_:
+        response = client_.post(ENDPOINT, json=parameterized_entity.entity)
 
     try:
         response_json = response.json()
@@ -56,18 +48,11 @@ def test_create_single_entity(
 def test_create_multiple_entities(
     static_dir: Path,
     client: ClientFixture,
-    mock_auth_verification: MockAuthVerification | None,
-    auth_header: AuthHeaderFixture,
-    live_backend: bool,
 ) -> None:
     """Test creating multiple entities."""
     import json
 
     import yaml
-
-    if not live_backend:
-        # Setup mock responses for OAuth2 verification
-        mock_auth_verification(auth_role="write")
 
     # Load entities
     entities: list[dict[str, Any]] = yaml.safe_load((static_dir / "valid_entities.yaml").read_text())
@@ -76,8 +61,8 @@ def test_create_multiple_entities(
     )
 
     # Create multiple entities
-    with client() as client_:
-        response = client_.post(ENDPOINT, json=entities, headers=auth_header(auth_role="write"))
+    with client(allowed_role="entities:write") as client_:
+        response = client_.post(ENDPOINT, json=entities)
 
     try:
         response_json = response.json()
@@ -91,20 +76,11 @@ def test_create_multiple_entities(
     assert response_json == scrubbed_entities, json.dumps(response_json, indent=2)
 
 
-def test_create_no_entities(
-    client: ClientFixture,
-    mock_auth_verification: MockAuthVerification | None,
-    auth_header: AuthHeaderFixture,
-    live_backend: bool,
-) -> None:
+def test_create_no_entities(client: ClientFixture) -> None:
     """Test creating no entities."""
-    if not live_backend:
-        # Setup mock responses for OAuth2 verification
-        mock_auth_verification(auth_role="write")
-
     # Create no entities
-    with client() as client_:
-        response = client_.post(ENDPOINT, json=[], headers=auth_header(auth_role="write"))
+    with client(allowed_role="entities:write") as client_:
+        response = client_.post(ENDPOINT, json=[])
 
     # Check response
     assert response.content == b"[]", response.content
@@ -115,16 +91,9 @@ def test_create_no_entities(
 def test_create_invalid_entity(
     static_dir: Path,
     client: ClientFixture,
-    mock_auth_verification: MockAuthVerification | None,
-    auth_header: AuthHeaderFixture,
-    live_backend: bool,
 ) -> None:
     """Test creating an invalid entity."""
     import json
-
-    if not live_backend:
-        # Setup mock responses for OAuth2 verification
-        mock_auth_verification(auth_role="write")
 
     # Load invalid entities
     entities: list[dict[str, Any]] = [
@@ -133,8 +102,8 @@ def test_create_invalid_entity(
     ]
 
     # Create multiple invalid entities
-    with client(raise_server_exceptions=False) as client_:
-        response = client_.post(ENDPOINT, json=entities, headers=auth_header(auth_role="write"))
+    with client(raise_server_exceptions=False, allowed_role="entities:write") as client_:
+        response = client_.post(ENDPOINT, json=entities)
 
     try:
         response_json = response.json()
@@ -153,8 +122,8 @@ def test_create_invalid_entity(
         )
         error_message = f"Failed to create entity with identity {identity}"
 
-        with client(raise_server_exceptions=False) as client_:
-            response = client_.post(ENDPOINT, json=entity, headers=auth_header(auth_role="write"))
+        with client(raise_server_exceptions=False, allowed_role="entities:write") as client_:
+            response = client_.post(ENDPOINT, json=entity)
 
         try:
             response_json = response.json()
@@ -167,28 +136,24 @@ def test_create_invalid_entity(
         assert "detail" in response_json, f"{error_message}\n{json.dumps(response_json, indent=2)}"
 
 
+@pytest.mark.skip_if_live_backend("Authentication is disabled in the live backend.")
 def test_user_with_no_write_access(
     static_dir: Path,
     client: ClientFixture,
-    mock_auth_verification: MockAuthVerification | None,
-    auth_header: AuthHeaderFixture,
     live_backend: bool,
 ) -> None:
-    """Test that a 401 exception is raised if the user does not have write access."""
+    """Test that a 403 Forbidden exception is raised if the user is a valid user, but does not have write
+    access."""
     import json
 
     import yaml
-
-    if not live_backend:
-        # Setup mock responses for OAuth2 verification
-        mock_auth_verification(auth_role="read")
 
     # Load entities
     entities = yaml.safe_load((static_dir / "valid_entities.yaml").read_text())
 
     # Create single entity
-    with client() as client_:
-        response = client_.post(ENDPOINT, json=entities, headers=auth_header(auth_role="read"))
+    with client(allowed_role="entities:read") as client_:
+        response = client_.post(ENDPOINT, json=entities)
 
     try:
         response_json = response.json()
@@ -199,22 +164,16 @@ def test_user_with_no_write_access(
     assert response.status_code == 403, json.dumps(response_json, indent=2)
     assert isinstance(response_json, dict), json.dumps(response_json, indent=2)
     assert "detail" in response_json, json.dumps(response_json, indent=2)
-    assert "WWW-Authenticate" in response.headers, response.headers
-    assert response.headers["WWW-Authenticate"] == "Bearer", response.headers["WWW-Authenticate"]
+    assert "WWW-Authenticate" not in response.headers, response.headers
 
     if not live_backend:
-        assert response_json["detail"] == (
-            "You do not have the rights to create entities. "
-            "Please contact the ds-entities-service group maintainer."
-        ), response_json
+        assert response_json["detail"] == "Unauthorized", json.dumps(response_json, indent=2)
 
 
 @pytest.mark.skip_if_live_backend("Cannot mock write error in live backend.")
 def test_backend_write_error_exception(
     static_dir: Path,
     client: ClientFixture,
-    mock_auth_verification: MockAuthVerification | None,
-    auth_header: AuthHeaderFixture,
 ) -> None:
     """Test that a 502 exception is raised if the backend cannot write the entity.
 
@@ -225,9 +184,6 @@ def test_backend_write_error_exception(
     import json
 
     import yaml
-
-    # Setup mock responses for OAuth2 verification
-    mock_auth_verification(auth_role="write")
 
     valid_entity = {
         "identity": "http://onto-ns.com/meta/1.0/ValidEntity",
@@ -246,8 +202,8 @@ def test_backend_write_error_exception(
     assert valid_entity not in entities, valid_entity
 
     # Create single entity
-    with client(raise_server_exceptions=False) as client_:
-        response = client_.post(ENDPOINT, json=valid_entity, headers=auth_header(auth_role="write"))
+    with client(raise_server_exceptions=False, allowed_role="entities:write") as client_:
+        response = client_.post(ENDPOINT, json=valid_entity)
 
     try:
         response_json = response.json()
@@ -267,8 +223,6 @@ def test_backend_write_error_exception(
 def test_backend_create_returns_bad_value(
     client: ClientFixture,
     parameterized_entity: ParameterizeGetEntities,
-    mock_auth_verification: MockAuthVerification | None,
-    auth_header: AuthHeaderFixture,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Test that an exception is raised if the backend's create methods returns a bad
@@ -286,16 +240,9 @@ def test_backend_create_returns_bad_value(
         lambda *args, **kwargs: None,  # noqa: ARG005
     )
 
-    # Setup mock responses for OAuth2 verification
-    mock_auth_verification(auth_role="write")
-
     # Create single entity
-    with client() as client_:
-        response = client_.post(
-            ENDPOINT,
-            json=parameterized_entity.entity,
-            headers=auth_header(auth_role="write"),
-        )
+    with client(allowed_role="entities:write") as client_:
+        response = client_.post(ENDPOINT, json=parameterized_entity.entity)
 
     response_json = response.json()
 

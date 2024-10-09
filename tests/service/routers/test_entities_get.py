@@ -9,6 +9,7 @@ import pytest
 if TYPE_CHECKING:
     from ...conftest import ClientFixture, ParameterizeGetEntities
 
+pytestmark = pytest.mark.httpx_mock(assert_all_responses_were_requested=False)
 
 ENDPOINT = "/entities"
 

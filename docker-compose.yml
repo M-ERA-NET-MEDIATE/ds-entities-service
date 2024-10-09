@@ -1,18 +1,19 @@
-name: entities_service
+name: DataSpaces-Entities
 
 services:
-  entities_service:
+  ds_entities_service:
     build:
       context: "."
-      target: "${ENTITIES_SERVICE_DOCKER_TARGET:-development}"
+      target: "${DS_ENTITIES_SERVICE_DOCKER_TARGET:-development}"
     ports:
-      - "${ENTITIES_SERVICE_PORT:-8000}:80"
+      - "${DS_ENTITIES_SERVICE_PORT:-7000}:80"
     environment:
-      ENTITIES_SERVICE_BACKEND: mongodb
-      ENTITIES_SERVICE_MONGO_URI: "mongodb://mongodb:27017"
-      ENTITIES_SERVICE_X509_CERTIFICATE_FILE: "docker_security/test-client.pem"
-      ENTITIES_SERVICE_CA_FILE: "docker_security/test-ca.pem"
-      ENTITIES_SERVICE_EXTERNAL_OAUTH:
+      # "Regular" entities service configuration values
+      DS_ENTITIES_SERVICE_BACKEND: mongodb
+      DS_ENTITIES_SERVICE_MONGO_URI: "mongodb://mongodb:27017"
+      DS_ENTITIES_SERVICE_X509_CERTIFICATE_FILE: "docker_security/test-client.pem"
+      DS_ENTITIES_SERVICE_CA_FILE: "docker_security/test-ca.pem"
+      DS_ENTITIES_SERVICE_DISABLE_AUTH_ROLE_CHECKS: "1"
     depends_on:
       mongodb:
         condition: service_healthy
@@ -26,14 +27,12 @@ services:
 
   mongodb:
     image: mongo:8
-    restart: always
+    container_name: mongodb
     ports:
-      - "${MONGO_PORT:-27017}:27017"
+      - 27017:27017
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: root
-      IN_DOCKER: "true"
-      HOST_USER: "${USER}"
     networks:
       - entities_service_net
     expose:
@@ -50,7 +49,6 @@ services:
 
   mongodb_gui:
     image: mongo-express:1
-    restart: always
     ports:
       - "${MONGO_GUI_PORT:-8081}:8081"
     environment:

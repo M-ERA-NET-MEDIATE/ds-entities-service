@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 from typing import Annotated, Any
 
+from dataspaces_auth.fastapi import has_role
 from fastapi import (
     APIRouter,
     Body,
@@ -18,12 +19,10 @@ from fastapi.exceptions import RequestValidationError
 from pydantic import Field, ValidationError, conlist
 from s7 import SOFT7Entity
 
-from entities_service.models import URI_REGEX
-from entities_service.models.service_errors import HTTPError
+from entities_service.models import URI_REGEX, DSAPIRole, HTTPError
 from entities_service.service.backend import get_backend
 from entities_service.service.config import CONFIG
 from entities_service.service.requests import YamlRequest, YamlRoute
-from entities_service.service.security import verify_token
 from entities_service.service.utils import get_identity
 
 LOGGER = logging.getLogger(__name__)
@@ -43,6 +42,7 @@ EmptyList: type[list[Any]] = conlist(Any, min_length=0, max_length=0)  # type: i
     response_model=list[SOFT7Entity] | SOFT7Entity,
     response_model_by_alias=True,
     response_model_exclude_unset=True,
+    dependencies=[Depends(has_role(DSAPIRole.ENTITIES_READ))],
     summary="Retrieve one or more Entity.",
     response_description="Retrieved Entity or Entities.",
     responses={404: {"description": "Entites not found", "model": HTTPError}},
@@ -111,7 +111,7 @@ async def get_entities(
     response_model_by_alias=True,
     response_model_exclude_unset=True,
     status_code=status.HTTP_201_CREATED,
-    dependencies=[Depends(verify_token)],
+    dependencies=[Depends(has_role(DSAPIRole.ENTITIES_WRITE))],
     summary="Create one or more Entities.",
     response_description="Created Entity or Entities.",
     responses={
@@ -187,7 +187,7 @@ async def create_entities(
     response_model_by_alias=True,
     response_model_exclude_unset=True,
     status_code=status.HTTP_201_CREATED,
-    dependencies=[Depends(verify_token)],
+    dependencies=[Depends(has_role(DSAPIRole.ENTITIES_EDIT))],
     summary="Replace and/or create one or more Entities.",
     response_description="Created (not replaced) Entity or Entities.",
     responses={
@@ -288,7 +288,7 @@ async def update_entities(
     response_model_by_alias=True,
     response_model_exclude_unset=True,
     status_code=status.HTTP_204_NO_CONTENT,
-    dependencies=[Depends(verify_token)],
+    dependencies=[Depends(has_role(DSAPIRole.ENTITIES_EDIT))],
     summary="Update one or more Entities.",
     response_description="Updated Entity or Entities.",
     responses={
@@ -359,7 +359,7 @@ async def patch_entities(request: YamlRequest, response: Response) -> list[Any] 
     "/",
     response_model=list[URIStrictType] | URIStrictType,
     status_code=status.HTTP_200_OK,
-    dependencies=[Depends(verify_token)],
+    dependencies=[Depends(has_role(DSAPIRole.ENTITIES_DELETE))],
     summary="Delete one or more Entities.",
     response_description="Deleted Entity identity or identities.",
     responses={
