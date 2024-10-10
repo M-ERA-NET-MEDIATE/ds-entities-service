@@ -14,6 +14,7 @@ if TYPE_CHECKING:
     from fastapi.testclient import TestClient
     from httpx import Client
 
+    from entities_service.models.auth import DSAPIRole
     from entities_service.service.backend.mongodb import MongoDBBackend
 
     class UserRoleDict(TypedDict):
@@ -35,10 +36,7 @@ if TYPE_CHECKING:
         def __call__(
             self,
             raise_server_exceptions: bool = True,
-            allowed_role: (
-                Literal["entities", "entities:read", "entities:write", "entities:edit", "entities:delete"]
-                | None
-            ) = None,
+            allowed_role: DSAPIRole | str | None = None,
         ) -> TestClient | Client: ...
 
     class GetBackendUserFixture(Protocol):
@@ -531,10 +529,11 @@ def _mock_lifespan(live_backend: bool, monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 @pytest.fixture
-def effective_auth_roles() -> dict[str, list[str]]:
+def effective_auth_roles() -> dict[DSAPIRole, list[DSAPIRole]]:
     """Effective roles for the ds-entities-service.
 
     This overrides the fixture from DataSpaces-Auth.
+    And instead of using strings, it uses the local DSAPIRole string enum.
 
     These roles are all composite, with the exception of `entities:read`.
 
@@ -549,12 +548,29 @@ def effective_auth_roles() -> dict[str, list[str]]:
         Includes: `entities:delete`, `entities:edit`, `entities:write`, and `entities:read`
 
     """
+    from entities_service.models.auth import DSAPIRole
+
     return {
-        "entities:read": ["entities:read"],
-        "entities:write": ["entities:write", "entities:read"],
-        "entities:edit": ["entities:edit", "entities:write", "entities:read"],
-        "entities:delete": ["entities:delete", "entities:edit", "entities:write", "entities:read"],
-        "entities": ["entities", "entities:delete", "entities:edit", "entities:write", "entities:read"],
+        DSAPIRole.ENTITIES_READ: [DSAPIRole.ENTITIES_READ],
+        DSAPIRole.ENTITIES_WRITE: [DSAPIRole.ENTITIES_WRITE, DSAPIRole.ENTITIES_READ],
+        DSAPIRole.ENTITIES_EDIT: [
+            DSAPIRole.ENTITIES_EDIT,
+            DSAPIRole.ENTITIES_WRITE,
+            DSAPIRole.ENTITIES_READ,
+        ],
+        DSAPIRole.ENTITIES_DELETE: [
+            DSAPIRole.ENTITIES_DELETE,
+            DSAPIRole.ENTITIES_EDIT,
+            DSAPIRole.ENTITIES_WRITE,
+            DSAPIRole.ENTITIES_READ,
+        ],
+        DSAPIRole.ENTITIES_ADMIN: [
+            DSAPIRole.ENTITIES_ADMIN,
+            DSAPIRole.ENTITIES_DELETE,
+            DSAPIRole.ENTITIES_EDIT,
+            DSAPIRole.ENTITIES_WRITE,
+            DSAPIRole.ENTITIES_READ,
+        ],
     }
 
 
@@ -564,10 +580,7 @@ def client(live_backend: bool, mock_valid_access_token: CreateMockValidAccessTok
 
     def _client(
         raise_server_exceptions: bool = True,
-        allowed_role: (
-            Literal["entities", "entities:read", "entities:write", "entities:edit", "entities:delete"]
-            | None
-        ) = None,
+        allowed_role: DSAPIRole | str | None = None,
     ) -> TestClient | Client:
         """Return the test client with the given authentication role."""
         if not live_backend:
@@ -575,9 +588,10 @@ def client(live_backend: bool, mock_valid_access_token: CreateMockValidAccessTok
             from fastapi.testclient import TestClient
 
             from entities_service.main import APP
+            from entities_service.models.auth import DSAPIRole
 
-            # "entities:read" is the default role given to all users
-            allowed_role = allowed_role or "entities:read"
+            # DSAPIRole.ENTITIES_READ ("entities:read") is the default role given to all users
+            allowed_role = allowed_role or DSAPIRole.ENTITIES_READ
 
             APP.dependency_overrides[valid_access_token] = mock_valid_access_token(allowed_role)
 
