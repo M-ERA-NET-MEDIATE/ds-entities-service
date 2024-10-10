@@ -295,9 +295,7 @@ class MongoDBBackend(Backend):
 
         self._collection.delete_many(
             filter,
-            # comment=(
-            #     "deleting via the DS Entities Service MongoDB backend delete() method"
-            # ),
+            comment="deleting via the DS Entities Service MongoDB backend delete() method",
         )
 
     def search(
@@ -350,9 +348,7 @@ class MongoDBBackend(Backend):
         cursor = self._collection.find(
             query,
             projection={"_id": False},
-            # comment=(
-            #     "search via the DS Entities Service MongoDB backend search() method"
-            # ),
+            comment="search via the DS Entities Service MongoDB backend search() method",
         )
         yield from cursor
 

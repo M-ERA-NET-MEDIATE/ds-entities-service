@@ -11,7 +11,7 @@ RUN apt-get update && \
   rm -rf /var/lib/apt/lists/* && \
   python -m pip install -U pip && \
   pip install -U setuptools wheel && \
-  pip install -U -e .[server]
+  PIP_INDEX_URL=https://gitlab.sintef.no/api/v4/projects/17883/packages/pypi/simple pip install -U -e .[server]
 
 ## DEVELOPMENT target
 FROM base AS development
@@ -23,7 +23,7 @@ ENV PORT=80
 EXPOSE ${PORT}
 
 # Set debug mode, since we're running in development mode
-ENV ENTITIES_SERVICE_DEBUG=1
+ENV DS_ENTITIES_SERVICE_DEBUG=1
 
 ENTRYPOINT gunicorn --bind "0.0.0.0:${PORT}" --log-level debug --workers 1 --worker-class entities_service.uvicorn.UvicornWorker --reload entities_service.main:APP
 
@@ -34,6 +34,6 @@ ENV PORT=80
 EXPOSE ${PORT}
 
 # Force debug mode to be off, since we're running in production mode
-ENV ENTITIES_SERVICE_DEBUG=0
+ENV DS_ENTITIES_SERVICE_DEBUG=0
 
 ENTRYPOINT gunicorn --bind "0.0.0.0:${PORT}" --workers 1 --worker-class entities_service.uvicorn.UvicornWorker entities_service.main:APP

@@ -6,20 +6,23 @@ It's purpose is to serve entities from a multitude of backends.
 
 ## Install the service
 
-First, download and install the Python package from GitHub:
+The service can be installed from SINTEF's GitLab:
+
+```shell
+export PIP_INDEX_URL=https://gitlab.sintef.no/api/v4/projects/17883/packages/pypi/simple
+pip install ds-entities-service
+```
+
+For development, we recommend cloning the repository and installing the package locally:
 
 ```shell
 # Download (git clone)
 git clone https://github.com/M-ERA-NET-MEDIATE/ds-entities-service.git
 cd ds-entities-service
 
-# Install (using pip)
-python -m pip install -U pip
+# Install (local clone)
+export PIP_INDEX_URL=https://gitlab.sintef.no/api/v4/projects/17883/packages/pypi/simple
 pip install -U -e .
-
-# Install (using pip from SINTEF's GitLab)
-python -m pip install -U pip
-pip install ds-entities-service --index-url https://gitlab.sintef.no/api/v4/projects/17883/packages/pypi/simple
 ```
 
 > **Important**: If using this service locally alongside [DLite](https://github.com/SINTEF/dlite), it is important to note that issues may occur if [NumPy](https://numpy.org) v2 is used.
@@ -40,10 +43,10 @@ First, create a MongoDB Atlas cluster, and a user with read-only access to the `
 Set the necessary environment variables:
 
 ```shell
-ENTITIES_SERVICE_MONGO_URI=<your MongoDB Atlas URI>
-ENTITIES_SERVICE_X509_CERTIFICATE_FILE=<your X.509 certificate file>
-ENTITIES_SERVICE_MONGO_USER=<your MongoDB Atlas user with read-only access (default: 'guest')>
-ENTITIES_SERVICE_MONGO_PASSWORD=<your MongoDB Atlas user's password with read-only access (default: 'guest')>
+DS_ENTITIES_SERVICE_MONGO_URI=<your MongoDB Atlas URI>
+DS_ENTITIES_SERVICE_X509_CERTIFICATE_FILE=<your X.509 certificate file>
+DS_ENTITIES_SERVICE_MONGO_USER=<your MongoDB Atlas user with read-only access (default: 'guest')>
+DS_ENTITIES_SERVICE_MONGO_PASSWORD=<your MongoDB Atlas user's password with read-only access (default: 'guest')>
 ```
 
 Run the service:
@@ -51,12 +54,12 @@ Run the service:
 ```shell
 uvicorn entities_service.main:APP \
 --host localhost \
---port 8000 \
+--port 7000 \
 --no-server-header \
 --header "Server:EntitiesService"
 ```
 
-Finally, go to [localhost:8000/docs](http://localhost:8000/docs) and try out retrieving an entity.
+Finally, go to [localhost:7000/docs](http://localhost:7000/docs) and try out retrieving an entity.
 
 `--log-level debug` can be added to the `uvicorn` command to get more verbose logging.
 `--reload` can be added to the `uvicorn` command to enable auto-reloading of the service when any files are changed.
@@ -81,8 +84,6 @@ For development, start a local MongoDB server, e.g., through another Docker imag
 
 ```shell
 docker run --rm -d \
-  --env "IN_DOCKER=true" \
-  --env "HOST_USER=${USER}" \
   --env "MONGO_INITDB_ROOT_USERNAME=root" \
   --env "MONGO_INITDB_ROOT_PASSWORD=root" \
   --name "mongodb" \
@@ -98,22 +99,22 @@ Then build and run the Entities Service Docker image:
 ```shell
 docker build --pull -t ds-entities-service --target development .
 docker run --rm -d \
-  --env "ENTITIES_SERVICE_MONGO_URI=mongodb://localhost:27017" \
-  --env "ENTITIES_SERVICE_X509_CERTIFICATE_FILE=docker_security/test-client.pem" \
-  --env "ENTITIES_SERVICE_CA_FILE=docker_security/test-ca.pem" \
+  --env "DS_ENTITIES_SERVICE_MONGO_URI=mongodb://localhost:27017" \
+  --env "DS_ENTITIES_SERVICE_X509_CERTIFICATE_FILE=docker_security/test-client.pem" \
+  --env "DS_ENTITIES_SERVICE_CA_FILE=docker_security/test-ca.pem" \
   --name "ds-entities-service" \
   -u "${id -ur}:${id -gr}" \
-  -p "8000:80" \
+  -p "7000:80" \
   ds-entities-service
 ```
 
 Now, fill up the MongoDB with valid entities at the `entities_service` database in the `entities` collection.
 
-Then go to [localhost:8000/docs](http://localhost:8000/docs) and try out retrieving an entity.
+Then go to [localhost:7000/docs](http://localhost:7000/docs) and try out retrieving an entity.
 
 ---
 
-For production, use a public MongoDB, and follow the same instructions above for building and running the Entities Service Docker image, but exchange the `--target` value with `production`, put in the proper value for the `ENTITIES_SERVICE_MONGO_URI` and `ENTITIES_SERVICE_X509_CERTIFICATE_FILE` environment values, possibly add the `ENTITIES_SERVICE_MONGO_USER`, `ENTITIES_SERVICE_MONGO_PASSWORD`, and `ENTITIES_SERVICE_CA_FILE` environment variables as well, if needed.
+For production, use a public MongoDB, and follow the same instructions above for building and running the Entities Service Docker image, but exchange the `--target` value with `production`, put in the proper value for the `DS_ENTITIES_SERVICE_MONGO_URI` and `DS_ENTITIES_SERVICE_X509_CERTIFICATE_FILE` environment values, possibly add the `DS_ENTITIES_SERVICE_MONGO_USER`, `DS_ENTITIES_SERVICE_MONGO_PASSWORD`, and `DS_ENTITIES_SERVICE_CA_FILE` environment variables as well, if needed.
 
 ### Using Docker Compose
 
@@ -124,10 +125,10 @@ docker compose pull
 docker compose --env-file=.env up --build
 ```
 
-By default the `development` target will be built, to change this, set the `ENTITIES_SERVICE_DOCKER_TARGET` environment variable accordingly, e.g.:
+By default the `development` target will be built, to change this, set the `DS_ENTITIES_SERVICE_DOCKER_TARGET` environment variable accordingly, e.g.:
 
 ```shell
-ENTITIES_SERVICE_DOCKER_TARGET=production docker compose --env-file=.env up --build
+DS_ENTITIES_SERVICE_DOCKER_TARGET=production docker compose --env-file=.env up --build
 ```
 
 Furthermore, the used `localhost` port can be changed via the `PORT` environment variable.
@@ -177,11 +178,9 @@ pytest --live-backend
 
 Remember to set the following environment variables:
 
-- `ENTITIES_SERVICE_X509_CERTIFICATE_FILE=docker_security/test-server1.pem`
-- `ENTITIES_SERVICE_CA_FILE=docker_security/test-ca.pem`
-- `ENTITIES_SERVICE_EXTERNAL_OAUTH=0`
+- `DS_ENTITIES_SERVICE_DISABLE_AUTH_ROLE_CHECKS=1`
 
-> **Warning** Setting `ENTITIES_SERVICE_EXTERNAL_OAUTH=0` will effectively deactivate the OAuth2 authentication and should only be used for testing purposes.
+> **Warning** Setting `DS_ENTITIES_SERVICE_DISABLE_AUTH_ROLE_CHECKS=1` will effectively deactivate the OAuth2 authentication and user role checks and should only be used for testing purposes.
 
 ### Extra pytest markers
 

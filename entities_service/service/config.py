@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Annotated, Any
 
 from pydantic import Field, SecretStr, ValidationInfo, field_validator
-from pydantic.networks import AnyHttpUrl, MultiHostUrl, UrlConstraints
+from pydantic.networks import MultiHostUrl, UrlConstraints
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from entities_service.service.backend import Backends
@@ -18,7 +18,7 @@ MongoDsn = Annotated[MultiHostUrl, UrlConstraints(allowed_schemes=["mongodb", "m
 class ServiceSettings(BaseSettings):
     """Service app configuration."""
 
-    model_config = SettingsConfigDict(env_prefix="entities_service_", env_file=".env", extra="ignore")
+    model_config = SettingsConfigDict(env_prefix="ds_entities_service_", env_file=".env", extra="ignore")
 
     debug: Annotated[bool, Field(description="Enable debug mode.")] = False
 
@@ -28,39 +28,6 @@ class ServiceSettings(BaseSettings):
             description="Backend to use for storing entities.",
         ),
     ] = Backends.MONGODB
-
-    # Security
-    oauth2_provider: Annotated[AnyHttpUrl, Field(description="OAuth2 provider base URL.")] = AnyHttpUrl(
-        "https://gitlab.sintef.no"
-    )
-
-    roles_group: Annotated[str, Field(description="GitLab group for roles.")] = (
-        "team4.0-authentication/entities-service"
-    )
-
-    external_oauth: Annotated[
-        bool,
-        Field(
-            description=(
-                "Whether or not to use proper OAuth2 authentication and authorization with an external "
-                " authority. An external OAuth2 authority should ALWAYS be used in production."
-            )
-        ),
-    ] = True
-
-    test_token: Annotated[
-        SecretStr,
-        Field(
-            description=(
-                "Test token when bypassing OAuth2 authentication and authorization. This should NEVER be "
-                "used in production and will only be used if `external_oauth` is `True`."
-            )
-        ),
-    ] = SecretStr(
-        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJyb290IiwiaXNzIjoiaHR0cDovL29udG8tbnMuY29t"
-        "L21ldGEiLCJleHAiOjE3MDYxOTI1OTAsImNsaWVudF9pZCI6Imh0dHA6Ly9vbnRvLW5zLmNvbS9tZXRhIiwiaWF0I"
-        "joxNzA2MTkwNzkwfQ.FzvzWyI_CNrLkHhr4oPRQ0XEY8H9DL442QD8tM8dhVM"
-    )
 
     # MongoDB backend settings
     mongo_uri: Annotated[

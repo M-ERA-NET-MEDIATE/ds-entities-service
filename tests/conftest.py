@@ -7,13 +7,15 @@ from typing import TYPE_CHECKING, NamedTuple
 import pytest
 
 if TYPE_CHECKING:
+    from collections.abc import Callable, Coroutine
     from pathlib import Path
     from typing import Any, Literal, Protocol, TypedDict
 
+    from dataspaces_auth.fastapi._models import TokenData
     from fastapi.testclient import TestClient
     from httpx import Client
-    from pytest_httpx import HTTPXMock
 
+    from entities_service.models.auth import DSAPIRole
     from entities_service.service.backend.mongodb import MongoDBBackend
 
     class UserRoleDict(TypedDict):
@@ -35,29 +37,16 @@ if TYPE_CHECKING:
         def __call__(
             self,
             raise_server_exceptions: bool = True,
+            allowed_role: (
+                Literal["entities", "entities:read", "entities:write", "entities:edit", "entities:delete"]
+                | None
+            ) = None,
         ) -> TestClient | Client: ...
 
     class GetBackendUserFixture(Protocol):
         """Protocol for the get_backend_user fixture."""
 
         def __call__(self, auth_role: Literal["read", "write"] | None = None) -> UserDict: ...
-
-    class MockAuthVerification(Protocol):
-        """Protocol for the mock_auth_verification fixture."""
-
-        def __call__(self, auth_role: Literal["read", "write"] | None = None) -> None: ...
-
-    class TokenMockFixture(Protocol):
-        """Protocol for the token_mock fixture."""
-
-        def __call__(self, auth_role: Literal["read", "write"] | None = None) -> str: ...
-
-    class AuthHeaderFixture(Protocol):
-        """Protocol for the auth_header fixture."""
-
-        def __call__(
-            self, auth_role: Literal["read", "write"] | None = None
-        ) -> dict[Literal["Authorization"], str]: ...
 
 
 class ParameterizeGetEntities(NamedTuple):
@@ -84,13 +73,13 @@ def pytest_addoption(parser: pytest.Parser) -> None:
 
 
 def pytest_configure(config: pytest.Config) -> None:
-    """Configure pytest - set ENTITIES_SERVICE_BACKEND env var."""
+    """Configure pytest - set DS_ENTITIES_SERVICE_BACKEND env var."""
     import os
 
     # These are only really (properly) used when running with --live-backend,
     # but it's fine to set them here, since they are not checked when running without.
-    os.environ["ENTITIES_SERVICE_X509_CERTIFICATE_FILE"] = "docker_security/test-client.pem"
-    os.environ["ENTITIES_SERVICE_CA_FILE"] = "docker_security/test-ca.pem"
+    os.environ["DS_ENTITIES_SERVICE_X509_CERTIFICATE_FILE"] = "docker_security/test-client.pem"
+    os.environ["DS_ENTITIES_SERVICE_CA_FILE"] = "docker_security/test-ca.pem"
 
     # Add extra markers
     config.addinivalue_line(
@@ -137,7 +126,7 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
                 item.add_marker(pytest.mark.skip(reason=prefix_reason.format(reason=reason)))
 
             # HTTPX non-mocked hosts
-            entities_service_port = os.getenv("ENTITIES_SERVICE_PORT", "8000")
+            entities_service_port = os.getenv("DS_ENTITIES_SERVICE_PORT", "7000")
             non_mocked_hosts = ["localhost"]
             if entities_service_port:
                 non_mocked_hosts.append(f"localhost:{entities_service_port}")
@@ -368,7 +357,7 @@ def live_backend(request: pytest.FixtureRequest) -> bool:
     import os
     import warnings
 
-    required_environment_variables = ("ENTITIES_SERVICE_PORT",)
+    required_environment_variables = ("DS_ENTITIES_SERVICE_PORT",)
 
     value = request.config.getoption("--live-backend")
 
@@ -541,154 +530,6 @@ def _mock_lifespan(live_backend: bool, monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 @pytest.fixture
-def token_mock() -> TokenMockFixture:
-    """Return a mock token."""
-
-    def _token_mock(auth_role: Literal["read", "write"] | None = None) -> str:
-        """Return a mock token related to an authorization role."""
-        import os
-        from pathlib import Path
-
-        import dotenv
-
-        if auth_role is None:
-            auth_role = "read"
-
-        if auth_role == "read":
-            return "read-users-token"
-
-        if auth_role == "write":
-            # This will return the token from either:
-            #
-            # 1. The environment variable ENTITIES_SERVICE_TEST_TOKEN
-            # 2. The .env file in the root directory
-            # 3. Or use a hard-coded default token (the same as is the default for the configuration
-            #    option, but that is not used directly here to avoid the import).
-            #
-            # in that order of descending priority.
-            # Therefore, if the live backend is not created using the `.env` file, this should default to
-            # the default, and if this is not used either, one must manually set the environment variable
-            # to be used when running pytest, for example:
-            #
-            #     $ ENTITIES_SERVICE_TEST_TOKEN=your_token pytest --live-backend
-            #
-            return (
-                os.getenv("ENTITIES_SERVICE_TEST_TOKEN")
-                or dotenv.get_key(
-                    Path(__file__).resolve().parent.parent / ".env", "ENTITIES_SERVICE_TEST_TOKEN"
-                )
-                or (
-                    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJyb290IiwiaXNzIjoiaHR0cDovL29udG8tbnMuY29t"
-                    "L21ldGEiLCJleHAiOjE3MDYxOTI1OTAsImNsaWVudF9pZCI6Imh0dHA6Ly9vbnRvLW5zLmNvbS9tZXRhIiwiaWF0I"
-                    "joxNzA2MTkwNzkwfQ.FzvzWyI_CNrLkHhr4oPRQ0XEY8H9DL442QD8tM8dhVM"
-                )
-            )
-
-        pytest.fail("The authentication role must be either 'read' or 'write'.")
-
-    return _token_mock
-
-
-@pytest.fixture
-def auth_header(token_mock: TokenMockFixture) -> AuthHeaderFixture:
-    """Return the authentication header."""
-    from fastapi.security import HTTPAuthorizationCredentials
-
-    def _auth_header(
-        auth_role: Literal["read", "write"] | None = None
-    ) -> dict[Literal["Authorization"], str]:
-        """Return the user-related authentication header."""
-        if auth_role is None:
-            auth_role = "read"
-
-        mock_credentials = HTTPAuthorizationCredentials(
-            scheme="Bearer",
-            credentials=token_mock(auth_role),
-        )
-
-        return {"Authorization": f"{mock_credentials.scheme} {mock_credentials.credentials}"}
-
-    return _auth_header
-
-
-@pytest.fixture
-def mock_auth_verification(
-    httpx_mock: HTTPXMock,
-    get_backend_user: GetBackendUserFixture,
-    auth_header: AuthHeaderFixture,
-    live_backend: bool,
-) -> MockAuthVerification | None:
-    """Mock authentication."""
-    if live_backend:
-        return None
-
-    from entities_service.service.config import CONFIG
-
-    # OpenID configuration
-    httpx_mock.add_response(
-        url=f"{str(CONFIG.oauth2_provider).rstrip('/')}/.well-known/openid-configuration",
-        json={
-            "issuer": str(CONFIG.oauth2_provider).rstrip("/"),
-            "authorization_endpoint": f"{str(CONFIG.oauth2_provider).rstrip('/')}/oauth/authorize",
-            "token_endpoint": f"{str(CONFIG.oauth2_provider).rstrip('/')}/oauth/token",
-            "userinfo_endpoint": f"{str(CONFIG.oauth2_provider).rstrip('/')}/oauth/userinfo",
-            "jwks_uri": f"{str(CONFIG.oauth2_provider).rstrip('/')}/oauth/discovery/keys",
-            "response_types_supported": [
-                "code",
-            ],
-            "subject_types_supported": [
-                "public",
-            ],
-            "id_token_signing_alg_values_supported": [
-                "RS256",
-            ],
-            "code_challenge_methods_supported": [
-                "plain",
-                "S256",
-            ],
-        },
-    )
-
-    def _mock_auth_verification(auth_role: Literal["read", "write"] | None = None) -> None:
-        """Mock authentication."""
-        if auth_role is None:
-            auth_role = "read"
-
-        assert auth_role in (
-            "read",
-            "write",
-        ), "The authentication role must be either 'read' or 'write'."
-
-        backend_user = get_backend_user(auth_role)
-        groups_role_developer = {
-            "https://gitlab.org/claims/groups/developer": (
-                [CONFIG.roles_group] if auth_role == "write" else []
-            )
-        }
-
-        # Userinfo endpoint
-        httpx_mock.add_response(
-            url=f"{str(CONFIG.oauth2_provider).rstrip('/')}/oauth/userinfo",
-            json={
-                "sub": backend_user["username"],
-                "name": backend_user["username"],
-                "nickname": backend_user["username"],
-                "preferred_username": backend_user["username"],
-                "website": f"{str(CONFIG.oauth2_provider).rstrip('/')}/{backend_user['username']}",
-                "profile": f"{str(CONFIG.oauth2_provider).rstrip('/')}/{backend_user['username']}",
-                "picture": f"{str(CONFIG.oauth2_provider).rstrip('/')}/{backend_user['username']}",
-                "groups": [CONFIG.roles_group],
-                "https://gitlab.org/claims/groups/owner": [],
-                "https://gitlab.org/claims/groups/maintainer": [],
-                **groups_role_developer,
-            },
-            match_headers=auth_header(auth_role),
-        )
-
-    return _mock_auth_verification
-
-
-@pytest.fixture
 def client(live_backend: bool) -> ClientFixture:
     """Return the test client."""
     import os
@@ -696,10 +537,78 @@ def client(live_backend: bool) -> ClientFixture:
     from fastapi.testclient import TestClient
     from httpx import Client
 
-    def _client(raise_server_exceptions: bool = True) -> TestClient | Client:
+    def _create_mock_valid_access_token(
+        allowed_role: DSAPIRole | str,
+    ) -> Callable[[], Coroutine[Any, Any, TokenData]]:
+        """Internal function to create a mock valid_access_token function with a specific set of roles.
+
+        The roles are set by the `allowed_role` parameter and are all composite, with the exception of
+        `entities:read`.
+
+        The composite roles are:
+        - `entities:write`
+          Includes: `entities:read`
+        - `entities:edit`
+          Includes: `entities:write` and `entities:read`
+        - `entities:delete`
+          Includes: `entities:edit`, `entities:write`, and `entities:read`
+        - `entities`
+          Includes: `entities:delete`, `entities:edit`, `entities:write`, and `entities:read`
+
+        """
+        effective_roles: dict[str, list[str]] = {
+            "entities:read": ["entities:read"],
+            "entities:write": ["entities:write", "entities:read"],
+            "entities:edit": ["entities:edit", "entities:write", "entities:read"],
+            "entities:delete": ["entities:delete", "entities:edit", "entities:write", "entities:read"],
+            "entities": ["entities", "entities:delete", "entities:edit", "entities:write", "entities:read"],
+        }
+
+        assert allowed_role in effective_roles, f"Invalid auth role: {allowed_role}"
+
+        async def mock_valid_access_token() -> TokenData:
+            """Mock the valid_access_token function from DataSpaces-Auth.
+
+            Include all available roles for the entities service.
+            """
+            from dataspaces_auth.fastapi._models import TokenData
+
+            return TokenData(
+                # Role mapping
+                resource_access={
+                    "backend": {"roles": effective_roles[allowed_role]},
+                    # Required resource_access field (for the model)
+                    "account": {"roles": []},
+                },
+                # Required fields (for the model)
+                preferred_username="test_user",
+                iss="http://example.com",
+                exp=1234567890,
+                aud=["test_client"],
+                sub="test_user",
+                iat=1234567890,
+                jti="test_jti",
+            )
+
+        return mock_valid_access_token
+
+    def _client(
+        raise_server_exceptions: bool = True,
+        allowed_role: (
+            Literal["entities", "entities:read", "entities:write", "entities:edit", "entities:delete"]
+            | None
+        ) = None,
+    ) -> TestClient | Client:
         """Return the test client with the given authentication role."""
         if not live_backend:
+            from dataspaces_auth.fastapi import valid_access_token
+
             from entities_service.main import APP
+
+            # "entities:read" is the default role given to all users
+            allowed_role = allowed_role or "entities:read"
+
+            APP.dependency_overrides[valid_access_token] = _create_mock_valid_access_token(allowed_role)
 
             return TestClient(
                 app=APP,
@@ -707,7 +616,7 @@ def client(live_backend: bool) -> ClientFixture:
                 follow_redirects=True,
             )
 
-        port = os.getenv("ENTITIES_SERVICE_PORT", "8000")
+        port = os.getenv("DS_ENTITIES_SERVICE_PORT", "7000")
 
         base_url = f"http://localhost{':' + port if port else ''}"
 
