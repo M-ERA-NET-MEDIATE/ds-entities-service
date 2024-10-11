@@ -14,8 +14,6 @@ from entities_service.config import get_config
 from entities_service.logger import setup_logger
 from entities_service.routers import get_routers
 
-LOGGER = logging.getLogger(__name__)
-
 # Handle testing
 if bool(int(os.getenv("DS_ENTITIES_SERVICE_DISABLE_AUTH_ROLE_CHECKS", "0"))):
     import dataspaces_auth.fastapi._auth as ds_auth
@@ -61,14 +59,15 @@ async def lifespan(app: FastAPI):  # noqa: ARG001
     setup_logger()
 
     config = get_config()
+    logger = logging.getLogger(__name__)
 
-    LOGGER.debug("Starting service with config: %s", config)
+    logger.debug("Starting service with config: %s", config)
 
     # Initialize backend
     get_backend(config.backend, auth_level="write").initialize()
 
     if bool(int(os.getenv("DS_ENTITIES_SERVICE_DISABLE_AUTH_ROLE_CHECKS", "0"))):
-        LOGGER.debug(
+        logger.debug(
             "Running in test mode.\n"
             "    - External OAuth2 authentication is disabled!\n"
             "    - DataSpaces-Auth role checks are disabled!"

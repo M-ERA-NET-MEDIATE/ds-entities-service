@@ -20,8 +20,6 @@ else:
         """Enum with string values."""
 
 
-from entities_service.config import get_config
-
 if TYPE_CHECKING:  # pragma: no cover
     from typing import Any, Literal
 
@@ -44,6 +42,9 @@ class Backends(StrEnum):
 
     def get_auth_level_settings(self, auth_level: Literal["read", "write"] = "read") -> dict[str, Any]:
         """Get the settings for the auth level."""
+        # Import `get_config` here to avoid circular imports
+        from entities_service.config import get_config
+
         config = get_config()
 
         if self == self.MONGODB:
@@ -76,6 +77,9 @@ def get_backend(
     settings: dict[str, Any] | None = None,
 ) -> Backend:
     """Get a backend instance."""
+    # Import `get_config` here to avoid circular imports
+    from entities_service.config import get_config
+
     if backend is None:
         backend = get_config().backend
 
