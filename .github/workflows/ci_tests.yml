@@ -100,6 +100,7 @@ jobs:
             --pull \
             --tag ds-entities-service \
             --target ${{ matrix.docker_target }} \
+            --file docker/Dockerfile \
             .
 
       - name: Install test dependencies
