@@ -14,39 +14,16 @@ from entities_service.service.config import CONFIG
 from entities_service.service.logger import setup_logger
 from entities_service.service.routers import get_routers
 
-LOGGER = logging.getLogger("entities_service")
-
+LOGGER = logging.getLogger(__name__)
 
 # Handle testing
-env_vars: set[str] = set()
 if bool(int(os.getenv("DS_ENTITIES_SERVICE_DISABLE_AUTH_ROLE_CHECKS", "0"))):
-    from entities_service.models import DSAPIRole
-
-    # Set mandatory settings for DataSpaces-Auth
-    env_vars = {"authorization_url", "token_url", "certs_url", "scopes", "realm"}
-    env_vars_to_unset: set[str] = set()
-    original_env_var_values: dict[str, str] = {}
-
-    for env_var in env_vars:
-        composed_env_var = f"DS_AUTH_{env_var.upper()}"
-        if composed_env_var in os.environ:
-            original_env_var_values[composed_env_var] = os.environ[composed_env_var]
-        else:
-            env_vars_to_unset.add(composed_env_var)
-
-        if "url" in env_var:
-            os.environ[composed_env_var] = "https://semanticmatter.com"
-        elif env_var == "scopes":
-            os.environ[composed_env_var] = '["openid","profile","email"]'
-        elif env_var == "realm":
-            os.environ[composed_env_var] = "test_realm"
-        else:  # pragma: no cover
-            raise ValueError(f"Unknown env var: {env_var}")
-
-    # Override DataSpaces-Auth valid_access_token dependency
     import dataspaces_auth.fastapi._auth as ds_auth
     from dataspaces_auth.fastapi._models import TokenData
 
+    from entities_service.models import DSAPIRole
+
+    # Override DataSpaces-Auth valid_access_token dependency
     async def disable_auth_valid_access_token() -> TokenData:
         return TokenData(
             # Role mapping
@@ -97,25 +74,6 @@ async def lifespan(app: FastAPI):  # noqa: ARG001
 
     # Run application
     yield
-
-    ## Clean up
-
-    # Close MongoDB clients (if any)
-    from entities_service.service.backend.mongodb import MONGO_CLIENTS
-
-    if MONGO_CLIENTS is not None:
-        for role in list(MONGO_CLIENTS):
-            MONGO_CLIENTS.pop(role).close()
-
-    # Handle environment variables if in test mode
-    if env_vars:
-        # Unset previously undefined env vars
-        for env_var in env_vars_to_unset:
-            os.environ.pop(env_var)
-
-        # Reset original values for pre-defined env vars
-        for env_var, value in original_env_var_values.items():
-            os.environ[env_var] = value
 
 
 # Setup application
