@@ -23,7 +23,7 @@ if bool(int(os.getenv("DS_ENTITIES_SERVICE_DISABLE_AUTH_ROLE_CHECKS", "0"))):
     from entities_service.models import DSAPIRole
 
     # Set mandatory settings for DataSpaces-Auth
-    env_vars = {"authorization_url", "token_url", "certs_url", "scopes"}
+    env_vars = {"authorization_url", "token_url", "certs_url", "scopes", "realm"}
     env_vars_to_unset: set[str] = set()
     original_env_var_values: dict[str, str] = {}
 
@@ -36,37 +36,44 @@ if bool(int(os.getenv("DS_ENTITIES_SERVICE_DISABLE_AUTH_ROLE_CHECKS", "0"))):
 
         if "url" in env_var:
             os.environ[composed_env_var] = "https://semanticmatter.com"
-        else:
+        elif env_var == "scopes":
             os.environ[composed_env_var] = '["openid","profile","email"]'
+        elif env_var == "realm":
+            os.environ[composed_env_var] = "test_realm"
+        else:  # pragma: no cover
+            raise ValueError(f"Unknown env var: {env_var}")
 
     # Override DataSpaces-Auth valid_access_token dependency
     import dataspaces_auth.fastapi._auth as ds_auth
     from dataspaces_auth.fastapi._models import TokenData
 
-    ds_auth.valid_access_token = lambda: TokenData(
-        # Role mapping
-        resource_access={
-            "backend": {
-                "roles": [
-                    DSAPIRole.ENTITIES_ADMIN,
-                    DSAPIRole.ENTITIES_DELETE,
-                    DSAPIRole.ENTITIES_READ,
-                    DSAPIRole.ENTITIES_WRITE,
-                    DSAPIRole.ENTITIES_EDIT,
-                ]
+    async def disable_auth_valid_access_token() -> TokenData:
+        return TokenData(
+            # Role mapping
+            resource_access={
+                "backend": {
+                    "roles": [
+                        DSAPIRole.ENTITIES_ADMIN,
+                        DSAPIRole.ENTITIES_DELETE,
+                        DSAPIRole.ENTITIES_READ,
+                        DSAPIRole.ENTITIES_WRITE,
+                        DSAPIRole.ENTITIES_EDIT,
+                    ]
+                },
+                # Required resource_access field (for the model)
+                "account": {"roles": []},
             },
-            # Required resource_access field (for the model)
-            "account": {"roles": []},
-        },
-        # Required fields (for the model)
-        preferred_username="test_user",
-        iss="https://semanticmatter.com",
-        exp=1234567890,
-        aud=["test_client"],
-        sub="test_user",
-        iat=1234567890,
-        jti="test_jti",
-    )
+            # Required fields (for the model)
+            preferred_username="test_user",
+            iss="https://semanticmatter.com",
+            exp=1234567890,
+            aud=["test_client"],
+            sub="test_user",
+            iat=1234567890,
+            jti="test_jti",
+        )
+
+    ds_auth.valid_access_token = disable_auth_valid_access_token
 
 
 # Application lifespan function
