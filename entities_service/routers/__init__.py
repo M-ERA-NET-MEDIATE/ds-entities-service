@@ -14,7 +14,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
 def get_routers() -> Generator[APIRouter]:
     """Get the routers."""
-    this_dir = Path(__file__).parent.resolve()
+    this_dir = Path(__file__).resolve().parent
 
     for path in this_dir.glob("*.py"):
         if path.stem == "__init__":

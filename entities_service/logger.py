@@ -49,7 +49,7 @@ def _get_service_logger_handlers() -> list[logging.Handler]:
     config = get_config()
 
     # Create logs directory
-    root_dir = Path(__file__).resolve().parent.parent.parent.resolve()
+    root_dir = Path(__file__).resolve().parent.parent
     logs_dir = root_dir / "logs"
     logs_dir.mkdir(exist_ok=True)
 

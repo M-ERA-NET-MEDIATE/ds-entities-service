@@ -5,6 +5,22 @@ build-backend = "flit_core.buildapi"
 [tool.flit.module]
 name = "entities_service"
 
+[tool.flit.sdist]
+exclude = [
+    ".github",
+    ".gitignore",
+    ".coverage",
+    ".env",
+    ".markdownlint.yaml",
+    ".pre-commit-config.yaml",
+    "asgi.py",
+    "docker-compose.yml",
+    "Dockerfile",
+    "docker_security/",
+    "logs/",
+    "tests/",
+]
+
 [project]
 name = "ds-entities-service"
 authors = [

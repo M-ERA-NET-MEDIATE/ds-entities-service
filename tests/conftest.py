@@ -192,7 +192,7 @@ def pytest_sessionstart(session: pytest.Session) -> None:
     import yaml
 
     # Unpack `valid_entities.yaml` to `valid_entities/*.json`
-    static_dir = (Path(__file__).parent / "static").resolve()
+    static_dir = Path(__file__).resolve().parent / "static"
 
     entities: list[dict[str, Any]] = yaml.safe_load((static_dir / "valid_entities.yaml").read_text())
 
@@ -257,7 +257,7 @@ def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:  # n
     from pathlib import Path
 
     # Remove `valid_entities/*.json`
-    valid_entities_dir = (Path(__file__).parent / "static" / "valid_entities").resolve()
+    valid_entities_dir = Path(__file__).resolve().parent / "static" / "valid_entities"
 
     if valid_entities_dir.exists():
         shutil.rmtree(valid_entities_dir)
@@ -332,7 +332,7 @@ def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
 
     results: list[ParameterizeGetEntities] = []
 
-    static_dir = (Path(__file__).parent / "static").resolve()
+    static_dir = Path(__file__).resolve().parent / "static"
 
     entities: list[dict[str, Any]] = yaml.safe_load((static_dir / "valid_entities.yaml").read_text())
     scrubbed_entities: list[dict[str, Any]] = yaml.safe_load(
@@ -385,7 +385,7 @@ def static_dir() -> Path:
     """Return the path to the static directory."""
     from pathlib import Path
 
-    return (Path(__file__).parent / "static").resolve()
+    return Path(__file__).resolve().parent / "static"
 
 
 @pytest.fixture(scope="session")
