@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from pathlib import Path
     from typing import Any
 
-    from ...conftest import ClientFixture, ParameterizeGetEntities
+    from ..conftest import ClientFixture, ParameterizeGetEntities
 
 
 pytestmark = [

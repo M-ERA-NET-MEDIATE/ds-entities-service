@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
     from entities_service.backend.mongodb import MongoDBBackend
 
-    from ...conftest import GetBackendUserFixture, ParameterizeGetEntities
+    from ..conftest import GetBackendUserFixture, ParameterizeGetEntities
 
     class GetMongoBackend(Protocol):
         """Get the MongoDB backend."""
