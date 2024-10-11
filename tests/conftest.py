@@ -7,11 +7,10 @@ from typing import TYPE_CHECKING, NamedTuple
 import pytest
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Coroutine
     from pathlib import Path
     from typing import Any, Literal, Protocol, TypedDict
 
-    from dataspaces_auth.fastapi._models import TokenData
+    from dataspaces_auth.fastapi._pytest_fixtures import CreateMockValidAccessToken
     from fastapi.testclient import TestClient
     from httpx import Client
 
@@ -37,10 +36,7 @@ if TYPE_CHECKING:
         def __call__(
             self,
             raise_server_exceptions: bool = True,
-            allowed_role: (
-                Literal["entities", "entities:read", "entities:write", "entities:edit", "entities:delete"]
-                | None
-            ) = None,
+            allowed_role: DSAPIRole | str | None = None,
         ) -> TestClient | Client: ...
 
     class GetBackendUserFixture(Protocol):
@@ -62,6 +58,9 @@ class ParameterizeGetEntities(NamedTuple):
 ## Pytest configuration functions and hooks ##
 
 
+pytest_plugins = ("dataspaces_auth.fastapi._pytest_fixtures",)
+
+
 def pytest_addoption(parser: pytest.Parser) -> None:
     """Add the command line option to run the tests with a live backend."""
     parser.addoption(
@@ -80,6 +79,12 @@ def pytest_configure(config: pytest.Config) -> None:
     # but it's fine to set them here, since they are not checked when running without.
     os.environ["DS_ENTITIES_SERVICE_X509_CERTIFICATE_FILE"] = "docker_security/test-client.pem"
     os.environ["DS_ENTITIES_SERVICE_CA_FILE"] = "docker_security/test-ca.pem"
+
+    # Avoid raising a user warning in DataSpaces-Auth for not finding 'realm-export.json'
+    # Note, this will work as intended once SemanticMatter/ds-auth#32 is fixed.
+    # Link: https://github.com/SemanticMatter/ds-auth/issues/32
+    # This value should be the fallback default value from the DataSpaces-Auth library.
+    os.environ["DS_AUTH_REALM"] = "dataspaces"
 
     # Add extra markers
     config.addinivalue_line(
@@ -530,91 +535,81 @@ def _mock_lifespan(live_backend: bool, monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 @pytest.fixture
-def client(live_backend: bool) -> ClientFixture:
+def effective_auth_roles() -> dict[DSAPIRole, list[DSAPIRole]]:
+    """Effective roles for the ds-entities-service.
+
+    This overrides the fixture from DataSpaces-Auth.
+    And instead of using strings, it uses the local DSAPIRole string enum.
+
+    These roles are all composite, with the exception of `entities:read`.
+
+    The composite roles are:
+    - `entities:write`
+        Includes: `entities:read`
+    - `entities:edit`
+        Includes: `entities:write` and `entities:read`
+    - `entities:delete`
+        Includes: `entities:edit`, `entities:write`, and `entities:read`
+    - `entities`
+        Includes: `entities:delete`, `entities:edit`, `entities:write`, and `entities:read`
+
+    """
+    from entities_service.models.auth import DSAPIRole
+
+    return {
+        DSAPIRole.ENTITIES_READ: [DSAPIRole.ENTITIES_READ],
+        DSAPIRole.ENTITIES_WRITE: [DSAPIRole.ENTITIES_WRITE, DSAPIRole.ENTITIES_READ],
+        DSAPIRole.ENTITIES_EDIT: [
+            DSAPIRole.ENTITIES_EDIT,
+            DSAPIRole.ENTITIES_WRITE,
+            DSAPIRole.ENTITIES_READ,
+        ],
+        DSAPIRole.ENTITIES_DELETE: [
+            DSAPIRole.ENTITIES_DELETE,
+            DSAPIRole.ENTITIES_EDIT,
+            DSAPIRole.ENTITIES_WRITE,
+            DSAPIRole.ENTITIES_READ,
+        ],
+        DSAPIRole.ENTITIES_ADMIN: [
+            DSAPIRole.ENTITIES_ADMIN,
+            DSAPIRole.ENTITIES_DELETE,
+            DSAPIRole.ENTITIES_EDIT,
+            DSAPIRole.ENTITIES_WRITE,
+            DSAPIRole.ENTITIES_READ,
+        ],
+    }
+
+
+@pytest.fixture
+def client(live_backend: bool, mock_valid_access_token: CreateMockValidAccessToken) -> ClientFixture:
     """Return the test client."""
-    import os
-
-    from fastapi.testclient import TestClient
-    from httpx import Client
-
-    def _create_mock_valid_access_token(
-        allowed_role: DSAPIRole | str,
-    ) -> Callable[[], Coroutine[Any, Any, TokenData]]:
-        """Internal function to create a mock valid_access_token function with a specific set of roles.
-
-        The roles are set by the `allowed_role` parameter and are all composite, with the exception of
-        `entities:read`.
-
-        The composite roles are:
-        - `entities:write`
-          Includes: `entities:read`
-        - `entities:edit`
-          Includes: `entities:write` and `entities:read`
-        - `entities:delete`
-          Includes: `entities:edit`, `entities:write`, and `entities:read`
-        - `entities`
-          Includes: `entities:delete`, `entities:edit`, `entities:write`, and `entities:read`
-
-        """
-        effective_roles: dict[str, list[str]] = {
-            "entities:read": ["entities:read"],
-            "entities:write": ["entities:write", "entities:read"],
-            "entities:edit": ["entities:edit", "entities:write", "entities:read"],
-            "entities:delete": ["entities:delete", "entities:edit", "entities:write", "entities:read"],
-            "entities": ["entities", "entities:delete", "entities:edit", "entities:write", "entities:read"],
-        }
-
-        assert allowed_role in effective_roles, f"Invalid auth role: {allowed_role}"
-
-        async def mock_valid_access_token() -> TokenData:
-            """Mock the valid_access_token function from DataSpaces-Auth.
-
-            Include all available roles for the entities service.
-            """
-            from dataspaces_auth.fastapi._models import TokenData
-
-            return TokenData(
-                # Role mapping
-                resource_access={
-                    "backend": {"roles": effective_roles[allowed_role]},
-                    # Required resource_access field (for the model)
-                    "account": {"roles": []},
-                },
-                # Required fields (for the model)
-                preferred_username="test_user",
-                iss="http://example.com",
-                exp=1234567890,
-                aud=["test_client"],
-                sub="test_user",
-                iat=1234567890,
-                jti="test_jti",
-            )
-
-        return mock_valid_access_token
 
     def _client(
         raise_server_exceptions: bool = True,
-        allowed_role: (
-            Literal["entities", "entities:read", "entities:write", "entities:edit", "entities:delete"]
-            | None
-        ) = None,
+        allowed_role: DSAPIRole | str | None = None,
     ) -> TestClient | Client:
         """Return the test client with the given authentication role."""
         if not live_backend:
             from dataspaces_auth.fastapi import valid_access_token
+            from fastapi.testclient import TestClient
 
             from entities_service.main import APP
+            from entities_service.models.auth import DSAPIRole
 
-            # "entities:read" is the default role given to all users
-            allowed_role = allowed_role or "entities:read"
+            # DSAPIRole.ENTITIES_READ ("entities:read") is the default role given to all users
+            allowed_role = allowed_role or DSAPIRole.ENTITIES_READ
 
-            APP.dependency_overrides[valid_access_token] = _create_mock_valid_access_token(allowed_role)
+            APP.dependency_overrides[valid_access_token] = mock_valid_access_token(allowed_role)
 
             return TestClient(
                 app=APP,
                 raise_server_exceptions=raise_server_exceptions,
                 follow_redirects=True,
             )
+
+        import os
+
+        from httpx import Client
 
         port = os.getenv("DS_ENTITIES_SERVICE_PORT", "7000")
 

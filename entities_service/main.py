@@ -14,59 +14,43 @@ from entities_service.service.config import CONFIG
 from entities_service.service.logger import setup_logger
 from entities_service.service.routers import get_routers
 
-LOGGER = logging.getLogger("entities_service")
-
+LOGGER = logging.getLogger(__name__)
 
 # Handle testing
-env_vars: set[str] = set()
 if bool(int(os.getenv("DS_ENTITIES_SERVICE_DISABLE_AUTH_ROLE_CHECKS", "0"))):
-    from entities_service.models import DSAPIRole
-
-    # Set mandatory settings for DataSpaces-Auth
-    env_vars = {"authorization_url", "token_url", "certs_url", "scopes"}
-    env_vars_to_unset: set[str] = set()
-    original_env_var_values: dict[str, str] = {}
-
-    for env_var in env_vars:
-        composed_env_var = f"DS_AUTH_{env_var.upper()}"
-        if composed_env_var in os.environ:
-            original_env_var_values[composed_env_var] = os.environ[composed_env_var]
-        else:
-            env_vars_to_unset.add(composed_env_var)
-
-        if "url" in env_var:
-            os.environ[composed_env_var] = "http://example.org"
-        else:
-            os.environ[composed_env_var] = '["openid","profile","email"]'
-
-    # Override DataSpaces-Auth valid_access_token dependency
     import dataspaces_auth.fastapi._auth as ds_auth
     from dataspaces_auth.fastapi._models import TokenData
 
-    ds_auth.valid_access_token = lambda: TokenData(
-        # Role mapping
-        resource_access={
-            "backend": {
-                "roles": [
-                    DSAPIRole.ENTITIES_ADMIN,
-                    DSAPIRole.ENTITIES_DELETE,
-                    DSAPIRole.ENTITIES_READ,
-                    DSAPIRole.ENTITIES_WRITE,
-                    DSAPIRole.ENTITIES_EDIT,
-                ]
+    from entities_service.models import DSAPIRole
+
+    # Override DataSpaces-Auth valid_access_token dependency
+    async def disable_auth_valid_access_token() -> TokenData:
+        return TokenData(
+            # Role mapping
+            resource_access={
+                "backend": {
+                    "roles": [
+                        DSAPIRole.ENTITIES_ADMIN,
+                        DSAPIRole.ENTITIES_DELETE,
+                        DSAPIRole.ENTITIES_READ,
+                        DSAPIRole.ENTITIES_WRITE,
+                        DSAPIRole.ENTITIES_EDIT,
+                    ]
+                },
+                # Required resource_access field (for the model)
+                "account": {"roles": []},
             },
-            # Required resource_access field (for the model)
-            "account": {"roles": []},
-        },
-        # Required fields (for the model)
-        preferred_username="test_user",
-        iss="http://example.com",
-        exp=1234567890,
-        aud=["test_client"],
-        sub="test_user",
-        iat=1234567890,
-        jti="test_jti",
-    )
+            # Required fields (for the model)
+            preferred_username="test_user",
+            iss="https://semanticmatter.com",
+            exp=1234567890,
+            aud=["test_client"],
+            sub="test_user",
+            iat=1234567890,
+            jti="test_jti",
+        )
+
+    ds_auth.valid_access_token = disable_auth_valid_access_token
 
 
 # Application lifespan function
@@ -90,25 +74,6 @@ async def lifespan(app: FastAPI):  # noqa: ARG001
 
     # Run application
     yield
-
-    ## Clean up
-
-    # Close MongoDB clients (if any)
-    from entities_service.service.backend.mongodb import MONGO_CLIENTS
-
-    if MONGO_CLIENTS is not None:
-        for role in list(MONGO_CLIENTS):
-            MONGO_CLIENTS.pop(role).close()
-
-    # Handle environment variables if in test mode
-    if env_vars:
-        # Unset previously undefined env vars
-        for env_var in env_vars_to_unset:
-            os.environ.pop(env_var)
-
-        # Reset original values for pre-defined env vars
-        for env_var, value in original_env_var_values.items():
-            os.environ[env_var] = value
 
 
 # Setup application
