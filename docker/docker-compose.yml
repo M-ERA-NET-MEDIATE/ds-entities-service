@@ -3,26 +3,27 @@ name: DataSpaces-Entities
 services:
   ds_entities_service:
     build:
-      context: "."
-      target: "${DS_ENTITIES_SERVICE_DOCKER_TARGET:-development}"
+      context: ".."
+      dockerfile: "docker/Dockerfile"
+      target: "${DS_ENTITIES_SERVICE_DOCKER_TARGET:-production}"
     ports:
       - "${DS_ENTITIES_SERVICE_PORT:-7000}:80"
     environment:
-      # "Regular" entities service configuration values
       DS_ENTITIES_SERVICE_BACKEND: mongodb
       DS_ENTITIES_SERVICE_MONGO_URI: "mongodb://mongodb:27017"
       DS_ENTITIES_SERVICE_X509_CERTIFICATE_FILE: "docker_security/test-client.pem"
       DS_ENTITIES_SERVICE_CA_FILE: "docker_security/test-ca.pem"
       DS_ENTITIES_SERVICE_DISABLE_AUTH_ROLE_CHECKS: "1"
+      DS_ENTITIES_SERVICE_DEBUG: "1"
     depends_on:
       mongodb:
         condition: service_healthy
         restart: true
     networks:
-      - entities_service_net
+      - ds_entities_service_net
     volumes:
-      - "${PWD}:/app"
-    user: "1000:1000"  # To ensure files created in the container are owned by the host user
+      - "../:/app"  # should map the repository root to /app in the container
+    user: "1000:1000"  # To ensure files (logs) created in the container are owned by the host user
     stop_grace_period: 1s
 
   mongodb:
@@ -34,12 +35,10 @@ services:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: root
     networks:
-      - entities_service_net
-    expose:
-      - 27017
+      - ds_entities_service_net
     volumes:
-      - "./.github/docker_init/create_x509_user.js:/docker-entrypoint-initdb.d/0_create_x509_user.js"
-      - "./docker_security:/mongo_tls"
+      - "./docker_init/create_x509_user.js:/docker-entrypoint-initdb.d/0_create_x509_user.js"
+      - "../docker_security:/mongo_tls"
     command: --tlsMode allowTLS --tlsCertificateKeyFile /mongo_tls/test-server1.pem --tlsCAFile /mongo_tls/test-ca.pem
     healthcheck:
       test: echo 'db.runCommand("ping").ok' | mongosh mongodb://root:root@localhost:27017/?authSource=admin --quiet
@@ -50,7 +49,7 @@ services:
   mongodb_gui:
     image: mongo-express:1
     ports:
-      - "${MONGO_GUI_PORT:-8081}:8081"
+      - 8081:8081
     environment:
       ME_CONFIG_MONGODB_SERVER: mongodb
       ME_CONFIG_MONGODB_PORT: 27017
@@ -60,11 +59,11 @@ services:
       ME_CONFIG_BASICAUTH_USERNAME: admin
       ME_CONFIG_BASICAUTH_PASSWORD: admin
     networks:
-      - entities_service_net
+      - ds_entities_service_net
     depends_on:
       mongodb:
         condition: service_healthy
         restart: true
 
 networks:
-  entities_service_net:
+  ds_entities_service_net:

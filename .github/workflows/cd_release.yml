@@ -20,7 +20,7 @@ jobs:
 
       # Python package
       python_package: true
-      package_dirs: entities_service
+      package_dirs: ds_entities_service
       install_extras: "[dev]"
       pip_index_url: "${{ vars.EXTERNAL_PYPI_INDEX_URL }}"
       python_version_build: "3.10"

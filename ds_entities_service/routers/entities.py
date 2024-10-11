@@ -19,11 +19,11 @@ from fastapi.exceptions import RequestValidationError
 from pydantic import Field, ValidationError, conlist
 from s7 import SOFT7Entity
 
-from entities_service.backend import get_backend
-from entities_service.config import get_config
-from entities_service.models import URI_REGEX, DSAPIRole, HTTPError
-from entities_service.requests import YamlRequest, YamlRoute
-from entities_service.utils import get_identity
+from ds_entities_service.backend import get_backend
+from ds_entities_service.config import get_config
+from ds_entities_service.models import URI_REGEX, DSAPIRole, HTTPError
+from ds_entities_service.requests import YamlRequest, YamlRoute
+from ds_entities_service.utils import get_identity
 
 LOGGER = logging.getLogger(__name__)
 

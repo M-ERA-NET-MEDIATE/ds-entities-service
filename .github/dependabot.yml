@@ -29,6 +29,24 @@ updates:
       patterns:
         - "*"
 - package-ecosystem: pip
+  directory: "/docker"
+  schedule:
+    interval: weekly
+    time: "05:16"
+  target-branch: main
+  labels:
+    - CI/CD
+    - skip_changelog
+  groups:
+    docker-python:
+      applies-to: "version-updates"
+      patterns:
+        - "*"
+    docker-python-security:
+      applies-to: "security-updates"
+      patterns:
+        - "*"
+- package-ecosystem: pip
   directory: "/"
   schedule:
     interval: weekly

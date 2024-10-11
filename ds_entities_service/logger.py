@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 
 from uvicorn.logging import DefaultFormatter
 
-from entities_service.config import get_config
+from ds_entities_service.config import get_config
 
 if TYPE_CHECKING:  # pragma: no cover
     import logging.handlers
@@ -23,7 +23,7 @@ def disable_logging():
     Usage:
 
     ```python
-    from entities_service.logger import disable_logging
+    from ds_entities_service.logger import disable_logging
 
     # Do stuff, logging to all handlers.
     # ...
@@ -55,7 +55,7 @@ def _get_service_logger_handlers() -> list[logging.Handler]:
 
     # Set handlers
     file_handler = logging.handlers.RotatingFileHandler(
-        logs_dir / "entities_service.log", maxBytes=1000000, backupCount=5
+        logs_dir / "ds_entities_service.log", maxBytes=1000000, backupCount=5
     )
     file_handler.setLevel(logging.DEBUG)
 
@@ -77,7 +77,7 @@ def _get_service_logger_handlers() -> list[logging.Handler]:
 
 def setup_logger() -> None:
     """Return a logger with the given name."""
-    logger = logging.getLogger("entities_service")
+    logger = logging.getLogger("ds_entities_service")
     logger.setLevel(logging.DEBUG)
 
     for handler in _get_service_logger_handlers():

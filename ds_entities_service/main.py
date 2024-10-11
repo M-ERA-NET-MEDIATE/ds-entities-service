@@ -8,18 +8,18 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from entities_service import __version__
-from entities_service.backend import get_backend
-from entities_service.config import get_config
-from entities_service.logger import setup_logger
-from entities_service.routers import get_routers
+from ds_entities_service import __version__
+from ds_entities_service.backend import get_backend
+from ds_entities_service.config import get_config
+from ds_entities_service.logger import setup_logger
+from ds_entities_service.routers import get_routers
 
 # Handle testing
 if bool(int(os.getenv("DS_ENTITIES_SERVICE_DISABLE_AUTH_ROLE_CHECKS", "0"))):
     import dataspaces_auth.fastapi._auth as ds_auth
     from dataspaces_auth.fastapi._models import TokenData
 
-    from entities_service.models import DSAPIRole
+    from ds_entities_service.models import DSAPIRole
 
     # Override DataSpaces-Auth valid_access_token dependency
     async def disable_auth_valid_access_token() -> TokenData:

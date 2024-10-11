@@ -78,7 +78,7 @@ jobs:
           chmod 777 docker_security
 
           # Generate certificates
-          cd docker_security && ${{ github.workspace }}/.github/docker_init/setup_mongo_security.sh
+          cd docker_security && ${{ github.workspace }}/docker/docker_init/setup_mongo_security.sh
           cd ${{ github.workspace }}
 
           # Pull mongo:8 image and run it
@@ -88,7 +88,7 @@ jobs:
             --env MONGO_INITDB_ROOT_PASSWORD=root \
             --name "mongo" \
             --network "host" \
-            --volume "${{ github.workspace }}/.github/docker_init/create_x509_user.js:/docker-entrypoint-initdb.d/0_create_x509_user.js" \
+            --volume "${{ github.workspace }}/docker/docker_init/create_x509_user.js:/docker-entrypoint-initdb.d/0_create_x509_user.js" \
             --volume "${{ github.workspace }}/docker_security:/mongo_tls" \
             mongo:8 \
             --tlsMode allowTLS --tlsCertificateKeyFile /mongo_tls/test-server1.pem --tlsCAFile /mongo_tls/test-ca.pem
@@ -112,7 +112,7 @@ jobs:
         run: |
           # Create logging directory and file
           mkdir -p logs
-          touch -a logs/entities_service.log
+          touch -a logs/ds_entities_service.log
 
           # Run the service in the background
           docker run --rm -d \
@@ -140,7 +140,7 @@ jobs:
             docker logs ds-entities-service &&
 
             echo -e "\nAnd the service log:" &&
-            cat logs/entities_service.log &&
+            cat logs/ds_entities_service.log &&
 
             exit 1
           }
@@ -167,7 +167,7 @@ jobs:
             docker logs ds-entities-service &&
 
             echo -e "\nAnd the service log:" &&
-            cat logs/entities_service.log &&
+            cat logs/ds_entities_service.log &&
 
             exit 1
           }

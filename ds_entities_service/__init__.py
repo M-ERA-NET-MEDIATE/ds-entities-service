@@ -1,4 +1,4 @@
-"""Entities Service."""
+"""DataSpaces-Entities service."""
 
 from __future__ import annotations
 

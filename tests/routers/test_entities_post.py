@@ -231,7 +231,7 @@ def test_backend_create_returns_bad_value(
     from the response checked in the `test_backend_write_error_exception` test.
     """
     # Monkeypatch the backend create method to return an unexpected value
-    from entities_service.backend import mongodb as entities_backend
+    from ds_entities_service.backend import mongodb as entities_backend
 
     monkeypatch.setattr(
         entities_backend.MongoDBBackend,

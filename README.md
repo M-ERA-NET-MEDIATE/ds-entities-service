@@ -9,8 +9,7 @@ It's purpose is to serve entities from a multitude of backends.
 The service can be installed from SINTEF's GitLab:
 
 ```shell
-export PIP_INDEX_URL=https://gitlab.sintef.no/api/v4/projects/17883/packages/pypi/simple
-pip install ds-entities-service
+pip install --index-url="https://gitlab.sintef.no/api/v4/projects/17883/packages/pypi/simple" ds-entities-service
 ```
 
 For development, we recommend cloning the repository and installing the package locally:
@@ -21,8 +20,7 @@ git clone https://github.com/M-ERA-NET-MEDIATE/ds-entities-service.git
 cd ds-entities-service
 
 # Install (local clone)
-export PIP_INDEX_URL=https://gitlab.sintef.no/api/v4/projects/17883/packages/pypi/simple
-pip install -U -e .
+pip install -U --index-url="https://gitlab.sintef.no/api/v4/projects/17883/packages/pypi/simple" -e .
 ```
 
 > **Important**: If using this service locally alongside [DLite](https://github.com/SINTEF/dlite), it is important to note that issues may occur if [NumPy](https://numpy.org) v2 is used.
@@ -43,10 +41,10 @@ First, create a MongoDB Atlas cluster, and a user with read-only access to the `
 Set the necessary environment variables:
 
 ```shell
-DS_ENTITIES_SERVICE_MONGO_URI=<your MongoDB Atlas URI>
-DS_ENTITIES_SERVICE_X509_CERTIFICATE_FILE=<your X.509 certificate file>
-DS_ENTITIES_SERVICE_MONGO_USER=<your MongoDB Atlas user with read-only access (default: 'guest')>
-DS_ENTITIES_SERVICE_MONGO_PASSWORD=<your MongoDB Atlas user's password with read-only access (default: 'guest')>
+DS_ENTITIES_SERVICE_MONGO_URI="<your MongoDB Atlas URI>"
+DS_ENTITIES_SERVICE_X509_CERTIFICATE_FILE="<your X.509 certificate file>"
+DS_ENTITIES_SERVICE_MONGO_USER="<your MongoDB Atlas user with read-only access (default: 'guest')>"
+DS_ENTITIES_SERVICE_MONGO_PASSWORD="<your MongoDB Atlas user's password with read-only access (default: 'guest')>"
 ```
 
 Run the service:
@@ -56,7 +54,7 @@ uvicorn asgi:app \
 --host localhost \
 --port 7000 \
 --no-server-header \
---header "Server:EntitiesService"
+--header "Server:DataSpaces-Entities Service"
 ```
 
 Finally, go to [localhost:7000/docs](http://localhost:7000/docs) and try out retrieving an entity.
@@ -74,37 +72,40 @@ This is done by running the following command:
 ```shell
 mkdir docker_security
 cd docker_security
-../.github/docker_init/setup_mongo_security.sh
+../docker/docker_init/setup_mongo_security.sh
 ```
 
 Note, this is only possible with `openssl` installed on your system.
 And the OS on the system being Linux/Unix-based.
 
-For development, start a local MongoDB server, e.g., through another Docker image:
+For development, create a docker bridge network and start a local MongoDB server:
 
 ```shell
+docker network create ds_entities_service_net
 docker run --rm -d \
   --env "MONGO_INITDB_ROOT_USERNAME=root" \
   --env "MONGO_INITDB_ROOT_PASSWORD=root" \
   --name "mongodb" \
-  -p "27017:27017" \
-  -v "${PWD}/.github/docker_init/create_x509_user.js:/docker-entrypoint-initdb.d/0_create_x509_user.js" \
-  -v "${PWD}/docker_security:/mongo_tls" \
+  --publish "27017:27017" \
+  --network "ds_entities_service_net" \
+  --volume "${PWD}/docker/docker_init/create_x509_user.js:/docker-entrypoint-initdb.d/0_create_x509_user.js" \
+  --volume "${PWD}/docker_security:/mongo_tls" \
   mongo:8 \
   --tlsMode allowTLS --tlsCertificateKeyFile /mongo_tls/test-server1.pem --tlsCAFile /mongo_tls/
 ```
 
-Then build and run the Entities Service Docker image:
+Then build and run the DataSpaces-Entities service Docker image:
 
 ```shell
 docker build --pull -t ds-entities-service --target development .
 docker run --rm -d \
-  --env "DS_ENTITIES_SERVICE_MONGO_URI=mongodb://localhost:27017" \
+  --env "DS_ENTITIES_SERVICE_MONGO_URI=mongodb://mongodb:27017" \
   --env "DS_ENTITIES_SERVICE_X509_CERTIFICATE_FILE=docker_security/test-client.pem" \
   --env "DS_ENTITIES_SERVICE_CA_FILE=docker_security/test-ca.pem" \
   --name "ds-entities-service" \
-  -u "${id -ur}:${id -gr}" \
-  -p "7000:80" \
+  --user "${id -ur}:${id -gr}" \
+  --publish "7000:80" \
+  --network "ds_entities_service_net" \
   ds-entities-service
 ```
 
@@ -114,7 +115,8 @@ Then go to [localhost:7000/docs](http://localhost:7000/docs) and try out retriev
 
 ---
 
-For production, use a public MongoDB, and follow the same instructions above for building and running the Entities Service Docker image, but exchange the `--target` value with `production`, put in the proper value for the `DS_ENTITIES_SERVICE_MONGO_URI` and `DS_ENTITIES_SERVICE_X509_CERTIFICATE_FILE` environment values, possibly add the `DS_ENTITIES_SERVICE_MONGO_USER`, `DS_ENTITIES_SERVICE_MONGO_PASSWORD`, and `DS_ENTITIES_SERVICE_CA_FILE` environment variables as well, if needed.
+For production, use a public MongoDB, and follow the same instructions above for building and running the DataSpaces-Entities service Docker image, but exchange the `--target` value with `production`, put in the proper value for the `DS_ENTITIES_SERVICE_MONGO_URI` and `DS_ENTITIES_SERVICE_X509_CERTIFICATE_FILE` environment values.
+Possibly add the `DS_ENTITIES_SERVICE_MONGO_USER`, `DS_ENTITIES_SERVICE_MONGO_PASSWORD`, and `DS_ENTITIES_SERVICE_CA_FILE` environment variables as well, if needed.
 
 ### Using Docker Compose
 
@@ -125,13 +127,15 @@ docker compose pull
 docker compose --env-file=.env up --build
 ```
 
-By default the `development` target will be built, to change this, set the `DS_ENTITIES_SERVICE_DOCKER_TARGET` environment variable accordingly, e.g.:
+By default the `production` target will be built, to change this, set the `DS_ENTITIES_SERVICE_DOCKER_TARGET` environment variable accordingly, e.g.:
 
 ```shell
-DS_ENTITIES_SERVICE_DOCKER_TARGET=production docker compose --env-file=.env up --build
+DS_ENTITIES_SERVICE_DOCKER_TARGET=development docker compose --env-file=.env up --build
 ```
 
-Furthermore, the used `localhost` port can be changed via the `PORT` environment variable.
+Or change the compose.yml file manually.
+
+Furthermore, the used `localhost` port can be changed via the `DS_ENTITIES_SERVICE_PORT` environment variable.
 
 The `--env-file` argument is optional, but if used, it should point to a file containing the environment variables needed by the service.
 See the section on [using a file for environment variables](#using-a-file-for-environment-variables) for more information.
@@ -151,7 +155,7 @@ For using it with Docker, use the `--env-file .env` argument when calling `docke
 
 ## Testing
 
-The service is tested using `pytest` and can be tested against a local MongoDB server and Entities Service instance.
+The service is tested using `pytest` and can be tested against a local MongoDB server and DataSpaces-Entities service instance.
 
 To run the tests, first install the test dependencies:
 
@@ -162,6 +166,7 @@ pip install -U -e .[testing]
 To run the tests against a live backend, you can pull, build, and run the [Docker Compose file](docker-compose.yml):
 
 ```shell
+cd docker
 docker compose pull
 docker compose build
 ```
@@ -172,15 +177,13 @@ See the section on [using Docker and a local MongoDB server](#using-docker-and-a
 Then run (up) the Docker Compose file and subsequently the tests:
 
 ```shell
+cd docker
 docker compose up -d
+cd ..
 pytest --live-backend
 ```
 
-Remember to set the following environment variables:
-
-- `DS_ENTITIES_SERVICE_DISABLE_AUTH_ROLE_CHECKS=1`
-
-> **Warning** Setting `DS_ENTITIES_SERVICE_DISABLE_AUTH_ROLE_CHECKS=1` will effectively deactivate the OAuth2 authentication and user role checks and should only be used for testing purposes.
+> **Warning**: Setting `DS_ENTITIES_SERVICE_DISABLE_AUTH_ROLE_CHECKS=1` will effectively deactivate the OAuth2 authentication and user role checks and should only be used for testing purposes.
 
 ### Extra pytest markers
 
