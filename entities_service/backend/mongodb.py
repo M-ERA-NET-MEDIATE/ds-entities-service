@@ -17,15 +17,15 @@ from pymongo.errors import (
 )
 from s7 import SOFT7Entity, get_entity
 
-from entities_service.models import URI_REGEX
-from entities_service.service.backend import Backends
-from entities_service.service.backend.backend import (
+from entities_service.backend import Backends
+from entities_service.backend.backend import (
     Backend,
     BackendError,
     BackendSettings,
     BackendWriteAccessError,
 )
-from entities_service.service.config import CONFIG, MongoDsn
+from entities_service.config import MongoDsn, get_config
+from entities_service.models import URI_REGEX
 
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Generator, Iterable, Iterator
@@ -74,7 +74,7 @@ class MongoDBSettings(BackendSettings):
     Use default username and password for read access.
     """
 
-    mongo_uri: Annotated[MongoDsn, Field(description="The MongoDB URI.")] = CONFIG.mongo_uri
+    mongo_uri: Annotated[MongoDsn, Field(description="The MongoDB URI.")] = get_config().mongo_uri
 
     mongo_username: Annotated[str | None, Field(description="The MongoDB username.")] = None
 
@@ -100,16 +100,18 @@ class MongoDBSettings(BackendSettings):
         ),
     ] = None
 
-    mongo_db: Annotated[str, Field(description="The MongoDB database.")] = CONFIG.mongo_db
+    mongo_db: Annotated[str, Field(description="The MongoDB database.")] = get_config().mongo_db
 
-    mongo_collection: Annotated[str, Field(description="The MongoDB collection.")] = CONFIG.mongo_collection
+    mongo_collection: Annotated[str, Field(description="The MongoDB collection.")] = (
+        get_config().mongo_collection
+    )
 
     mongo_driver: Annotated[
         Literal["pymongo"],
         Field(
             description="The MongoDB driver to use. Only 'pymongo' is currently supported.",
         ),
-    ] = BACKEND_DRIVER_MAPPING.get(CONFIG.backend, "pymongo")
+    ] = BACKEND_DRIVER_MAPPING.get(get_config().backend, "pymongo")
 
     auth_level: Annotated[
         Literal["read", "write"],
@@ -140,6 +142,8 @@ def get_client(
     driver: Literal["pymongo"] | None = None,
 ) -> MongoClient:
     """Get the MongoDB client."""
+    config = get_config()
+
     if driver is None:
         driver = "pymongo"
 
@@ -163,25 +167,25 @@ def get_client(
     # Ensure all required settings are set
     if auth_level == "read":
         client_options: dict[str, Any] = {
-            "username": username or CONFIG.mongo_user,
-            "password": password or CONFIG.mongo_password.get_secret_value(),
+            "username": username or config.mongo_user,
+            "password": password or config.mongo_password.get_secret_value(),
         }
     else:  # write
         client_options = {
             "tls": True,
-            "tlsCertificateKeyFile": str(certificate_file or CONFIG.x509_certificate_file),
+            "tlsCertificateKeyFile": str(certificate_file or config.x509_certificate_file),
             "authSource": "$external",
             "authMechanism": "MONGODB-X509",
         }
-        if ca_file or CONFIG.ca_file:
-            client_options["tlsCAFile"] = str(ca_file or CONFIG.ca_file)
+        if ca_file or config.ca_file:
+            client_options["tlsCAFile"] = str(ca_file or config.ca_file)
 
         if client_options["tlsCertificateKeyFile"] is None:
             raise MongoDBBackendError(
                 "MongoDB X.509 certificate for connecting with write-access rights not set."
             )
 
-    new_client = MongoClient(uri or str(CONFIG.mongo_uri), **client_options)
+    new_client = MongoClient(uri or str(config.mongo_uri), **client_options)
 
     if MONGO_CLIENTS is None:
         MONGO_CLIENTS = {auth_level: new_client}

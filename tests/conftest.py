@@ -14,8 +14,8 @@ if TYPE_CHECKING:
     from fastapi.testclient import TestClient
     from httpx import Client
 
+    from entities_service.backend.mongodb import MongoDBBackend
     from entities_service.models.auth import DSAPIRole
-    from entities_service.service.backend.mongodb import MongoDBBackend
 
     class UserRoleDict(TypedDict):
         """Type for the user info dictionary with roles."""
@@ -397,7 +397,9 @@ def get_backend_user() -> GetBackendUserFixture:
 
     However, for testing, it is easier to do it this way using SCRAM.
     """
-    from entities_service.service.config import CONFIG
+    from entities_service.config import get_config
+
+    config = get_config()
 
     def _get_backend_user(auth_role: Literal["read", "write"] | None = None) -> UserDict:
         """Return the backend user for the given authentication role."""
@@ -411,12 +413,12 @@ def get_backend_user() -> GetBackendUserFixture:
 
         if auth_role == "read":
             user: UserDict = {
-                "username": CONFIG.mongo_user,
-                "password": CONFIG.mongo_password.get_secret_value(),
+                "username": config.mongo_user,
+                "password": config.mongo_password.get_secret_value(),
                 "roles": [
                     {
                         "role": "read",
-                        "db": CONFIG.mongo_db,
+                        "db": config.mongo_db,
                     }
                 ],
             }
@@ -427,7 +429,7 @@ def get_backend_user() -> GetBackendUserFixture:
                 "roles": [
                     {
                         "role": "readWrite",
-                        "db": CONFIG.mongo_db,
+                        "db": config.mongo_db,
                     }
                 ],
             }
@@ -443,7 +445,7 @@ def _mongo_backend_users(live_backend: bool, get_backend_user: GetBackendUserFix
     if not live_backend:
         return
 
-    from entities_service.service.backend import get_backend
+    from entities_service.backend import get_backend
 
     backend: MongoDBBackend = get_backend(
         settings={
@@ -486,7 +488,7 @@ def _reset_mongo_test_collection(
     if not live_backend:
         return
 
-    from entities_service.service.backend import get_backend
+    from entities_service.backend import get_backend
 
     backend_user = get_backend_user("write")
 
@@ -507,7 +509,7 @@ def _empty_backend_collection(live_backend: bool, get_backend_user: GetBackendUs
     if not live_backend:
         return
 
-    from entities_service.service.backend import get_backend
+    from entities_service.backend import get_backend
 
     backend_user = get_backend_user("write")
 
@@ -529,7 +531,7 @@ def _mock_lifespan(live_backend: bool, monkeypatch: pytest.MonkeyPatch) -> None:
     # backend
     if not live_backend:
         monkeypatch.setattr(
-            "entities_service.service.backend.mongodb.MongoDBBackend.initialize",
+            "entities_service.backend.mongodb.MongoDBBackend.initialize",
             lambda _: None,
         )
 
@@ -593,16 +595,17 @@ def client(live_backend: bool, mock_valid_access_token: CreateMockValidAccessTok
             from dataspaces_auth.fastapi import valid_access_token
             from fastapi.testclient import TestClient
 
-            from entities_service.main import APP
+            from entities_service.main import create_app
             from entities_service.models.auth import DSAPIRole
 
             # DSAPIRole.ENTITIES_READ ("entities:read") is the default role given to all users
             allowed_role = allowed_role or DSAPIRole.ENTITIES_READ
 
-            APP.dependency_overrides[valid_access_token] = mock_valid_access_token(allowed_role)
+            app = create_app()
+            app.dependency_overrides[valid_access_token] = mock_valid_access_token(allowed_role)
 
             return TestClient(
-                app=APP,
+                app=app,
                 raise_server_exceptions=raise_server_exceptions,
                 follow_redirects=True,
             )

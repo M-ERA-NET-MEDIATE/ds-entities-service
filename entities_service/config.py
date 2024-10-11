@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from functools import lru_cache
 from pathlib import Path
 from typing import Annotated, Any
 
@@ -9,13 +10,13 @@ from pydantic import Field, SecretStr, ValidationInfo, field_validator
 from pydantic.networks import MultiHostUrl, UrlConstraints
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from entities_service.service.backend import Backends
+from entities_service.backend import Backends
 
 MongoDsn = Annotated[MultiHostUrl, UrlConstraints(allowed_schemes=["mongodb", "mongodb+srv"])]
 """Support MongoDB schemes with hidden port (no default port)."""
 
 
-class ServiceSettings(BaseSettings):
+class ServiceConfig(BaseSettings):
     """Service app configuration."""
 
     model_config = SettingsConfigDict(env_prefix="ds_entities_service_", env_file=".env", extra="ignore")
@@ -133,4 +134,7 @@ class ServiceSettings(BaseSettings):
         return value
 
 
-CONFIG = ServiceSettings()
+@lru_cache
+def get_config() -> ServiceConfig:
+    """Get the service configuration."""
+    return ServiceConfig()

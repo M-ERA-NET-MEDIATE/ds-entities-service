@@ -1,8 +1,8 @@
 """Special file to run the application with coverage.
 
 First, import the coverage module and start it.
-Then, import the application and register a function to save the coverage at exit.
-Finally, run the application.
+Then, import the application factory, instantiate the application, to be run via `coverage_entrypoint.sh`,
+and register a function to save the coverage at exit.
 """
 
 from __future__ import annotations
@@ -14,7 +14,9 @@ from coverage import Coverage
 cov = Coverage(data_file=".coverage.docker", config_file="pyproject.toml")
 cov.start()
 
-from entities_service.main import APP  # noqa: F401, E402
+from entities_service.main import create_app  # noqa: E402
+
+app = create_app()
 
 
 def save_coverage():

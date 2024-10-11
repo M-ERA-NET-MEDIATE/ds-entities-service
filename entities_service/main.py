@@ -9,10 +9,10 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from entities_service import __version__
-from entities_service.service.backend import get_backend
-from entities_service.service.config import CONFIG
-from entities_service.service.logger import setup_logger
-from entities_service.service.routers import get_routers
+from entities_service.backend import get_backend
+from entities_service.config import get_config
+from entities_service.logger import setup_logger
+from entities_service.routers import get_routers
 
 LOGGER = logging.getLogger(__name__)
 
@@ -60,10 +60,12 @@ async def lifespan(app: FastAPI):  # noqa: ARG001
     # Initialize logger
     setup_logger()
 
-    LOGGER.debug("Starting service with config: %s", CONFIG)
+    config = get_config()
+
+    LOGGER.debug("Starting service with config: %s", config)
 
     # Initialize backend
-    get_backend(CONFIG.backend, auth_level="write").initialize()
+    get_backend(config.backend, auth_level="write").initialize()
 
     if bool(int(os.getenv("DS_ENTITIES_SERVICE_DISABLE_AUTH_ROLE_CHECKS", "0"))):
         LOGGER.debug(
@@ -76,15 +78,20 @@ async def lifespan(app: FastAPI):  # noqa: ARG001
     yield
 
 
-# Setup application
-APP = FastAPI(
-    title="Entities Service for DataSpaces",
-    version=__version__,
-    description="A service for managing entities in DataSpaces.",
-    lifespan=lifespan,
-    debug=CONFIG.debug,
-)
+def create_app() -> FastAPI:
+    """Create the ASGI application for the DataSpaces-Entities service."""
+    config = get_config()
 
-# Add routers
-for router in get_routers():
-    APP.include_router(router)
+    app = FastAPI(
+        title="Entities Service for DataSpaces",
+        version=__version__,
+        description="A service for managing entities in DataSpaces.",
+        lifespan=lifespan,
+        debug=config.debug,
+    )
+
+    # Add routers
+    for router in get_routers():
+        app.include_router(router)
+
+    return app

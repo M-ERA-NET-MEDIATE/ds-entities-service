@@ -52,7 +52,7 @@ DS_ENTITIES_SERVICE_MONGO_PASSWORD=<your MongoDB Atlas user's password with read
 Run the service:
 
 ```shell
-uvicorn entities_service.main:APP \
+uvicorn asgi:app \
 --host localhost \
 --port 7000 \
 --no-server-header \

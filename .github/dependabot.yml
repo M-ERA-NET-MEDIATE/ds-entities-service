@@ -11,6 +11,24 @@ updates:
     - CI/CD
     - skip_changelog
 - package-ecosystem: pip
+  directory: "/.github/utils"
+  schedule:
+    interval: weekly
+    time: "05:16"
+  target-branch: main
+  labels:
+    - CI/CD
+    - skip_changelog
+  groups:
+    ci-python:
+      applies-to: "version-updates"
+      patterns:
+        - "*"
+    ci-python-security:
+      applies-to: "security-updates"
+      patterns:
+        - "*"
+- package-ecosystem: pip
   directory: "/"
   schedule:
     interval: weekly

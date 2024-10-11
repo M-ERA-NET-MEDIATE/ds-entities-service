@@ -3,7 +3,7 @@ FROM python:3.12-slim AS base
 WORKDIR /app
 
 COPY entities_service entities_service/
-COPY pyproject.toml LICENSE README.md ./
+COPY pyproject.toml LICENSE README.md asgi.py ./
 
 # Install dependencies
 RUN apt-get update && \
@@ -25,7 +25,7 @@ EXPOSE ${PORT}
 # Set debug mode, since we're running in development mode
 ENV DS_ENTITIES_SERVICE_DEBUG=1
 
-ENTRYPOINT gunicorn --bind "0.0.0.0:${PORT}" --log-level debug --workers 1 --worker-class entities_service.uvicorn.UvicornWorker --reload entities_service.main:APP
+ENTRYPOINT gunicorn --bind "0.0.0.0:${PORT}" --log-level debug --workers 1 --worker-class entities_service.uvicorn.UvicornWorker --reload asgi:app
 
 ## PRODUCTION target
 FROM base AS production
@@ -36,4 +36,4 @@ EXPOSE ${PORT}
 # Force debug mode to be off, since we're running in production mode
 ENV DS_ENTITIES_SERVICE_DEBUG=0
 
-ENTRYPOINT gunicorn --bind "0.0.0.0:${PORT}" --workers 1 --worker-class entities_service.uvicorn.UvicornWorker entities_service.main:APP
+ENTRYPOINT gunicorn --bind "0.0.0.0:${PORT}" --workers 1 --worker-class entities_service.uvicorn.UvicornWorker asgi:app

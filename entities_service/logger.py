@@ -10,6 +10,8 @@ from typing import TYPE_CHECKING
 
 from uvicorn.logging import DefaultFormatter
 
+from entities_service.config import get_config
+
 if TYPE_CHECKING:  # pragma: no cover
     import logging.handlers
 
@@ -44,7 +46,7 @@ def disable_logging():
 
 def _get_service_logger_handlers() -> list[logging.Handler]:
     """Return a list of handlers for the service logger."""
-    from entities_service.service.config import CONFIG
+    config = get_config()
 
     # Create logs directory
     root_dir = Path(__file__).resolve().parent.parent.parent.resolve()
@@ -58,7 +60,7 @@ def _get_service_logger_handlers() -> list[logging.Handler]:
     file_handler.setLevel(logging.DEBUG)
 
     console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setLevel(logging.DEBUG if CONFIG.debug else logging.INFO)
+    console_handler.setLevel(logging.DEBUG if config.debug else logging.INFO)
 
     # Set formatters
     file_formatter = logging.Formatter(
