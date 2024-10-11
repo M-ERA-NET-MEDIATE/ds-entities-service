@@ -124,6 +124,11 @@ filterwarnings = [
 
     # Notice to close MongoClient
     "ignore:.*Unclosed MongoClient opened at.*:ResourceWarning",
+
+    # DataSpaces-Auth issues a warning if realm-export.json cannot be found
+    # Keep this only for as long as SemanticMatter/ds-auth#32 is not fixed.
+    # Link: https://github.com/SemanticMatter/ds-auth/issues/32
+    "ignore:.*The realm-export\\.json file was not found.*:UserWarning",
 ]
 
 [tool.coverage.run]

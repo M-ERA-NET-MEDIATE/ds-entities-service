@@ -81,6 +81,8 @@ def pytest_configure(config: pytest.Config) -> None:
     os.environ["DS_ENTITIES_SERVICE_CA_FILE"] = "docker_security/test-ca.pem"
 
     # Avoid raising a user warning in DataSpaces-Auth for not finding 'realm-export.json'
+    # Note, this will work as intended once SemanticMatter/ds-auth#32 is fixed.
+    # Link: https://github.com/SemanticMatter/ds-auth/issues/32
     os.environ["DS_AUTH_REALM"] = "test_realm"
 
     # Add extra markers
