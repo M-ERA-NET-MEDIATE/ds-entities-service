@@ -80,6 +80,9 @@ def pytest_configure(config: pytest.Config) -> None:
     os.environ["DS_ENTITIES_SERVICE_X509_CERTIFICATE_FILE"] = "docker_security/test-client.pem"
     os.environ["DS_ENTITIES_SERVICE_CA_FILE"] = "docker_security/test-ca.pem"
 
+    # Avoid raising a user warning in DataSpaces-Auth for not finding 'realm-export.json'
+    os.environ["DS_AUTH_REALM"] = "test_realm"
+
     # Add extra markers
     config.addinivalue_line(
         "markers",
