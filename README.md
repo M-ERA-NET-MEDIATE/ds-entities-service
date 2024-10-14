@@ -163,7 +163,7 @@ To run the tests, first install the test dependencies:
 pip install -U -e .[testing]
 ```
 
-To run the tests against a live backend, you can pull, build, and run the [Docker Compose file](docker-compose.yml):
+To run the tests against a live backend, you can pull, build, and run the [Docker Compose file](compose.yml):
 
 ```shell
 cd docker
