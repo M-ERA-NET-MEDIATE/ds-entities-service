@@ -14,8 +14,8 @@ if TYPE_CHECKING:
     from fastapi.testclient import TestClient
     from httpx import Client
 
-    from entities_service.models.auth import DSAPIRole
-    from entities_service.service.backend.mongodb import MongoDBBackend
+    from dataspaces_entities.backend.mongodb import MongoDBBackend
+    from dataspaces_entities.models.auth import DSAPIRole
 
     class UserRoleDict(TypedDict):
         """Type for the user info dictionary with roles."""
@@ -72,13 +72,13 @@ def pytest_addoption(parser: pytest.Parser) -> None:
 
 
 def pytest_configure(config: pytest.Config) -> None:
-    """Configure pytest - set DS_ENTITIES_SERVICE_BACKEND env var."""
+    """Configure pytest - set DS_ENTITIES_BACKEND env var."""
     import os
 
     # These are only really (properly) used when running with --live-backend,
     # but it's fine to set them here, since they are not checked when running without.
-    os.environ["DS_ENTITIES_SERVICE_X509_CERTIFICATE_FILE"] = "docker_security/test-client.pem"
-    os.environ["DS_ENTITIES_SERVICE_CA_FILE"] = "docker_security/test-ca.pem"
+    os.environ["DS_ENTITIES_X509_CERTIFICATE_FILE"] = "docker_security/test-client.pem"
+    os.environ["DS_ENTITIES_CA_FILE"] = "docker_security/test-ca.pem"
 
     # Avoid raising a user warning in DataSpaces-Auth for not finding 'realm-export.json'
     # Note, this will work as intended once SemanticMatter/ds-auth#32 is fixed.
@@ -131,10 +131,10 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
                 item.add_marker(pytest.mark.skip(reason=prefix_reason.format(reason=reason)))
 
             # HTTPX non-mocked hosts
-            entities_service_port = os.getenv("DS_ENTITIES_SERVICE_PORT", "7000")
+            dataspaces_entities_port = os.getenv("DS_ENTITIES_PORT", "7000")
             non_mocked_hosts = ["localhost"]
-            if entities_service_port:
-                non_mocked_hosts.append(f"localhost:{entities_service_port}")
+            if dataspaces_entities_port:
+                non_mocked_hosts.append(f"localhost:{dataspaces_entities_port}")
 
             # Handle the case of the httpx_mock marker already being present
             if "httpx_mock" in item.keywords:
@@ -192,7 +192,7 @@ def pytest_sessionstart(session: pytest.Session) -> None:
     import yaml
 
     # Unpack `valid_entities.yaml` to `valid_entities/*.json`
-    static_dir = (Path(__file__).parent / "static").resolve()
+    static_dir = Path(__file__).resolve().parent / "static"
 
     entities: list[dict[str, Any]] = yaml.safe_load((static_dir / "valid_entities.yaml").read_text())
 
@@ -257,7 +257,7 @@ def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:  # n
     from pathlib import Path
 
     # Remove `valid_entities/*.json`
-    valid_entities_dir = (Path(__file__).parent / "static" / "valid_entities").resolve()
+    valid_entities_dir = Path(__file__).resolve().parent / "static" / "valid_entities"
 
     if valid_entities_dir.exists():
         shutil.rmtree(valid_entities_dir)
@@ -332,7 +332,7 @@ def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
 
     results: list[ParameterizeGetEntities] = []
 
-    static_dir = (Path(__file__).parent / "static").resolve()
+    static_dir = Path(__file__).resolve().parent / "static"
 
     entities: list[dict[str, Any]] = yaml.safe_load((static_dir / "valid_entities.yaml").read_text())
     scrubbed_entities: list[dict[str, Any]] = yaml.safe_load(
@@ -362,7 +362,7 @@ def live_backend(request: pytest.FixtureRequest) -> bool:
     import os
     import warnings
 
-    required_environment_variables = ("DS_ENTITIES_SERVICE_PORT",)
+    required_environment_variables = ("DS_ENTITIES_PORT",)
 
     value = request.config.getoption("--live-backend")
 
@@ -385,7 +385,7 @@ def static_dir() -> Path:
     """Return the path to the static directory."""
     from pathlib import Path
 
-    return (Path(__file__).parent / "static").resolve()
+    return Path(__file__).resolve().parent / "static"
 
 
 @pytest.fixture(scope="session")
@@ -397,7 +397,9 @@ def get_backend_user() -> GetBackendUserFixture:
 
     However, for testing, it is easier to do it this way using SCRAM.
     """
-    from entities_service.service.config import CONFIG
+    from dataspaces_entities.config import get_config
+
+    config = get_config()
 
     def _get_backend_user(auth_role: Literal["read", "write"] | None = None) -> UserDict:
         """Return the backend user for the given authentication role."""
@@ -411,12 +413,12 @@ def get_backend_user() -> GetBackendUserFixture:
 
         if auth_role == "read":
             user: UserDict = {
-                "username": CONFIG.mongo_user,
-                "password": CONFIG.mongo_password.get_secret_value(),
+                "username": config.mongo_user,
+                "password": config.mongo_password.get_secret_value(),
                 "roles": [
                     {
                         "role": "read",
-                        "db": CONFIG.mongo_db,
+                        "db": config.mongo_db,
                     }
                 ],
             }
@@ -427,7 +429,7 @@ def get_backend_user() -> GetBackendUserFixture:
                 "roles": [
                     {
                         "role": "readWrite",
-                        "db": CONFIG.mongo_db,
+                        "db": config.mongo_db,
                     }
                 ],
             }
@@ -443,7 +445,7 @@ def _mongo_backend_users(live_backend: bool, get_backend_user: GetBackendUserFix
     if not live_backend:
         return
 
-    from entities_service.service.backend import get_backend
+    from dataspaces_entities.backend import get_backend
 
     backend: MongoDBBackend = get_backend(
         settings={
@@ -486,7 +488,7 @@ def _reset_mongo_test_collection(
     if not live_backend:
         return
 
-    from entities_service.service.backend import get_backend
+    from dataspaces_entities.backend import get_backend
 
     backend_user = get_backend_user("write")
 
@@ -507,7 +509,7 @@ def _empty_backend_collection(live_backend: bool, get_backend_user: GetBackendUs
     if not live_backend:
         return
 
-    from entities_service.service.backend import get_backend
+    from dataspaces_entities.backend import get_backend
 
     backend_user = get_backend_user("write")
 
@@ -529,14 +531,14 @@ def _mock_lifespan(live_backend: bool, monkeypatch: pytest.MonkeyPatch) -> None:
     # backend
     if not live_backend:
         monkeypatch.setattr(
-            "entities_service.service.backend.mongodb.MongoDBBackend.initialize",
+            "dataspaces_entities.backend.mongodb.MongoDBBackend.initialize",
             lambda _: None,
         )
 
 
 @pytest.fixture
 def effective_auth_roles() -> dict[DSAPIRole, list[DSAPIRole]]:
-    """Effective roles for the ds-entities-service.
+    """Effective roles for the DataSpaces-Entities.
 
     This overrides the fixture from DataSpaces-Auth.
     And instead of using strings, it uses the local DSAPIRole string enum.
@@ -554,7 +556,7 @@ def effective_auth_roles() -> dict[DSAPIRole, list[DSAPIRole]]:
         Includes: `entities:delete`, `entities:edit`, `entities:write`, and `entities:read`
 
     """
-    from entities_service.models.auth import DSAPIRole
+    from dataspaces_entities.models.auth import DSAPIRole
 
     return {
         DSAPIRole.ENTITIES_READ: [DSAPIRole.ENTITIES_READ],
@@ -593,16 +595,17 @@ def client(live_backend: bool, mock_valid_access_token: CreateMockValidAccessTok
             from dataspaces_auth.fastapi import valid_access_token
             from fastapi.testclient import TestClient
 
-            from entities_service.main import APP
-            from entities_service.models.auth import DSAPIRole
+            from dataspaces_entities.main import create_app
+            from dataspaces_entities.models.auth import DSAPIRole
 
             # DSAPIRole.ENTITIES_READ ("entities:read") is the default role given to all users
             allowed_role = allowed_role or DSAPIRole.ENTITIES_READ
 
-            APP.dependency_overrides[valid_access_token] = mock_valid_access_token(allowed_role)
+            app = create_app()
+            app.dependency_overrides[valid_access_token] = mock_valid_access_token(allowed_role)
 
             return TestClient(
-                app=APP,
+                app=app,
                 raise_server_exceptions=raise_server_exceptions,
                 follow_redirects=True,
             )
@@ -611,7 +614,7 @@ def client(live_backend: bool, mock_valid_access_token: CreateMockValidAccessTok
 
         from httpx import Client
 
-        port = os.getenv("DS_ENTITIES_SERVICE_PORT", "7000")
+        port = os.getenv("DS_ENTITIES_PORT", "7000")
 
         base_url = f"http://localhost{':' + port if port else ''}"
 

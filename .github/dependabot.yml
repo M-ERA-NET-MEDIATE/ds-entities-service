@@ -10,21 +10,26 @@ updates:
   labels:
     - CI/CD
     - skip_changelog
+
 - package-ecosystem: pip
-  directory: "/"
+  directories:
+    - "/"
+    - "/.github/utils"
+    - "/docker"
   schedule:
     interval: weekly
     time: "05:16"
   target-branch: main
   labels:
+    - CI/CD
     - dependencies
     - skip_changelog
   groups:
-    pyproject:
+    python:
       applies-to: "version-updates"
       patterns:
         - "*"
-    pyproject-security:
+    python-security:
       applies-to: "security-updates"
       patterns:
         - "*"

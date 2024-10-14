@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 if TYPE_CHECKING:
-    from ...conftest import ClientFixture, ParameterizeGetEntities
+    from ..conftest import ClientFixture, ParameterizeGetEntities
 
 pytestmark = [
     pytest.mark.usefixtures("_mock_openid_url_request"),

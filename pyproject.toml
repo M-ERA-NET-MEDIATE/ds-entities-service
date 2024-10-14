@@ -3,10 +3,25 @@ requires = ["flit_core >=3.4,<4"]
 build-backend = "flit_core.buildapi"
 
 [tool.flit.module]
-name = "entities_service"
+name = "dataspaces_entities"
+
+[tool.flit.sdist]
+exclude = [
+    ".github",
+    ".gitignore",
+    ".coverage",
+    ".env",
+    ".markdownlint.yaml",
+    ".pre-commit-config.yaml",
+    "asgi.py",
+    "docker/",
+    "docker_security/",
+    "logs/",
+    "tests/",
+]
 
 [project]
-name = "ds-entities-service"
+name = "DataSpaces-Entities"
 authors = [
     {name = "Casper Welzel Andersen", email = "casper.w.andersen@sintef.no"},
 ]
@@ -26,7 +41,7 @@ requires-python = "~=3.10"
 dynamic = ["version", "description"]
 
 dependencies = [
-    "DataSpaces-Auth~=0.3.0",  # From SINTEF's GitLab (SemanticMatter group)
+    "DataSpaces-Auth ~=0.3.0",  # From SINTEF's GitLab (SemanticMatter group)
     "fastapi >=0.115.0,<1",
     "httpx ~=0.27.0",
     "pydantic-settings ~=2.1",
@@ -40,7 +55,7 @@ dependencies = [
 [project.optional-dependencies]
 testing = [
     "dlite-python ~=0.5.22",
-    "pytest ~=8.0",
+    "pytest ~=8.3",
     "pytest-cov ~=5.0",
     "pytest-httpx ~=0.32.0",
 ]
@@ -49,7 +64,7 @@ server = [
 ]
 dev = [
     "pre-commit ~=4.0",
-    "ds-entities-service[testing]",
+    "DataSpaces-Entities[testing]",
 ]
 
 [project.urls]
@@ -116,8 +131,8 @@ isort.required-imports = ["from __future__ import annotations"]
 ]
 
 [tool.pytest.ini_options]
-minversion = "8.0"
-addopts = "-rs --cov=entities_service --cov-config=pyproject.toml --cov-report=term-missing:skip-covered --no-cov-on-fail"
+minversion = "8.3"
+addopts = "-rs --cov=dataspaces_entities --cov-config=pyproject.toml --cov-report=term-missing:skip-covered --no-cov-on-fail"
 filterwarnings = [
     # Treat all warnings as errors
     "error",
@@ -134,4 +149,4 @@ filterwarnings = [
 [tool.coverage.run]
 sigterm = true
 relative_files = true
-source = ["entities_service"]
+source = ["dataspaces_entities"]

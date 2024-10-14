@@ -8,20 +8,18 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from entities_service import __version__
-from entities_service.service.backend import get_backend
-from entities_service.service.config import CONFIG
-from entities_service.service.logger import setup_logger
-from entities_service.service.routers import get_routers
-
-LOGGER = logging.getLogger(__name__)
+from dataspaces_entities import __version__
+from dataspaces_entities.backend import get_backend
+from dataspaces_entities.config import get_config
+from dataspaces_entities.logger import setup_logger
+from dataspaces_entities.routers import get_routers
 
 # Handle testing
-if bool(int(os.getenv("DS_ENTITIES_SERVICE_DISABLE_AUTH_ROLE_CHECKS", "0"))):
+if bool(int(os.getenv("DS_ENTITIES_DISABLE_AUTH_ROLE_CHECKS", "0"))):
     import dataspaces_auth.fastapi._auth as ds_auth
     from dataspaces_auth.fastapi._models import TokenData
 
-    from entities_service.models import DSAPIRole
+    from dataspaces_entities.models import DSAPIRole
 
     # Override DataSpaces-Auth valid_access_token dependency
     async def disable_auth_valid_access_token() -> TokenData:
@@ -60,13 +58,16 @@ async def lifespan(app: FastAPI):  # noqa: ARG001
     # Initialize logger
     setup_logger()
 
-    LOGGER.debug("Starting service with config: %s", CONFIG)
+    config = get_config()
+    logger = logging.getLogger(__name__)
+
+    logger.debug("Starting service with config: %s", config)
 
     # Initialize backend
-    get_backend(CONFIG.backend, auth_level="write").initialize()
+    get_backend(config.backend, auth_level="write").initialize()
 
-    if bool(int(os.getenv("DS_ENTITIES_SERVICE_DISABLE_AUTH_ROLE_CHECKS", "0"))):
-        LOGGER.debug(
+    if bool(int(os.getenv("DS_ENTITIES_DISABLE_AUTH_ROLE_CHECKS", "0"))):
+        logger.debug(
             "Running in test mode.\n"
             "    - External OAuth2 authentication is disabled!\n"
             "    - DataSpaces-Auth role checks are disabled!"
@@ -76,15 +77,20 @@ async def lifespan(app: FastAPI):  # noqa: ARG001
     yield
 
 
-# Setup application
-APP = FastAPI(
-    title="Entities Service for DataSpaces",
-    version=__version__,
-    description="A service for managing entities in DataSpaces.",
-    lifespan=lifespan,
-    debug=CONFIG.debug,
-)
+def create_app() -> FastAPI:
+    """Create the ASGI application for the DataSpaces-Entities service."""
+    config = get_config()
 
-# Add routers
-for router in get_routers():
-    APP.include_router(router)
+    app = FastAPI(
+        title="Entities Service for DataSpaces",
+        version=__version__,
+        description="A service for managing entities in DataSpaces.",
+        lifespan=lifespan,
+        debug=config.debug,
+    )
+
+    # Add routers
+    for router in get_routers():
+        app.include_router(router)
+
+    return app

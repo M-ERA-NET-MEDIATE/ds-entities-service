@@ -32,14 +32,14 @@ def _mock_backend(
     import yaml
     from pydantic import ConfigDict
 
-    from entities_service.models import URI_REGEX
-    from entities_service.service.backend.backend import (
+    from dataspaces_entities.backend.backend import (
         BackendError,
         BackendSettings,
         BackendWriteAccessError,
     )
-    from entities_service.service.backend.mongodb import MongoDBBackend
-    from entities_service.service.utils import get_identity
+    from dataspaces_entities.backend.mongodb import MongoDBBackend
+    from dataspaces_entities.models import URI_REGEX
+    from dataspaces_entities.utils import get_identity
 
     class MockBackendError(BackendError):
         """Mock backend error."""
@@ -208,4 +208,4 @@ def _mock_backend(
 
             return len(self.__test_data)
 
-    monkeypatch.setattr("entities_service.service.backend.mongodb.MongoDBBackend", MockBackend)
+    monkeypatch.setattr("dataspaces_entities.backend.mongodb.MongoDBBackend", MockBackend)

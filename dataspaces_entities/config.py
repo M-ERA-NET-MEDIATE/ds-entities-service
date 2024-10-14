@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from functools import lru_cache
 from pathlib import Path
 from typing import Annotated, Any
 
@@ -9,16 +10,16 @@ from pydantic import Field, SecretStr, ValidationInfo, field_validator
 from pydantic.networks import MultiHostUrl, UrlConstraints
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from entities_service.service.backend import Backends
+from dataspaces_entities.backend import Backends
 
 MongoDsn = Annotated[MultiHostUrl, UrlConstraints(allowed_schemes=["mongodb", "mongodb+srv"])]
 """Support MongoDB schemes with hidden port (no default port)."""
 
 
-class ServiceSettings(BaseSettings):
+class ServiceConfig(BaseSettings):
     """Service app configuration."""
 
-    model_config = SettingsConfigDict(env_prefix="ds_entities_service_", env_file=".env", extra="ignore")
+    model_config = SettingsConfigDict(env_prefix="ds_entities_", env_file=".env", extra="ignore")
 
     debug: Annotated[bool, Field(description="Enable debug mode.")] = False
 
@@ -85,7 +86,7 @@ class ServiceSettings(BaseSettings):
     @classmethod
     def _handle_raw_certificate(cls, value: Any, info: ValidationInfo) -> Any:
         """Handle the case of the value being a "raw" certificate file content."""
-        cache_dir = Path.home() / ".cache" / "ds-entities-service"
+        cache_dir = Path.home() / ".cache" / "DataSpaces-Entities"
         if not info.field_name:
             raise ValueError(
                 "This validator can only be used for fields with a name, i.e. not for root fields."
@@ -133,4 +134,13 @@ class ServiceSettings(BaseSettings):
         return value
 
 
-CONFIG = ServiceSettings()
+# The configuration is an LRU-cached function to avoid re-reading the environment variables.
+# This is done for both historical and performance reasons.
+# THe historical reason is that this used to simply be a module-level variable, which was
+# auto-initialized on any import of this package, which can lead to unwanted side effects due to the way
+# the configuration is setup. The performance reason is that the configuration is accessed in many places,
+# and we don't want to re-read the environment variables each time.
+@lru_cache
+def get_config() -> ServiceConfig:
+    """Get the service configuration."""
+    return ServiceConfig()
