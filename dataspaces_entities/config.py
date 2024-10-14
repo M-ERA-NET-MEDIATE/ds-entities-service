@@ -134,6 +134,12 @@ class ServiceConfig(BaseSettings):
         return value
 
 
+# The configuration is an LRU-cached function to avoid re-reading the environment variables.
+# This is done for both historical and performance reasons.
+# THe historical reason is that this used to simply be a module-level variable, which was
+# auto-initialized on any import of this package, which can lead to unwanted side effects due to the way
+# the configuration is setup. The performance reason is that the configuration is accessed in many places,
+# and we don't want to re-read the environment variables each time.
 @lru_cache
 def get_config() -> ServiceConfig:
     """Get the service configuration."""
