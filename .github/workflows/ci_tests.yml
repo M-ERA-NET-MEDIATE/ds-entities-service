@@ -54,12 +54,12 @@ jobs:
 
     env:
       # "Regular" entities service configuration values
-      DS_ENTITIES_SERVICE_MONGO_URI: mongodb://localhost:27017
-      DS_ENTITIES_SERVICE_X509_CERTIFICATE_FILE: docker_security/test-client.pem
-      DS_ENTITIES_SERVICE_CA_FILE: docker_security/test-ca.pem
-      DS_ENTITIES_SERVICE_DISABLE_AUTH_ROLE_CHECKS: 1
+      DS_ENTITIES_MONGO_URI: mongodb://localhost:27017
+      DS_ENTITIES_X509_CERTIFICATE_FILE: docker_security/test-client.pem
+      DS_ENTITIES_CA_FILE: docker_security/test-ca.pem
+      DS_ENTITIES_DISABLE_AUTH_ROLE_CHECKS: 1
       # These are used in the Dockerfile as well as in pytest
-      DS_ENTITIES_SERVICE_PORT: 7000
+      DS_ENTITIES_PORT: 7000
       STOP_TIME: 3
 
     steps:
@@ -98,7 +98,7 @@ jobs:
         run: |
           docker build \
             --pull \
-            --tag ds-entities-service \
+            --tag dataspaces-entities \
             --target ${{ matrix.docker_target }} \
             --file docker/Dockerfile \
             .
@@ -113,22 +113,22 @@ jobs:
         run: |
           # Create logging directory and file
           mkdir -p logs
-          touch -a logs/ds_entities_service.log
+          touch -a logs/dataspaces_entities.log
 
           # Run the service in the background
           docker run --rm -d \
-            --env DS_ENTITIES_SERVICE_MONGO_URI \
-            --env DS_ENTITIES_SERVICE_X509_CERTIFICATE_FILE \
-            --env DS_ENTITIES_SERVICE_CA_FILE \
-            --env DS_ENTITIES_SERVICE_DISABLE_AUTH_ROLE_CHECKS \
-            --env PORT=${DS_ENTITIES_SERVICE_PORT} \
+            --env DS_ENTITIES_MONGO_URI \
+            --env DS_ENTITIES_X509_CERTIFICATE_FILE \
+            --env DS_ENTITIES_CA_FILE \
+            --env DS_ENTITIES_DISABLE_AUTH_ROLE_CHECKS \
+            --env PORT=${DS_ENTITIES_PORT} \
             --env RUN_TIME=40 \
             --env STOP_TIME \
-            --name "ds-entities-service" \
+            --name "dataspaces-entities" \
             --network "host" \
             --volume "${PWD}:/app" \
             --entrypoint "./.github/utils/coverage_entrypoint.sh" \
-            ds-entities-service \
+            dataspaces-entities \
             ${{ matrix.docker_target }}
           sleep 5  # Wait for the service to start
 
@@ -138,10 +138,10 @@ jobs:
             pytest -vv --live-backend --cov-report=
           } || {
             echo "Failed! Here's the Docker logs for the service:" &&
-            docker logs ds-entities-service &&
+            docker logs dataspaces-entities &&
 
             echo -e "\nAnd the service log:" &&
-            cat logs/ds_entities_service.log &&
+            cat logs/dataspaces_entities.log &&
 
             exit 1
           }
@@ -165,10 +165,10 @@ jobs:
             coverage report --data-file=.coverage.final --rcfile=pyproject.toml --show-missing --skip-covered --skip-empty
           } || {
             echo "Failed to collect coverage data! Here's the Docker logs for the service:" &&
-            docker logs ds-entities-service &&
+            docker logs dataspaces-entities &&
 
             echo -e "\nAnd the service log:" &&
-            cat logs/ds_entities_service.log &&
+            cat logs/dataspaces_entities.log &&
 
             exit 1
           }

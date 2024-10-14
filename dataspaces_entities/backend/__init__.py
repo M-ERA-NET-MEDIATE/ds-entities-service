@@ -23,7 +23,7 @@ else:
 if TYPE_CHECKING:  # pragma: no cover
     from typing import Any, Literal
 
-    from ds_entities_service.backend.backend import Backend
+    from dataspaces_entities.backend.backend import Backend
 
 
 class Backends(StrEnum):
@@ -34,7 +34,7 @@ class Backends(StrEnum):
     def get_class(self) -> type[Backend]:
         """Get the backend class."""
         if self == self.MONGODB:
-            from ds_entities_service.backend.mongodb import MongoDBBackend
+            from dataspaces_entities.backend.mongodb import MongoDBBackend
 
             return MongoDBBackend
 
@@ -43,7 +43,7 @@ class Backends(StrEnum):
     def get_auth_level_settings(self, auth_level: Literal["read", "write"] = "read") -> dict[str, Any]:
         """Get the settings for the auth level."""
         # Import `get_config` here to avoid circular imports
-        from ds_entities_service.config import get_config
+        from dataspaces_entities.config import get_config
 
         config = get_config()
 
@@ -78,7 +78,7 @@ def get_backend(
 ) -> Backend:
     """Get a backend instance."""
     # Import `get_config` here to avoid circular imports
-    from ds_entities_service.config import get_config
+    from dataspaces_entities.config import get_config
 
     if backend is None:
         backend = get_config().backend

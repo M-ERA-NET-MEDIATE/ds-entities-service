@@ -10,7 +10,7 @@ from pydantic import Field, SecretStr, ValidationInfo, field_validator
 from pydantic.networks import MultiHostUrl, UrlConstraints
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from ds_entities_service.backend import Backends
+from dataspaces_entities.backend import Backends
 
 MongoDsn = Annotated[MultiHostUrl, UrlConstraints(allowed_schemes=["mongodb", "mongodb+srv"])]
 """Support MongoDB schemes with hidden port (no default port)."""
@@ -19,7 +19,7 @@ MongoDsn = Annotated[MultiHostUrl, UrlConstraints(allowed_schemes=["mongodb", "m
 class ServiceConfig(BaseSettings):
     """Service app configuration."""
 
-    model_config = SettingsConfigDict(env_prefix="ds_entities_service_", env_file=".env", extra="ignore")
+    model_config = SettingsConfigDict(env_prefix="ds_entities_", env_file=".env", extra="ignore")
 
     debug: Annotated[bool, Field(description="Enable debug mode.")] = False
 
@@ -86,7 +86,7 @@ class ServiceConfig(BaseSettings):
     @classmethod
     def _handle_raw_certificate(cls, value: Any, info: ValidationInfo) -> Any:
         """Handle the case of the value being a "raw" certificate file content."""
-        cache_dir = Path.home() / ".cache" / "ds-entities-service"
+        cache_dir = Path.home() / ".cache" / "DataSpaces-Entities"
         if not info.field_name:
             raise ValueError(
                 "This validator can only be used for fields with a name, i.e. not for root fields."

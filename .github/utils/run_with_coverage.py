@@ -14,7 +14,7 @@ from coverage import Coverage
 cov = Coverage(data_file=".coverage.docker", config_file="pyproject.toml")
 cov.start()
 
-from ds_entities_service.main import create_app  # noqa: E402
+from dataspaces_entities.main import create_app  # noqa: E402
 
 app = create_app()
 

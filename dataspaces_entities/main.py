@@ -8,18 +8,18 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from ds_entities_service import __version__
-from ds_entities_service.backend import get_backend
-from ds_entities_service.config import get_config
-from ds_entities_service.logger import setup_logger
-from ds_entities_service.routers import get_routers
+from dataspaces_entities import __version__
+from dataspaces_entities.backend import get_backend
+from dataspaces_entities.config import get_config
+from dataspaces_entities.logger import setup_logger
+from dataspaces_entities.routers import get_routers
 
 # Handle testing
-if bool(int(os.getenv("DS_ENTITIES_SERVICE_DISABLE_AUTH_ROLE_CHECKS", "0"))):
+if bool(int(os.getenv("DS_ENTITIES_DISABLE_AUTH_ROLE_CHECKS", "0"))):
     import dataspaces_auth.fastapi._auth as ds_auth
     from dataspaces_auth.fastapi._models import TokenData
 
-    from ds_entities_service.models import DSAPIRole
+    from dataspaces_entities.models import DSAPIRole
 
     # Override DataSpaces-Auth valid_access_token dependency
     async def disable_auth_valid_access_token() -> TokenData:
@@ -66,7 +66,7 @@ async def lifespan(app: FastAPI):  # noqa: ARG001
     # Initialize backend
     get_backend(config.backend, auth_level="write").initialize()
 
-    if bool(int(os.getenv("DS_ENTITIES_SERVICE_DISABLE_AUTH_ROLE_CHECKS", "0"))):
+    if bool(int(os.getenv("DS_ENTITIES_DISABLE_AUTH_ROLE_CHECKS", "0"))):
         logger.debug(
             "Running in test mode.\n"
             "    - External OAuth2 authentication is disabled!\n"

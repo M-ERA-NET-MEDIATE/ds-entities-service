@@ -3,7 +3,7 @@ requires = ["flit_core >=3.4,<4"]
 build-backend = "flit_core.buildapi"
 
 [tool.flit.module]
-name = "ds_entities_service"
+name = "dataspaces_entities"
 
 [tool.flit.sdist]
 exclude = [
@@ -21,7 +21,7 @@ exclude = [
 ]
 
 [project]
-name = "ds-entities-service"
+name = "DataSpaces-Entities"
 authors = [
     {name = "Casper Welzel Andersen", email = "casper.w.andersen@sintef.no"},
 ]
@@ -64,7 +64,7 @@ server = [
 ]
 dev = [
     "pre-commit ~=4.0",
-    "ds-entities-service[testing]",
+    "DataSpaces-Entities[testing]",
 ]
 
 [project.urls]
@@ -132,7 +132,7 @@ isort.required-imports = ["from __future__ import annotations"]
 
 [tool.pytest.ini_options]
 minversion = "8.3"
-addopts = "-rs --cov=ds_entities_service --cov-config=pyproject.toml --cov-report=term-missing:skip-covered --no-cov-on-fail"
+addopts = "-rs --cov=dataspaces_entities --cov-config=pyproject.toml --cov-report=term-missing:skip-covered --no-cov-on-fail"
 filterwarnings = [
     # Treat all warnings as errors
     "error",
@@ -149,4 +149,4 @@ filterwarnings = [
 [tool.coverage.run]
 sigterm = true
 relative_files = true
-source = ["ds_entities_service"]
+source = ["dataspaces_entities"]

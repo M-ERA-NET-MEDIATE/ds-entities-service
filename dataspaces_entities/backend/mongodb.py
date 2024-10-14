@@ -17,15 +17,15 @@ from pymongo.errors import (
 )
 from s7 import SOFT7Entity, get_entity
 
-from ds_entities_service.backend import Backends
-from ds_entities_service.backend.backend import (
+from dataspaces_entities.backend import Backends
+from dataspaces_entities.backend.backend import (
     Backend,
     BackendError,
     BackendSettings,
     BackendWriteAccessError,
 )
-from ds_entities_service.config import MongoDsn, get_config
-from ds_entities_service.models import URI_REGEX
+from dataspaces_entities.config import MongoDsn, get_config
+from dataspaces_entities.models import URI_REGEX
 
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Generator, Iterable, Iterator

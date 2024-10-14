@@ -17,7 +17,7 @@ RUN apt-get -qqy update && apt-get -fqqy upgrade && \
   apt-get install --no-install-recommends -fqqy procps
 
 # Copy the source code
-COPY ds_entities_service ds_entities_service/
+COPY dataspaces_entities dataspaces_entities/
 COPY asgi.py ./
 
 # Install Python dependencies
@@ -27,7 +27,7 @@ RUN --mount=type=bind,source=README.md,target=/app/README.md \
     pip install -q --no-cache-dir --upgrade pip setuptools wheel && \
     pip install -q -e .[server]
 
-ENTRYPOINT [ "gunicorn", "asgi:app", "--bind=0.0.0.0:80", "--workers=1", "--worker-class=ds_entities_service.uvicorn.UvicornWorker" ]
+ENTRYPOINT [ "gunicorn", "asgi:app", "--bind=0.0.0.0:80", "--workers=1", "--worker-class=dataspaces_entities.uvicorn.UvicornWorker" ]
 EXPOSE 80
 
 ################# DEVELOPMENT ####################################
@@ -56,7 +56,7 @@ COPY docker_security docker_security/
 RUN rm -rf ${HOME}/.cache /tmp/* /app/.git && pip cache purge
 
 # Set debug mode, since we're running in development mode
-ENV DS_ENTITIES_SERVICE_DEBUG=1
+ENV DS_ENTITIES_DEBUG=1
 
 CMD [ "--log-level=debug", "--reload" ]
 
@@ -64,7 +64,7 @@ CMD [ "--log-level=debug", "--reload" ]
 FROM base AS production
 
 # Force debug mode to be off, since we're running in production mode
-ENV DS_ENTITIES_SERVICE_DEBUG=0
+ENV DS_ENTITIES_DEBUG=0
 
 # Remove unnecessary files
 RUN rm -rf ${HOME}/.cache /tmp/* && \
