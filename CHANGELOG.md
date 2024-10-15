@@ -2,11 +2,76 @@
 
 ## [Unreleased](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/tree/HEAD)
 
-[Full Changelog](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/compare/v0.2.1...HEAD)
+[Full Changelog](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/compare/v0.3.0...HEAD)
 
-## Ensure v0.2.1 of `soft7` is used
+## Change package name and top-level import module
 
-Minor patch update to ensure at minimum v0.2.1 of the `soft7` package is used.
+The package name has changed from `ds-entities-service` to `DataSpaces-Entities`.
+The top-level package module has changed from `entities_service` to `dataspaces_entities`.
+
+This is all done to differentiate this package (and repository) from its originator ([`entities-service`](https://github.com/SINTEF/entities-service)) as well as cementing it as part of the DataSpaces by SemanticMatter.
+
+## Use DataSpaces-Auth for auth handling
+
+The [DataSpaces-Auth package](https://gitlab.sintef.no/groups/semanticmatter/-/packages/?orderBy=created_at&sort=desc&search[]=DataSpaces-Auth) is utilized for OAuth2 handling of the service.
+Specifically, it offers fine-grained access via OAuth2 "roles". This is offered through the `dataspaces_auth.fastapi.has_role` function, which can be used in any FastAPI application utilizing dependency injection.
+
+The roles are defined in the `models` module, which reflect the actual roles as implemented in the DataSpaces Keycloak service.
+
+## DX
+
+Moving to use DataSpaces-Auth has led to a lot of code deletion, since all things to do with auth handling can be removed.
+
+To show this closer relationship with the DataSpaces, the environment variable prefix to set settings has also been prepended with `DS_`. Moreover, the prefix has also dropped the `SERVICES_` part, so it is now: `DS_ENTITIES_`.
+
+When using DataSpaces-Auth, it also offer pytest fixtures to handle authentication and authorization during testing. These have been implemented and utilized.
+
+All dependencies and dev tools have been updated to support the latest version and install these as a minimum.
+
+## [v0.3.0](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/tree/v0.3.0) (2024-10-15)
+
+[Full Changelog](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/compare/v0.2.1...v0.3.0)
+
+## Change package name and top-level import module
+
+The package name has changed from `ds-entities-service` to `DataSpaces-Entities`.
+The top-level package module has changed from `entities_service` to `dataspaces_entities`.
+
+This is all done to differentiate this package (and repository) from its originator ([`entities-service`](https://github.com/SINTEF/entities-service)) as well as cementing it as part of the DataSpaces by SemanticMatter.
+
+## Use DataSpaces-Auth for auth handling
+
+The [DataSpaces-Auth package](https://gitlab.sintef.no/groups/semanticmatter/-/packages/?orderBy=created_at&sort=desc&search[]=DataSpaces-Auth) is utilized for OAuth2 handling of the service.
+Specifically, it offers fine-grained access via OAuth2 "roles". This is offered through the `dataspaces_auth.fastapi.has_role` function, which can be used in any FastAPI application utilizing dependency injection.
+
+The roles are defined in the `models` module, which reflect the actual roles as implemented in the DataSpaces Keycloak service.
+
+## DX
+
+Moving to use DataSpaces-Auth has led to a lot of code deletion, since all things to do with auth handling can be removed.
+
+To show this closer relationship with the DataSpaces, the environment variable prefix to set settings has also been prepended with `DS_`. Moreover, the prefix has also dropped the `SERVICES_` part, so it is now: `DS_ENTITIES_`.
+
+When using DataSpaces-Auth, it also offer pytest fixtures to handle authentication and authorization during testing. These have been implemented and utilized.
+
+All dependencies and dev tools have been updated to support the latest version and install these as a minimum.
+
+**Implemented enhancements:**
+
+- Support DataSpaces-Auth v0.2.1 [\#63](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/issues/63)
+- Use exposed "public" pytest fixtures from DataSpaces-Auth [\#62](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/issues/62)
+- Update Python API [\#60](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/issues/60)
+- Add authentication roles to this repository \(and package\) [\#56](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/issues/56)
+
+**Merged pull requests:**
+
+- \[pre-commit.ci\] pre-commit autoupdate [\#69](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/69) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
+- Update Python API [\#67](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/67) ([CasperWA](https://github.com/CasperWA))
+- Use fixtures from DataSpaces-Auth [\#61](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/61) ([CasperWA](https://github.com/CasperWA))
+- Remove all local auth handling [\#59](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/59) ([CasperWA](https://github.com/CasperWA))
+- \[pre-commit.ci\] pre-commit autoupdate [\#58](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/58) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
+- \[pre-commit.ci\] pre-commit autoupdate [\#55](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/55) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
+- \[pre-commit.ci\] pre-commit autoupdate [\#52](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/52) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
 
 ## [v0.2.1](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/tree/v0.2.1) (2024-09-18)
 
