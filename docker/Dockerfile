@@ -38,16 +38,18 @@ RUN apt-get -qqy update && \
     apt-get install --no-install-recommends -fqqy git git-lfs && \
     apt-get -qqy autoremove && apt-get -qqy clean && rm -rf /var/lib/apt/lists/*
 
-# Install additional development tools
+# Install additional development tools in virtual environment
 RUN --mount=type=bind,source=docker/requirements_development.txt,target=/tmp/requirements_dev.txt \
-    pip install -q -r /tmp/requirements_dev.txt
+    pip -m venv /tmp/dev_venv && \
+    /tmp/dev_venv/bin/pip install -q --no-cache-dir --upgrade pip setuptools wheel && \
+    /tmp/dev_venv/bin/pip install -q -r /tmp/requirements_dev.txt
 
 # Run static security check and linters
 RUN --mount=type=bind,source=docker/.pre-commit-config_docker.yaml,target=/app/.pre-commit-config.yaml \
     --mount=type=cache,target=${HOME}/.cache/pre-commit \
-    git init && pre-commit run --all-files
+    git init && git add . && /tmp/dev_venv/bin/pre-commit run --all-files || ( cat ${HOME}/.cache/pre-commit/pre-commit.log && exit 1 )
 RUN --mount=type=bind,source=docker/pyproject_requirements.txt,target=/tmp/requirements.txt \
-    safety check -r /tmp/requirements.txt --full-report
+    /tmp/dev_venv/bin/safety check -r /tmp/requirements.txt --full-report
 
 # Copy over the self-signed certificates for development
 COPY docker_security docker_security/
