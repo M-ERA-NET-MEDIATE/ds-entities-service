@@ -40,7 +40,7 @@ RUN apt-get -qqy update && \
 
 # Install additional development tools in virtual environment
 RUN --mount=type=bind,source=docker/requirements_development.txt,target=/tmp/requirements_dev.txt \
-    pip -m venv /tmp/dev_venv && \
+    python -m venv /tmp/dev_venv && \
     /tmp/dev_venv/bin/pip install -q --no-cache-dir --upgrade pip setuptools wheel && \
     /tmp/dev_venv/bin/pip install -q -r /tmp/requirements_dev.txt
 
