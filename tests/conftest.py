@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 
     from dataspaces_auth.fastapi._pytest_fixtures import CreateMockValidAccessToken
     from fastapi.testclient import TestClient
-    from httpx import Client
+    from httpx import Client, Request
 
     from dataspaces_entities.backend.mongodb import MongoDBBackend
     from dataspaces_entities.models.auth import DSAPIRole
@@ -130,25 +130,29 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
                 # Add the skip marker to the test
                 item.add_marker(pytest.mark.skip(reason=prefix_reason.format(reason=reason)))
 
-            # HTTPX non-mocked hosts
-            dataspaces_entities_port = os.getenv("DS_ENTITIES_PORT", "7000")
-            non_mocked_hosts = ["localhost"]
-            if dataspaces_entities_port:
-                non_mocked_hosts.append(f"localhost:{dataspaces_entities_port}")
+            def _mock_hosts(request: Request) -> bool:
+                """Mock the hosts."""
+                # HTTPX non-mocked hosts
+                dataspaces_entities_port = os.getenv("DS_ENTITIES_PORT", "7000")
+                non_mocked_hosts = ["localhost"]
+                if dataspaces_entities_port:
+                    non_mocked_hosts.append(f"localhost:{dataspaces_entities_port}")
+
+                return request.url.host not in non_mocked_hosts
 
             # Handle the case of the httpx_mock marker already being present
             if "httpx_mock" in item.keywords:
                 marker: pytest.Mark = item.keywords["httpx_mock"]
 
-                # The marker already has non-mocked hosts - ignore
-                if "non_mocked_hosts" in marker.kwargs:
+                # The marker already has defined "should_mock" hosts - ignore
+                if "should_mock" in marker.kwargs:
                     continue
 
-                # Add the non-mocked hosts to the marker
-                item.add_marker(pytest.mark.httpx_mock(non_mocked_hosts=non_mocked_hosts))
+                # Add the "should_mock" hosts to the marker
+                item.add_marker(pytest.mark.httpx_mock(should_mock=_mock_hosts))
             else:
-                # Add the httpx_mock marker with the non-mocked hosts
-                item.add_marker(pytest.mark.httpx_mock(non_mocked_hosts=non_mocked_hosts))
+                # Add the httpx_mock marker with the "should_mock" hosts
+                item.add_marker(pytest.mark.httpx_mock(should_mock=_mock_hosts))
     else:
         # If the tests are not run with a live backend, skip the tests marked with
         # 'skip_if_not_live_backend'
