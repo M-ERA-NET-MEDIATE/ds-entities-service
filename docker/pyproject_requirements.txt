@@ -1,0 +1,23 @@
+# This file is here to "safety check" all the dependencies listed in pyproject.toml
+--index-url "https://gitlab.sintef.no/api/v4/projects/17883/packages/pypi/simple"
+DataSpaces-Auth~=0.3.0
+fastapi>=0.115.0,<1
+httpx~=0.27.2
+pydantic-settings~=2.6
+pymongo~=4.10
+python-dotenv~=1.0
+pyyaml~=6.0
+soft7~=0.2.1
+uvicorn>=0.31.1,<1
+
+# 'testing' extra
+dlite-python~=0.5.23
+pytest~=8.3
+pytest-cov~=6.0
+pytest-httpx~=0.33.0
+
+# 'server' extra
+gunicorn~=23.0
+
+# 'dev' extra
+pre-commit~=4.0

@@ -5,8 +5,8 @@
 set -ex
 
 # Some configuration
-DN_server="/C=NO/ST=Trondelag/L=Trondheim/O=SINTEF/OU=Team4.0 CA Server/CN=ds-entities-service"
-DN_client="/C=NO/ST=Trondelag/L=Trondheim/O=SINTEF/OU=Team4.0 Client/CN=ds-entities-service"
+DN_server="/C=NO/ST=Trondelag/L=Trondheim/O=SINTEF/OU=Team4.0 CA Server/CN=DataSpaces-Entities"
+DN_client="/C=NO/ST=Trondelag/L=Trondheim/O=SINTEF/OU=Team4.0 Client/CN=DataSpaces-Entities"
 DNS_server_1="mongodb"
 DNS_server_2="localhost"
 

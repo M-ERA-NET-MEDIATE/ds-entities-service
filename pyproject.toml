@@ -3,10 +3,25 @@ requires = ["flit_core >=3.4,<4"]
 build-backend = "flit_core.buildapi"
 
 [tool.flit.module]
-name = "entities_service"
+name = "dataspaces_entities"
+
+[tool.flit.sdist]
+exclude = [
+    ".github",
+    ".gitignore",
+    ".coverage",
+    ".env",
+    ".markdownlint.yaml",
+    ".pre-commit-config.yaml",
+    "asgi.py",
+    "docker/",
+    "docker_security/",
+    "logs/",
+    "tests/",
+]
 
 [project]
-name = "ds-entities-service"
+name = "DataSpaces-Entities"
 authors = [
     {name = "Casper Welzel Andersen", email = "casper.w.andersen@sintef.no"},
 ]
@@ -27,30 +42,31 @@ requires-python = "~=3.10,<3.14"
 dynamic = ["version", "description"]
 
 dependencies = [
-    "DataSpaces-Auth~=0.2.1",  # From SINTEF's GitLab (SemanticMatter group)
-    "fastapi >=0.114.1,<1",
-    "httpx ~=0.27.0",
-    "pydantic-settings ~=2.1",
-    "pymongo ~=4.6",
+    "DataSpaces-Auth ~=0.3.0",  # From SINTEF's GitLab (SemanticMatter group)
+    "fastapi >=0.115.0,<1",
+    "httpx ~=0.27.2",
+    "pydantic-settings ~=2.5",
+    "pymongo ~=4.10",
     "python-dotenv ~=1.0",
     "pyyaml ~=6.0",
     "soft7 ~=0.2.1",
-    "uvicorn >=0.24.0,<1",
+    "uvicorn >=0.31.1,<1",
 ]
 
 [project.optional-dependencies]
 testing = [
-    "dlite-python ~=0.5.22; python_version<'3.13'",  # DLite is not yet compatible with Python 3.13
-    "pytest ~=8.0",
-    "pytest-cov ~=5.0",
-    "pytest-httpx ~=0.32.0",
+    # "dlite-python ~=0.5.22; python_version<'3.13'",  # DLite is not yet compatible with Python 3.13
+    "dlite-python ~=0.5.22",
+    "pytest ~=8.3",
+    "pytest-cov ~=6.0",
+    "pytest-httpx ~=0.33.0",
 ]
 server = [
     "gunicorn ~=23.0",
 ]
 dev = [
     "pre-commit ~=4.0",
-    "ds-entities-service[testing]",
+    "DataSpaces-Entities[testing]",
 ]
 
 [project.urls]
@@ -117,28 +133,22 @@ isort.required-imports = ["from __future__ import annotations"]
 ]
 
 [tool.pytest.ini_options]
-minversion = "8.0"
-addopts = "-rs --cov=entities_service --cov-config=pyproject.toml --cov-report=term-missing:skip-covered --no-cov-on-fail"
+minversion = "8.3"
+addopts = "-rs --cov=dataspaces_entities --cov-config=pyproject.toml --cov-report=term-missing:skip-covered --no-cov-on-fail"
 filterwarnings = [
     # Treat all warnings as errors
     "error",
 
-    # Passing app directly to httpx client is deprecated - TestClient still does this
-    "ignore:.*The 'app' shortcut is now deprecated.*:DeprecationWarning",
-
-    # Starlette's TestClient does not properly close all memory streams.
-    # For more information see the discussion on GitHub:
-    # https://github.com/encode/starlette/discussions/2603
-    "ignore:.*MemoryObjectReceiveStream.*:pytest.PytestUnraisableExceptionWarning",
-
-    # DataSpaces-Auth issues a warning if realm-export.json cannot be found
-    "ignore:.*The realm-export\\.json file was not found.*:UserWarning",
-
     # Notice to close MongoClient
     "ignore:.*Unclosed MongoClient opened at.*:ResourceWarning",
+
+    # DataSpaces-Auth issues a warning if realm-export.json cannot be found
+    # Keep this only for as long as SemanticMatter/ds-auth#32 is not fixed.
+    # Link: https://github.com/SemanticMatter/ds-auth/issues/32
+    "ignore:.*The realm-export\\.json file was not found.*:UserWarning",
 ]
 
 [tool.coverage.run]
 sigterm = true
 relative_files = true
-source = ["entities_service"]
+source = ["dataspaces_entities"]

@@ -10,12 +10,11 @@ if TYPE_CHECKING:
     from pathlib import Path
     from typing import Any
 
-    from ...conftest import ClientFixture, ParameterizeGetEntities
+    from ..conftest import ClientFixture, ParameterizeGetEntities
 
 
 pytestmark = [
-    pytest.mark.usefixtures("_empty_backend_collection"),
-    pytest.mark.httpx_mock(can_send_already_matched_responses=True),
+    pytest.mark.usefixtures("_empty_backend_collection", "_mock_openid_url_request"),
     pytest.mark.httpx_mock(assert_all_responses_were_requested=False),
 ]
 
@@ -232,7 +231,7 @@ def test_backend_create_returns_bad_value(
     from the response checked in the `test_backend_write_error_exception` test.
     """
     # Monkeypatch the backend create method to return an unexpected value
-    from entities_service.service.backend import mongodb as entities_backend
+    from dataspaces_entities.backend import mongodb as entities_backend
 
     monkeypatch.setattr(
         entities_backend.MongoDBBackend,

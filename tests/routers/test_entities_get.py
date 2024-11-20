@@ -8,9 +8,12 @@ from typing import TYPE_CHECKING
 import pytest
 
 if TYPE_CHECKING:
-    from ...conftest import ClientFixture, ParameterizeGetEntities
+    from ..conftest import ClientFixture, ParameterizeGetEntities
 
-pytestmark = pytest.mark.httpx_mock(assert_all_responses_were_requested=False)
+pytestmark = [
+    pytest.mark.usefixtures("_mock_openid_url_request"),
+    pytest.mark.httpx_mock(assert_all_responses_were_requested=False),
+]
 
 ENDPOINT = "/entities"
 

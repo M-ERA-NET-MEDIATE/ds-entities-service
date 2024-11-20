@@ -9,9 +9,9 @@ import pytest
 if TYPE_CHECKING:
     from typing import Literal, Protocol
 
-    from entities_service.service.backend.mongodb import MongoDBBackend
+    from dataspaces_entities.backend.mongodb import MongoDBBackend
 
-    from ...conftest import GetBackendUserFixture, ParameterizeGetEntities
+    from ..conftest import GetBackendUserFixture, ParameterizeGetEntities
 
     class GetMongoBackend(Protocol):
         """Get the MongoDB backend."""
@@ -27,7 +27,7 @@ def mongo_backend(get_backend_user: GetBackendUserFixture) -> GetMongoBackend:
     """Get a MongoDB backend."""
 
     def _mongo_backend(auth: Literal["read", "write"] | None = None) -> MongoDBBackend:
-        from entities_service.service.backend import get_backend
+        from dataspaces_entities.backend import get_backend
 
         backend_user = get_backend_user(auth)
 
@@ -67,8 +67,8 @@ def test_multiple_initialize(mongo_backend: GetMongoBackend) -> None:
 
 def test_close() -> None:
     """Test closing the backend."""
-    from entities_service.service.backend import get_backend
-    from entities_service.service.backend.mongodb import (
+    from dataspaces_entities.backend import get_backend
+    from dataspaces_entities.backend.mongodb import (
         MONGO_CLIENTS,
     )
 
@@ -144,7 +144,7 @@ def test_update(mongo_backend: GetMongoBackend, parameterized_entity: Parameteri
     """Test the update method."""
     from copy import deepcopy
 
-    from entities_service.service.backend.mongodb import URI_REGEX
+    from dataspaces_entities.backend.mongodb import URI_REGEX
 
     backend = mongo_backend("write")
 
@@ -190,7 +190,7 @@ def test_update(mongo_backend: GetMongoBackend, parameterized_entity: Parameteri
 
 def test_delete(mongo_backend: GetMongoBackend, parameterized_entity: ParameterizeGetEntities) -> None:
     """Test the delete method."""
-    from entities_service.service.backend.mongodb import URI_REGEX
+    from dataspaces_entities.backend.mongodb import URI_REGEX
 
     backend = mongo_backend("write")
 
@@ -234,7 +234,7 @@ def test_search(mongo_backend: GetMongoBackend, parameterized_entity: Parameteri
 
     Note, this method only accepts valid MongoDB queries.
     """
-    from entities_service.service.backend.mongodb import URI_REGEX
+    from dataspaces_entities.backend.mongodb import URI_REGEX
 
     backend = mongo_backend("read")
 
@@ -264,7 +264,7 @@ def test_search(mongo_backend: GetMongoBackend, parameterized_entity: Parameteri
 
 def test_count(mongo_backend: GetMongoBackend, parameterized_entity: ParameterizeGetEntities) -> None:
     """Test the count method."""
-    from entities_service.service.backend.mongodb import URI_REGEX
+    from dataspaces_entities.backend.mongodb import URI_REGEX
 
     backend = mongo_backend("read")
 

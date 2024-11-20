@@ -10,6 +10,8 @@ from typing import TYPE_CHECKING
 
 from uvicorn.logging import DefaultFormatter
 
+from dataspaces_entities.config import get_config
+
 if TYPE_CHECKING:  # pragma: no cover
     import logging.handlers
 
@@ -21,7 +23,7 @@ def disable_logging():
     Usage:
 
     ```python
-    from entities_service.logger import disable_logging
+    from dataspaces_entities.logger import disable_logging
 
     # Do stuff, logging to all handlers.
     # ...
@@ -44,21 +46,21 @@ def disable_logging():
 
 def _get_service_logger_handlers() -> list[logging.Handler]:
     """Return a list of handlers for the service logger."""
-    from entities_service.service.config import CONFIG
+    config = get_config()
 
     # Create logs directory
-    root_dir = Path(__file__).resolve().parent.parent.parent.resolve()
+    root_dir = Path(__file__).resolve().parent.parent
     logs_dir = root_dir / "logs"
     logs_dir.mkdir(exist_ok=True)
 
     # Set handlers
     file_handler = logging.handlers.RotatingFileHandler(
-        logs_dir / "entities_service.log", maxBytes=1000000, backupCount=5
+        logs_dir / "dataspaces_entities.log", maxBytes=1000000, backupCount=5
     )
     file_handler.setLevel(logging.DEBUG)
 
     console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setLevel(logging.DEBUG if CONFIG.debug else logging.INFO)
+    console_handler.setLevel(logging.DEBUG if config.debug else logging.INFO)
 
     # Set formatters
     file_formatter = logging.Formatter(
@@ -75,7 +77,7 @@ def _get_service_logger_handlers() -> list[logging.Handler]:
 
 def setup_logger() -> None:
     """Return a logger with the given name."""
-    logger = logging.getLogger("entities_service")
+    logger = logging.getLogger("dataspaces_entities")
     logger.setLevel(logging.DEBUG)
 
     for handler in _get_service_logger_handlers():

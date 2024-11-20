@@ -19,11 +19,11 @@ from fastapi.exceptions import RequestValidationError
 from pydantic import Field, ValidationError, conlist
 from s7 import SOFT7Entity
 
-from entities_service.models import URI_REGEX, DSAPIRole, HTTPError
-from entities_service.service.backend import get_backend
-from entities_service.service.config import CONFIG
-from entities_service.service.requests import YamlRequest, YamlRoute
-from entities_service.service.utils import get_identity
+from dataspaces_entities.backend import get_backend
+from dataspaces_entities.config import get_config
+from dataspaces_entities.models import URI_REGEX, DSAPIRole, HTTPError
+from dataspaces_entities.requests import YamlRequest, YamlRoute
+from dataspaces_entities.utils import get_identity
 
 LOGGER = logging.getLogger(__name__)
 
@@ -159,7 +159,7 @@ async def create_entities(
         ),
     )
 
-    entities_backend = get_backend(CONFIG.backend, auth_level="write")
+    entities_backend = get_backend(get_config().backend, auth_level="write")
 
     try:
         created_entities = entities_backend.create(entities)
@@ -236,7 +236,7 @@ async def update_entities(
         ),
     )
 
-    entities_backend = get_backend(CONFIG.backend, auth_level="write")
+    entities_backend = get_backend(get_config().backend, auth_level="write")
 
     new_entities = [entity for entity in entities if get_identity(entity) not in entities_backend]
 
@@ -329,7 +329,7 @@ async def patch_entities(request: YamlRequest, response: Response) -> list[Any] 
         ),
     )
 
-    entities_backend = get_backend(CONFIG.backend, auth_level="write")
+    entities_backend = get_backend(get_config().backend, auth_level="write")
 
     # First, check all entities already exist
     non_existing_entities = [entity for entity in entities if get_identity(entity) not in entities_backend]
@@ -401,7 +401,7 @@ async def delete_entities(
             detail="No Entity identities provided.",
         )
 
-    entities_backend = get_backend(CONFIG.backend, auth_level="write")
+    entities_backend = get_backend(get_config().backend, auth_level="write")
 
     try:
         entities_backend.delete(identities)
