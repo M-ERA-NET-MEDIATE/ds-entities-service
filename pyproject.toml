@@ -34,10 +34,11 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Natural Language :: English",
     "Operating System :: OS Independent",
 ]
-requires-python = "~=3.10"
+requires-python = "~=3.10,<3.14"
 dynamic = ["version", "description"]
 
 dependencies = [
@@ -54,7 +55,7 @@ dependencies = [
 
 [project.optional-dependencies]
 testing = [
-    "dlite-python ~=0.5.22",
+    "dlite-python ~=0.5.23; python_version<'3.13'",  # DLite is not yet compatible with Python 3.13
     "pytest ~=8.3",
     "pytest-cov ~=6.0",
     "pytest-httpx ~=0.33.0",
