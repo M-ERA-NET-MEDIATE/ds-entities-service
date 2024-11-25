@@ -7,7 +7,8 @@ from pathlib import Path
 from typing import Annotated, Any
 
 from pydantic import Field, SecretStr, ValidationInfo, field_validator
-from pydantic.networks import MultiHostUrl, UrlConstraints
+from pydantic.networks import UrlConstraints
+from pydantic_core import MultiHostUrl
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from dataspaces_entities.backend import Backends
