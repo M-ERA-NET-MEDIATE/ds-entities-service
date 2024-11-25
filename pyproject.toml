@@ -58,7 +58,7 @@ testing = [
     "dlite-python ~=0.5.23; python_version<'3.13'",  # DLite is not yet compatible with Python 3.13
     "pytest ~=8.3",
     "pytest-cov ~=6.0",
-    "pytest-httpx ~=0.33.0",
+    "pytest-httpx ~=0.34.0",
 ]
 server = [
     "gunicorn ~=23.0",

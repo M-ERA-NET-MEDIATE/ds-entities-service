@@ -14,7 +14,7 @@ uvicorn>=0.31.1,<1
 dlite-python~=0.5.23
 pytest~=8.3
 pytest-cov~=6.0
-pytest-httpx~=0.33.0
+pytest-httpx~=0.34.0
 
 # 'server' extra
 gunicorn~=23.0
