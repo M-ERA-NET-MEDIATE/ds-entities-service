@@ -2,31 +2,53 @@
 
 ## [Unreleased](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/tree/HEAD)
 
-[Full Changelog](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/compare/v0.3.0...HEAD)
+[Full Changelog](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/compare/v0.4.0...HEAD)
 
-## Change package name and top-level import module
+# Support Python 3.13
 
-The package name has changed from `ds-entities-service` to `DataSpaces-Entities`.
-The top-level package module has changed from `entities_service` to `dataspaces_entities`.
+Test Python 3.13 in CI and add it as a supported version to the package metadata.
 
-This is all done to differentiate this package (and repository) from its originator ([`entities-service`](https://github.com/SINTEF/entities-service)) as well as cementing it as part of the DataSpaces by SemanticMatter.
+Note, [DLite](https://github.com/SINTEF/dlite) currently does not support Python 3.13, and so any functionality using DLite together with this package directly is not supported.
 
-## Use DataSpaces-Auth for auth handling
+## Update dependencies
 
-The [DataSpaces-Auth package](https://gitlab.sintef.no/groups/semanticmatter/-/packages/?orderBy=created_at&sort=desc&search[]=DataSpaces-Auth) is utilized for OAuth2 handling of the service.
-Specifically, it offers fine-grained access via OAuth2 "roles". This is offered through the `dataspaces_auth.fastapi.has_role` function, which can be used in any FastAPI application utilizing dependency injection.
+Update dependencies and developer tools (pre-commit hooks, etc.)
 
-The roles are defined in the `models` module, which reflect the actual roles as implemented in the DataSpaces Keycloak service.
+Support the latest [SOFT7](https://github.com/SINTEF/soft7) package, which together with local changes in the repository supports [pydantic](https://docs.pydantic.dev) v2.10, which has several breaking changes in the `networks` module.
 
-## DX
+## [v0.4.0](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/tree/v0.4.0) (2024-12-02)
 
-Moving to use DataSpaces-Auth has led to a lot of code deletion, since all things to do with auth handling can be removed.
+[Full Changelog](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/compare/v0.3.0...v0.4.0)
 
-To show this closer relationship with the DataSpaces, the environment variable prefix to set settings has also been prepended with `DS_`. Moreover, the prefix has also dropped the `SERVICES_` part, so it is now: `DS_ENTITIES_`.
+# Support Python 3.13
 
-When using DataSpaces-Auth, it also offer pytest fixtures to handle authentication and authorization during testing. These have been implemented and utilized.
+Test Python 3.13 in CI and add it as a supported version to the package metadata.
 
-All dependencies and dev tools have been updated to support the latest version and install these as a minimum.
+Note, [DLite](https://github.com/SINTEF/dlite) currently does not support Python 3.13, and so any functionality using DLite together with this package directly is not supported.
+
+## Update dependencies
+
+Update dependencies and developer tools (pre-commit hooks, etc.)
+
+Support the latest [SOFT7](https://github.com/SINTEF/soft7) package, which together with local changes in the repository supports [pydantic](https://docs.pydantic.dev) v2.10, which has several breaking changes in the `networks` module.
+
+**Implemented enhancements:**
+
+- Test support for Python 3.13 [\#64](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/issues/64)
+
+**Closed issues:**
+
+- Why do we need git in the docker container? Should we add a new development layer? [\#42](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/issues/42)
+
+**Merged pull requests:**
+
+- \[pre-commit.ci\] pre-commit autoupdate [\#82](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/82) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
+- \[pre-commit.ci\] pre-commit autoupdate [\#79](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/79) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
+- \[pre-commit.ci\] pre-commit autoupdate [\#77](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/77) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
+- \[pre-commit.ci\] pre-commit autoupdate [\#76](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/76) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
+- \[pre-commit.ci\] pre-commit autoupdate [\#74](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/74) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
+- \[pre-commit.ci\] pre-commit autoupdate [\#72](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/72) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
+- Run pytest in CI with Python 3.13 [\#65](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/65) ([CasperWA](https://github.com/CasperWA))
 
 ## [v0.3.0](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/tree/v0.3.0) (2024-10-15)
 
