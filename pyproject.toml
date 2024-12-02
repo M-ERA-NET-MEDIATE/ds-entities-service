@@ -38,18 +38,18 @@ classifiers = [
     "Natural Language :: English",
     "Operating System :: OS Independent",
 ]
-requires-python = "~=3.10,<3.14"
+requires-python = "~=3.10"
 dynamic = ["version", "description"]
 
 dependencies = [
     "DataSpaces-Auth ~=0.3.0",  # From SINTEF's GitLab (SemanticMatter group)
     "fastapi >=0.115.5,<1",
-    "httpx ~=0.28.0",
+    "httpx >=0.28.0,<1",
     "pydantic-settings ~=2.6",
     "pymongo ~=4.10",
     "python-dotenv ~=1.0",
     "pyyaml ~=6.0",
-    "soft7 ~=0.3.0",
+    "soft7 >=0.3.0,<1",
     "uvicorn >=0.32.1,<1",
 ]
 
