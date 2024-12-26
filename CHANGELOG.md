@@ -2,19 +2,26 @@
 
 ## [Unreleased](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/tree/HEAD)
 
-[Full Changelog](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/compare/v0.4.0...HEAD)
+[Full Changelog](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/compare/v0.4.1...HEAD)
 
-# Support Python 3.13
+# Fit into DataSpaces-Services
 
-Test Python 3.13 in CI and add it as a supported version to the package metadata.
+Patch release to allow `httpx` v0.27.x, which is needed to support `httpx-auth` (at the moment).
 
-Note, [DLite](https://github.com/SINTEF/dlite) currently does not support Python 3.13, and so any functionality using DLite together with this package directly is not supported.
+## [v0.4.1](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/tree/v0.4.1) (2024-12-26)
 
-## Update dependencies
+[Full Changelog](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/compare/v0.4.0...v0.4.1)
 
-Update dependencies and developer tools (pre-commit hooks, etc.)
+# Fit into DataSpaces-Services
 
-Support the latest [SOFT7](https://github.com/SINTEF/soft7) package, which together with local changes in the repository supports [pydantic](https://docs.pydantic.dev) v2.10, which has several breaking changes in the `networks` module.
+Patch release to allow `httpx` v0.27.x, which is needed to support `httpx-auth` (at the moment).
+
+**Merged pull requests:**
+
+- Support httpx-auth by allowing v0.27.x of httpx [\#89](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/89) ([CasperWA](https://github.com/CasperWA))
+- \[pre-commit.ci\] pre-commit autoupdate [\#88](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/88) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
+- \[pre-commit.ci\] pre-commit autoupdate [\#87](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/87) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
+- \[pre-commit.ci\] pre-commit autoupdate [\#85](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/85) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
 
 ## [v0.4.0](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/tree/v0.4.0) (2024-12-02)
 
