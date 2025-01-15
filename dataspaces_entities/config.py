@@ -13,7 +13,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from dataspaces_entities.backend import Backends
 
 MongoDsn = Annotated[MultiHostUrl, UrlConstraints(allowed_schemes=["mongodb", "mongodb+srv"])]
-"""Support MongoDB schemes with hidden port (no default port)."""
+"""Support MongoDB schemes with hidden port (avoid default_port constraint)."""
 
 
 class ServiceConfig(BaseSettings):
