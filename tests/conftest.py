@@ -8,7 +8,7 @@ import pytest
 
 if TYPE_CHECKING:
     from pathlib import Path
-    from typing import Any, Literal, Protocol, TypedDict
+    from typing import Any, Protocol
 
     from dataspaces_auth.fastapi._pytest_fixtures import CreateMockValidAccessToken
     from fastapi.testclient import TestClient
@@ -16,19 +16,6 @@ if TYPE_CHECKING:
 
     from dataspaces_entities.backend.mongodb import MongoDBBackend
     from dataspaces_entities.models.auth import DSAPIRole
-
-    class UserRoleDict(TypedDict):
-        """Type for the user info dictionary with roles."""
-
-        role: str
-        db: str
-
-    class UserDict(TypedDict):
-        """Type for the user dictionary."""
-
-        username: str
-        password: str
-        roles: list[UserRoleDict]
 
     class ClientFixture(Protocol):
         """Protocol for the client fixture."""
@@ -38,11 +25,6 @@ if TYPE_CHECKING:
             raise_server_exceptions: bool = True,
             allowed_role: DSAPIRole | str | None = None,
         ) -> TestClient | Client: ...
-
-    class GetBackendUserFixture(Protocol):
-        """Protocol for the get_backend_user fixture."""
-
-        def __call__(self, auth_role: Literal["read", "write"] | None = None) -> UserDict: ...
 
 
 class ParameterizeGetEntities(NamedTuple):
@@ -72,20 +54,7 @@ def pytest_addoption(parser: pytest.Parser) -> None:
 
 
 def pytest_configure(config: pytest.Config) -> None:
-    """Configure pytest - set DS_ENTITIES_BACKEND env var."""
-    import os
-
-    # These are only really (properly) used when running with --live-backend,
-    # but it's fine to set them here, since they are not checked when running without.
-    os.environ["DS_ENTITIES_X509_CERTIFICATE_FILE"] = "docker_security/test-client.pem"
-    os.environ["DS_ENTITIES_CA_FILE"] = "docker_security/test-ca.pem"
-
-    # Avoid raising a user warning in DataSpaces-Auth for not finding 'realm-export.json'
-    # Note, this will work as intended once SemanticMatter/ds-auth#32 is fixed.
-    # Link: https://github.com/SemanticMatter/ds-auth/issues/32
-    # This value should be the fallback default value from the DataSpaces-Auth library.
-    os.environ["DS_AUTH_REALM"] = "dataspaces"
-
+    """Configure pytest."""
     # Add extra markers
     config.addinivalue_line(
         "markers",
@@ -103,7 +72,6 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
     """Called after collection has been performed. May filter or re-order the items
     in-place."""
     if config.getoption("--live-backend"):
-        import os
 
         # If the tests are run with a live backend, do the following:
         # - skip the tests marked with 'skip_if_live_backend'
@@ -132,12 +100,7 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
 
             def _mock_hosts(request: Request) -> bool:
                 """Mock the hosts."""
-                # HTTPX non-mocked hosts
-                dataspaces_entities_port = os.getenv("DS_ENTITIES_PORT", "7000")
-                non_mocked_hosts = ["localhost"]
-                if dataspaces_entities_port:
-                    non_mocked_hosts.append(f"localhost:{dataspaces_entities_port}")
-
+                non_mocked_hosts = ["localhost", "localhost:7000"]
                 return request.url.host not in non_mocked_hosts
 
             # Handle the case of the httpx_mock marker already being present
@@ -363,25 +326,7 @@ def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
 @pytest.fixture(scope="session")
 def live_backend(request: pytest.FixtureRequest) -> bool:
     """Return whether to run the tests with a live backend."""
-    import os
-    import warnings
-
-    required_environment_variables = ("DS_ENTITIES_PORT",)
-
-    value = request.config.getoption("--live-backend")
-
-    # Check certain environment variables are set
-    if value and any(os.getenv(_) is None for _ in required_environment_variables):
-        with warnings.catch_warnings():
-            warnings.simplefilter("default")
-            warnings.warn(
-                "All required environment variables were not found to be set. "
-                "Please set the following environment variables: "
-                f"{', '.join(required_environment_variables)}",
-                stacklevel=1,
-            )
-
-    return value
+    return request.config.getoption("--live-backend", default=False)
 
 
 @pytest.fixture(scope="session")
@@ -390,88 +335,6 @@ def static_dir() -> Path:
     from pathlib import Path
 
     return Path(__file__).resolve().parent / "static"
-
-
-@pytest.fixture(scope="session")
-def get_backend_user() -> GetBackendUserFixture:
-    """Return a function to get the backend user.
-
-    This fixture implements a mock write user that wouldn't exist in production,
-    since this auth level would be handled by TLS and a X.509 certificate.
-
-    However, for testing, it is easier to do it this way using SCRAM.
-    """
-    from dataspaces_entities.config import get_config
-
-    config = get_config()
-
-    def _get_backend_user(auth_role: Literal["read", "write"] | None = None) -> UserDict:
-        """Return the backend user for the given authentication role."""
-        if auth_role is None:
-            auth_role = "read"
-
-        assert auth_role in (
-            "read",
-            "write",
-        ), "The authentication role must be either 'read' or 'write'."
-
-        if auth_role == "read":
-            user: UserDict = {
-                "username": config.mongo_user,
-                "password": config.mongo_password.get_secret_value(),
-                "roles": [
-                    {
-                        "role": "read",
-                        "db": config.mongo_db,
-                    }
-                ],
-            }
-        else:  # write
-            user: UserDict = {
-                "username": "test_write_user",
-                "password": "writer",
-                "roles": [
-                    {
-                        "role": "readWrite",
-                        "db": config.mongo_db,
-                    }
-                ],
-            }
-
-        return user
-
-    return _get_backend_user
-
-
-@pytest.fixture(scope="session", autouse=True)
-def _mongo_backend_users(live_backend: bool, get_backend_user: GetBackendUserFixture) -> None:
-    """Add MongoDB test users."""
-    if not live_backend:
-        return
-
-    from dataspaces_entities.backend import get_backend
-
-    backend: MongoDBBackend = get_backend(
-        settings={
-            "mongo_username": "root",
-            "mongo_password": "root",
-        },
-    )
-    admin_db = backend._collection.database.client["admin"]
-
-    existing_users: list[str] = [
-        user["user"] for user in admin_db.command("usersInfo", usersInfo=1)["users"]
-    ]
-
-    for auth_role in ("read", "write"):
-        user_info = get_backend_user(auth_role)
-        if user_info["username"] not in existing_users:
-            admin_db.command(
-                "createUser",
-                createUser=user_info["username"],
-                pwd=user_info["password"],
-                roles=user_info["roles"],
-            )
 
 
 @pytest.fixture
@@ -484,7 +347,6 @@ def backend_test_data(static_dir: Path) -> list[dict[str, Any]]:
 
 @pytest.fixture(autouse=True)
 def _reset_mongo_test_collection(
-    get_backend_user: GetBackendUserFixture,
     backend_test_data: list[dict[str, Any]],
     live_backend: bool,
 ) -> None:
@@ -494,36 +356,20 @@ def _reset_mongo_test_collection(
 
     from dataspaces_entities.backend import get_backend
 
-    backend_user = get_backend_user("write")
-
-    backend: MongoDBBackend = get_backend(
-        auth_level="write",
-        settings={
-            "mongo_username": backend_user["username"],
-            "mongo_password": backend_user["password"],
-        },
-    )
+    backend: MongoDBBackend = get_backend()
     backend._collection.delete_many({})
     backend._collection.insert_many(backend_test_data)
 
 
 @pytest.fixture
-def _empty_backend_collection(live_backend: bool, get_backend_user: GetBackendUserFixture) -> None:
+def _empty_backend_collection(live_backend: bool) -> None:
     """Empty the backend collection."""
     if not live_backend:
         return
 
     from dataspaces_entities.backend import get_backend
 
-    backend_user = get_backend_user("write")
-
-    backend: MongoDBBackend = get_backend(
-        auth_level="write",
-        settings={
-            "mongo_username": backend_user["username"],
-            "mongo_password": backend_user["password"],
-        },
-    )
+    backend: MongoDBBackend = get_backend()
     backend._collection.delete_many({})
     assert backend._collection.count_documents({}) == 0
 
@@ -614,14 +460,8 @@ def client(live_backend: bool, mock_valid_access_token: CreateMockValidAccessTok
                 follow_redirects=True,
             )
 
-        import os
-
         from httpx import Client
 
-        port = os.getenv("DS_ENTITIES_PORT", "7000")
-
-        base_url = f"http://localhost{':' + port if port else ''}"
-
-        return Client(base_url=base_url, follow_redirects=True, timeout=10)
+        return Client(base_url="http://localhost:7000", follow_redirects=True, timeout=10)
 
     return _client

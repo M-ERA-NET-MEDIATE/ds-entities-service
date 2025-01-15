@@ -7,48 +7,21 @@ from typing import TYPE_CHECKING
 import pytest
 
 if TYPE_CHECKING:
-    from typing import Literal, Protocol
-
-    from dataspaces_entities.backend.mongodb import MongoDBBackend
-
-    from ..conftest import GetBackendUserFixture, ParameterizeGetEntities
-
-    class GetMongoBackend(Protocol):
-        """Get the MongoDB backend."""
-
-        def __call__(self, auth: Literal["read", "write"] | None = None) -> MongoDBBackend: ...
+    from ..conftest import ParameterizeGetEntities
 
 
 pytestmark = pytest.mark.skip_if_not_live_backend(reason="Tests are only valid with a live backend.")
 
 
-@pytest.fixture
-def mongo_backend(get_backend_user: GetBackendUserFixture) -> GetMongoBackend:
-    """Get a MongoDB backend."""
-
-    def _mongo_backend(auth: Literal["read", "write"] | None = None) -> MongoDBBackend:
-        from dataspaces_entities.backend import get_backend
-
-        backend_user = get_backend_user(auth)
-
-        return get_backend(
-            auth_level=auth,
-            settings={
-                "mongo_username": backend_user["username"],
-                "mongo_password": backend_user["password"],
-            },
-        )
-
-    return _mongo_backend
-
-
-def test_multiple_initialize(mongo_backend: GetMongoBackend) -> None:
+def test_multiple_initialize() -> None:
     """Test initializing the backend multiple times.
 
     At this point, the backend should already have been initialized once,
     so the second time should not create any new indices.
     """
-    backend = mongo_backend("write")
+    from dataspaces_entities.backend import get_backend
+
+    backend = get_backend()
 
     # Check current indices
     indices = backend._collection.index_information()
@@ -66,31 +39,21 @@ def test_multiple_initialize(mongo_backend: GetMongoBackend) -> None:
 
 
 def test_close() -> None:
-    """Test closing the backend."""
+    """Test closing the backend.
+
+    Note, this doesn't actually do anything for the MongoDB backend at this point.
+    """
     from dataspaces_entities.backend import get_backend
-    from dataspaces_entities.backend.mongodb import (
-        MONGO_CLIENTS,
-    )
-
-    original_number_of_clients = 2
-
-    assert MONGO_CLIENTS is not None
-    assert len(MONGO_CLIENTS) == original_number_of_clients
-    assert "read" in MONGO_CLIENTS
-    assert "write" in MONGO_CLIENTS
 
     get_backend().close()
 
-    # The clients are never _actually_ close
-    assert len(MONGO_CLIENTS) == original_number_of_clients
-    assert "read" in MONGO_CLIENTS
-    assert "write" in MONGO_CLIENTS
-
 
 @pytest.mark.usefixtures("_empty_backend_collection")
-def test_create(mongo_backend: GetMongoBackend, parameterized_entity: ParameterizeGetEntities) -> None:
+def test_create(parameterized_entity: ParameterizeGetEntities) -> None:
     """Test the create method."""
-    backend = mongo_backend("write")
+    from dataspaces_entities.backend import get_backend
+
+    backend = get_backend()
 
     # Create a single entity
     entity_from_backend = backend.create([parameterized_entity.parsed_entity])
@@ -130,9 +93,11 @@ def test_create(mongo_backend: GetMongoBackend, parameterized_entity: Parameteri
     assert entities_from_backend[1] in raw_entities
 
 
-def test_read(mongo_backend: GetMongoBackend, parameterized_entity: ParameterizeGetEntities) -> None:
+def test_read(parameterized_entity: ParameterizeGetEntities) -> None:
     """Test the read method."""
-    backend = mongo_backend("read")
+    from dataspaces_entities.backend import get_backend
+
+    backend = get_backend()
 
     entity_from_backend = backend.read(parameterized_entity.identity)
 
@@ -140,13 +105,14 @@ def test_read(mongo_backend: GetMongoBackend, parameterized_entity: Parameterize
     assert entity_from_backend == parameterized_entity.parsed_entity
 
 
-def test_update(mongo_backend: GetMongoBackend, parameterized_entity: ParameterizeGetEntities) -> None:
+def test_update(parameterized_entity: ParameterizeGetEntities) -> None:
     """Test the update method."""
     from copy import deepcopy
 
+    from dataspaces_entities.backend import get_backend
     from dataspaces_entities.backend.mongodb import URI_REGEX
 
-    backend = mongo_backend("write")
+    backend = get_backend()
 
     # Change current entity
     changed_raw_entity = deepcopy(parameterized_entity.parsed_entity)
@@ -188,11 +154,12 @@ def test_update(mongo_backend: GetMongoBackend, parameterized_entity: Parameteri
     assert entity_from_backend == changed_raw_entity
 
 
-def test_delete(mongo_backend: GetMongoBackend, parameterized_entity: ParameterizeGetEntities) -> None:
+def test_delete(parameterized_entity: ParameterizeGetEntities) -> None:
     """Test the delete method."""
+    from dataspaces_entities.backend import get_backend
     from dataspaces_entities.backend.mongodb import URI_REGEX
 
-    backend = mongo_backend("write")
+    backend = get_backend()
 
     # Ensure the entity currently exists in the backend
     entity_from_backend = backend._collection.find_one(
@@ -229,14 +196,15 @@ def test_delete(mongo_backend: GetMongoBackend, parameterized_entity: Parameteri
     assert len(backend) == number_of_entities - 1
 
 
-def test_search(mongo_backend: GetMongoBackend, parameterized_entity: ParameterizeGetEntities) -> None:
+def test_search(parameterized_entity: ParameterizeGetEntities) -> None:
     """Test the search method.
 
     Note, this method only accepts valid MongoDB queries.
     """
+    from dataspaces_entities.backend import get_backend
     from dataspaces_entities.backend.mongodb import URI_REGEX
 
-    backend = mongo_backend("read")
+    backend = get_backend()
 
     # Search for the entity
     entities_from_backend = list(
@@ -262,11 +230,12 @@ def test_search(mongo_backend: GetMongoBackend, parameterized_entity: Parameteri
     assert parameterized_entity.parsed_entity in entities_from_backend
 
 
-def test_count(mongo_backend: GetMongoBackend, parameterized_entity: ParameterizeGetEntities) -> None:
+def test_count(parameterized_entity: ParameterizeGetEntities) -> None:
     """Test the count method."""
+    from dataspaces_entities.backend import get_backend
     from dataspaces_entities.backend.mongodb import URI_REGEX
 
-    backend = mongo_backend("read")
+    backend = get_backend()
 
     # Count all entities
     number_of_entities = len(backend)
@@ -286,9 +255,11 @@ def test_count(mongo_backend: GetMongoBackend, parameterized_entity: Parameteriz
     )
 
 
-def test_contains(mongo_backend: GetMongoBackend, parameterized_entity: ParameterizeGetEntities) -> None:
+def test_contains(parameterized_entity: ParameterizeGetEntities) -> None:
     """Test the magic method __contains__."""
-    backend = mongo_backend("read")
+    from dataspaces_entities.backend import get_backend
+
+    backend = get_backend()
 
     assert 42 not in backend
 
@@ -296,9 +267,11 @@ def test_contains(mongo_backend: GetMongoBackend, parameterized_entity: Paramete
     assert parameterized_entity.entity in backend
 
 
-def test_iter(mongo_backend: GetMongoBackend, parameterized_entity: ParameterizeGetEntities) -> None:
+def test_iter(parameterized_entity: ParameterizeGetEntities) -> None:
     """Test the magic method: __iter__."""
-    backend = mongo_backend("read")
+    from dataspaces_entities.backend import get_backend
+
+    backend = get_backend()
 
     entities = list(backend)
     assert parameterized_entity.parsed_entity in entities
@@ -306,9 +279,11 @@ def test_iter(mongo_backend: GetMongoBackend, parameterized_entity: Parameterize
     assert len(entities) == backend._collection.count_documents({})
 
 
-def test_len(mongo_backend: GetMongoBackend) -> None:
+def test_len() -> None:
     """Test the magic method: __len__."""
-    backend = mongo_backend("read")
+    from dataspaces_entities.backend import get_backend
+
+    backend = get_backend()
 
     number_of_entities = backend._collection.count_documents({})
 

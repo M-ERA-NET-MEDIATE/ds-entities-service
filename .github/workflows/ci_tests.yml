@@ -55,11 +55,8 @@ jobs:
     env:
       # "Regular" entities service configuration values
       DS_ENTITIES_MONGO_URI: mongodb://localhost:27017
-      DS_ENTITIES_X509_CERTIFICATE_FILE: docker_security/test-client.pem
-      DS_ENTITIES_CA_FILE: docker_security/test-ca.pem
       DS_ENTITIES_DISABLE_AUTH_ROLE_CHECKS: 1
       # These are used in the Dockerfile as well as in pytest
-      DS_ENTITIES_PORT: 7000
       STOP_TIME: 3
 
     steps:
@@ -73,14 +70,6 @@ jobs:
 
       - name: Run MongoDB
         run: |
-          # Create folder for certificates
-          mkdir -p docker_security
-          chmod 777 docker_security
-
-          # Generate certificates
-          cd docker_security && ${{ github.workspace }}/docker/docker_init/setup_mongo_security.sh
-          cd ${{ github.workspace }}
-
           # Pull mongo:8 image and run it
           docker pull mongo:8
           docker run --rm -d \
@@ -88,10 +77,8 @@ jobs:
             --env MONGO_INITDB_ROOT_PASSWORD=root \
             --name "mongo" \
             --network "host" \
-            --volume "${{ github.workspace }}/docker/docker_init/create_x509_user.js:/docker-entrypoint-initdb.d/0_create_x509_user.js" \
-            --volume "${{ github.workspace }}/docker_security:/mongo_tls" \
-            mongo:8 \
-            --tlsMode allowTLS --tlsCertificateKeyFile /mongo_tls/test-server1.pem --tlsCAFile /mongo_tls/test-ca.pem
+            --volume "${{ github.workspace }}/docker/docker_init/create_users.js:/docker-entrypoint-initdb.d/0_create_users.js" \
+            mongo:8
           sleep 10  # Wait for the database to start
 
       - name: Build Docker image
@@ -118,10 +105,7 @@ jobs:
           # Run the service in the background
           docker run --rm -d \
             --env DS_ENTITIES_MONGO_URI \
-            --env DS_ENTITIES_X509_CERTIFICATE_FILE \
-            --env DS_ENTITIES_CA_FILE \
             --env DS_ENTITIES_DISABLE_AUTH_ROLE_CHECKS \
-            --env PORT=${DS_ENTITIES_PORT} \
             --env RUN_TIME=40 \
             --env STOP_TIME \
             --name "dataspaces-entities" \

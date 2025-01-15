@@ -52,9 +52,6 @@ RUN --mount=type=bind,source=docker/.pre-commit-config_docker.yaml,target=/app/.
 RUN --mount=type=bind,source=docker/pyproject_requirements.txt,target=/tmp/requirements.txt \
     /tmp/dev_venv/bin/safety check -r /tmp/requirements.txt --full-report
 
-# Copy over the self-signed certificates for development
-COPY docker_security docker_security/
-
 # Clean up
 RUN rm -rf ${HOME}/.cache /tmp/* /app/.git && pip cache purge
 
