@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 import logging
-from pathlib import Path
+from functools import lru_cache
 from typing import TYPE_CHECKING, Annotated, Literal
 
-from pydantic import Field, SecretStr, model_validator
+from pydantic import Field, SecretStr
 from pymongo.errors import (
     BulkWriteError,
     InvalidDocument,
@@ -38,13 +38,6 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 LOGGER = logging.getLogger(__name__)
-
-
-MONGO_CLIENTS: dict[Literal["read", "write"], MongoClient] | None = None
-"""Global cache for MongoDB clients.
-
-The key is the available auth levels, i.e. 'read' and 'write'.
-"""
 
 
 BACKEND_DRIVER_MAPPING: dict[Backends, Literal["pymongo"]] = {
@@ -80,26 +73,6 @@ class MongoDBSettings(BackendSettings):
 
     mongo_password: Annotated[SecretStr | None, Field(description="The MongoDB password.")] = None
 
-    mongo_x509_certificate_file: Annotated[
-        Path | None,
-        Field(
-            description=(
-                "File path to a X.509 certificate for connecting to the MongoDB "
-                "backend with write-access rights."
-            ),
-        ),
-    ] = None
-
-    mongo_ca_file: Annotated[
-        Path | None,
-        Field(
-            description=(
-                "File path to a CA certificate for connecting to the MongoDB backend "
-                "with write-access rights."
-            ),
-        ),
-    ] = None
-
     mongo_db: Annotated[str, Field(description="The MongoDB database.")] = get_config().mongo_db
 
     mongo_collection: Annotated[str, Field(description="The MongoDB collection.")] = (
@@ -113,32 +86,10 @@ class MongoDBSettings(BackendSettings):
         ),
     ] = BACKEND_DRIVER_MAPPING.get(get_config().backend, "pymongo")
 
-    auth_level: Annotated[
-        Literal["read", "write"],
-        Field(description="The auth level to use. Either 'read' or 'write'."),
-    ] = "read"
 
-    @model_validator(mode="after")
-    def _validate_auth_level_settings(self) -> MongoDBSettings:
-        """Ensure the correct settings are set according to the auth level."""
-        if self.auth_level == "read":
-            if self.mongo_username is None:
-                raise ValueError("MongoDB username should be set for read access.")
-            if self.mongo_password is None:
-                raise ValueError("MongoDB password should be set for read access.")
-        else:  # write
-            if self.mongo_x509_certificate_file is None:
-                raise ValueError("MongoDB X.509 certificate for connecting with write-access rights.")
-        return self
-
-
+@lru_cache
 def get_client(
-    auth_level: Literal["read", "write"] = "read",
     uri: str | None = None,
-    username: str | None = None,
-    password: str | None = None,
-    certificate_file: Path | None = None,
-    ca_file: Path | None = None,
     driver: Literal["pymongo"] | None = None,
 ) -> MongoClient:
     """Get the MongoDB client."""
@@ -152,51 +103,20 @@ def get_client(
     else:
         raise ValueError(f"Invalid MongoDB driver: {driver}. Only 'pymongo' is currently supported.")
 
-    global MONGO_CLIENTS  # noqa: PLW0603
+    LOGGER.debug("Creating new MongoDB client.")
 
-    if auth_level not in ("read", "write"):
-        raise ValueError(f"Invalid auth level: {auth_level!r} (valid: 'read', 'write')")
-
-    # Get cached client
-    if MONGO_CLIENTS is not None and auth_level in MONGO_CLIENTS:
-        LOGGER.debug("Using cached MongoDB client for %r.", auth_level)
-        return MONGO_CLIENTS[auth_level]
-
-    LOGGER.debug("Creating new MongoDB client for %r.", username)
-
-    # Ensure all required settings are set
-    if auth_level == "read":
-        client_options: dict[str, Any] = {
-            "username": username or config.mongo_user,
-            "password": password or config.mongo_password.get_secret_value(),
-        }
-    else:  # write
-        client_options = {
-            "tls": True,
-            "tlsCertificateKeyFile": str(certificate_file or config.x509_certificate_file),
-            "authSource": "$external",
-            "authMechanism": "MONGODB-X509",
-        }
-        if ca_file or config.ca_file:
-            client_options["tlsCAFile"] = str(ca_file or config.ca_file)
-
-        if client_options["tlsCertificateKeyFile"] is None:
-            raise MongoDBBackendError(
-                "MongoDB X.509 certificate for connecting with write-access rights not set."
-            )
-
-    new_client = MongoClient(uri or str(config.mongo_uri), **client_options)
-
-    if MONGO_CLIENTS is None:
-        MONGO_CLIENTS = {auth_level: new_client}
-    else:
-        MONGO_CLIENTS[auth_level] = new_client
-
-    return MONGO_CLIENTS[auth_level]
+    return MongoClient(
+        uri or str(config.mongo_uri),
+        username=config.mongo_user,
+        password=config.mongo_password.get_secret_value(),
+    )
 
 
 class MongoDBBackend(Backend):
-    """Backend implementation for MongoDB."""
+    """Backend implementation for MongoDB.
+
+    Represents a single collection in a MongoDB database.
+    """
 
     _settings_model: type[MongoDBSettings] = MongoDBSettings
     _settings: MongoDBSettings
@@ -209,16 +129,7 @@ class MongoDBBackend(Backend):
 
         try:
             self._collection: MongoCollection = get_client(
-                auth_level=self._settings.auth_level,
                 uri=str(self._settings.mongo_uri),
-                username=self._settings.mongo_username,
-                password=(
-                    self._settings.mongo_password.get_secret_value()
-                    if self._settings.mongo_password
-                    else None
-                ),
-                certificate_file=self._settings.mongo_x509_certificate_file,
-                ca_file=self._settings.mongo_ca_file,
                 driver=self._settings.mongo_driver,
             )[self._settings.mongo_db][self._settings.mongo_collection]
         except ValueError as exc:

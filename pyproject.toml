@@ -15,7 +15,6 @@ exclude = [
     ".pre-commit-config.yaml",
     "asgi.py",
     "docker/",
-    "docker_security/",
     "logs/",
     "tests/",
 ]
@@ -42,7 +41,7 @@ requires-python = "~=3.10"
 dynamic = ["version", "description"]
 
 dependencies = [
-    "DataSpaces-Auth ~=0.3.0",  # From SINTEF's GitLab (SemanticMatter group)
+    "DataSpaces-Auth ~=0.3.1",  # From SINTEF's GitLab (SemanticMatter group)
     "fastapi >=0.115.5,<1",
     "httpx >=0.27.2,<1",  # Support on v0.27 for the
     "pydantic-settings ~=2.6",
@@ -50,7 +49,7 @@ dependencies = [
     "python-dotenv ~=1.0",
     "pyyaml ~=6.0",
     "soft7 >=0.3.0,<1",
-    "uvicorn >=0.32.1,<1",
+    "uvicorn-worker >=0.3.0,<1",
 ]
 
 [project.optional-dependencies]

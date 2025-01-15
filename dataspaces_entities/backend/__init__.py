@@ -21,7 +21,7 @@ else:
 
 
 if TYPE_CHECKING:  # pragma: no cover
-    from typing import Any, Literal
+    from typing import Any
 
     from dataspaces_entities.backend.backend import Backend
 
@@ -40,40 +40,24 @@ class Backends(StrEnum):
 
         raise NotImplementedError(f"Backend {self} not implemented")
 
-    def get_auth_level_settings(self, auth_level: Literal["read", "write"] = "read") -> dict[str, Any]:
-        """Get the settings for the auth level."""
+    def get_default_settings(self) -> dict[str, Any]:
+        """Get the default settings for the given backend."""
         # Import `get_config` here to avoid circular imports
         from dataspaces_entities.config import get_config
 
         config = get_config()
 
         if self == self.MONGODB:
-            if auth_level == "read":
-                return {
-                    "auth_level": auth_level,
-                    "mongo_username": config.mongo_user,
-                    "mongo_password": config.mongo_password,
-                }
-
-            if auth_level == "write":
-                if config.x509_certificate_file is None:
-                    raise ValueError("Cannot use 'write' auth level without a X.509 certificate file.")
-
-                return {
-                    "auth_level": auth_level,
-                    "mongo_username": "Application (not a real user)",
-                    "mongo_x509_certificate_file": config.x509_certificate_file,
-                    "mongo_ca_file": config.ca_file,
-                }
-
-            raise ValueError(f"Unknown auth level: {auth_level!r} (valid: 'read', 'write')")
+            return {
+                "mongo_username": config.mongo_user,
+                "mongo_password": config.mongo_password,
+            }
 
         raise NotImplementedError(f"Backend {self} not implemented")
 
 
 def get_backend(
     backend: Backends | str | None = None,
-    auth_level: Literal["read", "write"] = "read",
     settings: dict[str, Any] | None = None,
 ) -> Backend:
     """Get a backend instance."""
@@ -93,8 +77,8 @@ def get_backend(
 
     backend_class = backend.get_class()
 
-    backend_settings = backend.get_auth_level_settings(auth_level)
-    if settings is not None:
+    backend_settings = backend.get_default_settings()
+    if isinstance(settings, dict):
         backend_settings.update(settings)
 
     return backend_class(settings=backend_settings)

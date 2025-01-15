@@ -11,8 +11,9 @@ from fastapi import FastAPI
 from dataspaces_entities import __version__
 from dataspaces_entities.backend import get_backend
 from dataspaces_entities.config import get_config
-from dataspaces_entities.logger import setup_logger
 from dataspaces_entities.routers import get_routers
+
+LOGGER = logging.getLogger(__name__)
 
 # Handle testing
 if bool(int(os.getenv("DS_ENTITIES_DISABLE_AUTH_ROLE_CHECKS", "0"))):
@@ -55,19 +56,15 @@ if bool(int(os.getenv("DS_ENTITIES_DISABLE_AUTH_ROLE_CHECKS", "0"))):
 @asynccontextmanager
 async def lifespan(app: FastAPI):  # noqa: ARG001
     """Add lifespan events to the application."""
-    # Initialize logger
-    setup_logger()
-
     config = get_config()
-    logger = logging.getLogger(__name__)
 
-    logger.debug("Starting service with config: %s", config)
+    LOGGER.debug("DataSpaces-Graphs configuration: %s", config)
 
     # Initialize backend
-    get_backend(config.backend, auth_level="write").initialize()
+    get_backend(config.backend).initialize()
 
     if bool(int(os.getenv("DS_ENTITIES_DISABLE_AUTH_ROLE_CHECKS", "0"))):
-        logger.debug(
+        LOGGER.debug(
             "Running in test mode.\n"
             "    - External OAuth2 authentication is disabled!\n"
             "    - DataSpaces-Auth role checks are disabled!"

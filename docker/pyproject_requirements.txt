@@ -8,7 +8,7 @@ pymongo~=4.10
 python-dotenv~=1.0
 pyyaml~=6.0
 soft7>=0.3.0,<1
-uvicorn>=0.32.1,<1
+uvicorn-worker>=0.3.0,<1
 
 # 'testing' extra
 dlite-python<=0.5.27; python_version<'3.13'

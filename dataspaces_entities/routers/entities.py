@@ -159,7 +159,7 @@ async def create_entities(
         ),
     )
 
-    entities_backend = get_backend(get_config().backend, auth_level="write")
+    entities_backend = get_backend(get_config().backend)
 
     try:
         created_entities = entities_backend.create(entities)
@@ -236,7 +236,7 @@ async def update_entities(
         ),
     )
 
-    entities_backend = get_backend(get_config().backend, auth_level="write")
+    entities_backend = get_backend(get_config().backend)
 
     new_entities = [entity for entity in entities if get_identity(entity) not in entities_backend]
 
@@ -329,7 +329,7 @@ async def patch_entities(request: YamlRequest, response: Response) -> list[Any] 
         ),
     )
 
-    entities_backend = get_backend(get_config().backend, auth_level="write")
+    entities_backend = get_backend(get_config().backend)
 
     # First, check all entities already exist
     non_existing_entities = [entity for entity in entities if get_identity(entity) not in entities_backend]
@@ -401,7 +401,7 @@ async def delete_entities(
             detail="No Entity identities provided.",
         )
 
-    entities_backend = get_backend(get_config().backend, auth_level="write")
+    entities_backend = get_backend(get_config().backend)
 
     try:
         entities_backend.delete(identities)

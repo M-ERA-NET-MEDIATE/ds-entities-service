@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar
 
-from uvicorn.workers import UvicornWorker as OriginalUvicornWorker
+from uvicorn_worker import UvicornWorker as OriginalUvicornWorker
 
 if TYPE_CHECKING:  # pragma: no cover
     from typing import Any

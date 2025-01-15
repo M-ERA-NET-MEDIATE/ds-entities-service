@@ -8,9 +8,9 @@ pip install -r .github/utils/requirements.txt
 # Redo the Dockerfile entrypoints, but pointing to the run_with_coverage script
 # Avoid '--reload' always.
 if [ "$1" == "development" ]; then
-    gunicorn --bind "0.0.0.0:${PORT}" --log-level debug --workers 1 --worker-class dataspaces_entities.uvicorn.UvicornWorker --pythonpath ".github/utils" run_with_coverage:app &
+    gunicorn --bind "0.0.0.0:7000" --log-level debug --workers 1 --worker-class dataspaces_entities.uvicorn.UvicornWorker --pythonpath ".github/utils" run_with_coverage:app &
 elif [ "$1" == "production" ]; then
-    gunicorn --bind "0.0.0.0:${PORT}" --workers 1 --worker-class dataspaces_entities.uvicorn.UvicornWorker --pythonpath ".github/utils" run_with_coverage:app &
+    gunicorn --bind "0.0.0.0:7000" --workers 1 --worker-class dataspaces_entities.uvicorn.UvicornWorker --pythonpath ".github/utils" run_with_coverage:app &
 else
     echo "unknown environment"
     exit 1

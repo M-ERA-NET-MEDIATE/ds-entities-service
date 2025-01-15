@@ -30,53 +30,8 @@ pip install -U --index-url="https://gitlab.sintef.no/api/v4/projects/17883/packa
 ## Run the service
 
 The service requires a MongoDB server to be running, and the service needs to be able to connect to it.
-The service also requires a valid X.509 certificate, in order to connect to the MongoDB server.
-
-The MongoDB server could be on MongoDB Atlas, a local MongoDB server running either as a system service or through a Docker container.
-
-### Using the local environment and MongoDB Atlas
-
-First, create a MongoDB Atlas cluster, and a user with read-only access to the `entities` database.
-
-Set the necessary environment variables:
-
-```shell
-DS_ENTITIES_MONGO_URI="<your MongoDB Atlas URI>"
-DS_ENTITIES_X509_CERTIFICATE_FILE="<your X.509 certificate file>"
-DS_ENTITIES_MONGO_USER="<your MongoDB Atlas user with read-only access (default: 'guest')>"
-DS_ENTITIES_MONGO_PASSWORD="<your MongoDB Atlas user's password with read-only access (default: 'guest')>"
-```
-
-Run the service:
-
-```shell
-uvicorn asgi:app \
---host localhost \
---port 7000 \
---no-server-header \
---header "Server:DataSpaces-Entities Service"
-```
-
-Finally, go to [localhost:7000/docs](http://localhost:7000/docs) and try out retrieving an entity.
-
-`--log-level debug` can be added to the `uvicorn` command to get more verbose logging.
-`--reload` can be added to the `uvicorn` command to enable auto-reloading of the service when any files are changed.
-
-Note, the environment variables can be set in a `.env` file, see the section on [using a file for environment variables](#using-a-file-for-environment-variables).
 
 ### Using Docker and a local MongoDB server
-
-First, we need to create self-signed certificates for the service to use.
-This is done by running the following command:
-
-```shell
-mkdir docker_security
-cd docker_security
-../docker/docker_init/setup_mongo_security.sh
-```
-
-Note, this is only possible with `openssl` installed on your system.
-And the OS on the system being Linux/Unix-based.
 
 For development, create a docker bridge network and start a local MongoDB server:
 
@@ -88,10 +43,8 @@ docker run --rm -d \
   --name "mongodb" \
   --publish "27017:27017" \
   --network "dataspaces_entities_net" \
-  --volume "${PWD}/docker/docker_init/create_x509_user.js:/docker-entrypoint-initdb.d/0_create_x509_user.js" \
-  --volume "${PWD}/docker_security:/mongo_tls" \
-  mongo:8 \
-  --tlsMode allowTLS --tlsCertificateKeyFile /mongo_tls/test-server1.pem --tlsCAFile /mongo_tls/
+  --volume "${PWD}/docker/docker_init/create_users.js:/docker-entrypoint-initdb.d/0_create_users.js" \
+  mongo:8
 ```
 
 Then build and run the DataSpaces-Entities service Docker image:
@@ -100,8 +53,6 @@ Then build and run the DataSpaces-Entities service Docker image:
 docker build --pull -t dataspaces-entities --target development .
 docker run --rm -d \
   --env "DS_ENTITIES_MONGO_URI=mongodb://mongodb:27017" \
-  --env "DS_ENTITIES_X509_CERTIFICATE_FILE=docker_security/test-client.pem" \
-  --env "DS_ENTITIES_CA_FILE=docker_security/test-ca.pem" \
   --name "DataSpaces-Entities" \
   --user "${id -ur}:${id -gr}" \
   --publish "7000:80" \
@@ -112,11 +63,6 @@ docker run --rm -d \
 Now, fill up the MongoDB with valid entities at the `entities_service` database in the `entities` collection.
 
 Then go to [localhost:7000/docs](http://localhost:7000/docs) and try out retrieving an entity.
-
----
-
-For production, use a public MongoDB, and follow the same instructions above for building and running the DataSpaces-Entities service Docker image, but exchange the `--target` value with `production`, put in the proper value for the `DS_ENTITIES_MONGO_URI` and `DS_ENTITIES_X509_CERTIFICATE_FILE` environment values.
-Possibly add the `DS_ENTITIES_MONGO_USER`, `DS_ENTITIES_MONGO_PASSWORD`, and `DS_ENTITIES_CA_FILE` environment variables as well, if needed.
 
 ### Using Docker Compose
 
@@ -170,9 +116,6 @@ cd docker
 docker compose pull
 docker compose build
 ```
-
-Before running the services the self-signed certificates need to be created.
-See the section on [using Docker and a local MongoDB server](#using-docker-and-a-local-mongodb-server) for more information.
 
 Then run (up) the Docker Compose file and subsequently the tests:
 

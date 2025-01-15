@@ -12,7 +12,6 @@ coverage.xml
 
 # running
 logs/
-docker_security/
 
 # Sdist
 dist/
