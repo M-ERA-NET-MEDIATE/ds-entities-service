@@ -1,2 +1,2 @@
-pre-commit~=4.0
+pre-commit~=4.1
 safety~=3.2
