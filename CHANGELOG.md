@@ -2,11 +2,44 @@
 
 ## [Unreleased](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/tree/HEAD)
 
-[Full Changelog](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/compare/v0.4.1...HEAD)
+[Full Changelog](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/compare/v0.5.0...HEAD)
 
-# Fit into DataSpaces-Services
+# Remove the need for an X.509 certificate
 
-Patch release to allow `httpx` v0.27.x, which is needed to support `httpx-auth` (at the moment).
+The need for a certificate between the service REST API and the underlying MongoDB is leftover from the origins of this repository. It originates from [SINTEF/entities-service](https://github.com/SINTEF/entities-service), which was meant to connect via an X.509 certificate to MongoDB Atlas. This is, however, not relevant for this re-implementation.
+
+Removing this, also removes a lot of logic pertaining to different MongoDB-specific users, simplifying the code base significantly.
+
+## QoL for DX
+
+Dependencies and dev tools have been updated, along with the CI/CD workflows to accommodate the removal of extra MongoDB authentication.
+
+## [v0.5.0](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/tree/v0.5.0) (2025-01-30)
+
+[Full Changelog](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/compare/v0.4.1...v0.5.0)
+
+# Remove the need for an X.509 certificate
+
+The need for a certificate between the service REST API and the underlying MongoDB is leftover from the origins of this repository. It originates from [SINTEF/entities-service](https://github.com/SINTEF/entities-service), which was meant to connect via an X.509 certificate to MongoDB Atlas. This is, however, not relevant for this re-implementation.
+
+Removing this, also removes a lot of logic pertaining to different MongoDB-specific users, simplifying the code base significantly.
+
+## QoL for DX
+
+Dependencies and dev tools have been updated, along with the CI/CD workflows to accommodate the removal of extra MongoDB authentication.
+
+**Implemented enhancements:**
+
+- Remove extra security layers for MongoDB [\#95](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/issues/95)
+
+**Merged pull requests:**
+
+- \[pre-commit.ci\] pre-commit autoupdate [\#100](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/100) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
+- \[pre-commit.ci\] pre-commit autoupdate [\#97](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/97) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
+- Remove X509 user and self-signed certificates [\#96](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/96) ([CasperWA](https://github.com/CasperWA))
+- \[pre-commit.ci\] pre-commit autoupdate [\#94](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/94) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
+- \[pre-commit.ci\] pre-commit autoupdate [\#92](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/92) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
+- \[pre-commit.ci\] pre-commit autoupdate [\#91](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/91) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
 
 ## [v0.4.1](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/tree/v0.4.1) (2024-12-26)
 
