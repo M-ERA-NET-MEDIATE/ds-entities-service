@@ -3,7 +3,7 @@
 DataSpaces-Auth[fastapi]~=0.3.1
 fastapi>=0.115.5,<1
 httpx>=0.27.2,<1
-pydantic-settings~=2.7
+pydantic-settings~=2.8
 pymongo~=4.11
 python-dotenv~=1.0
 pyyaml~=6.0
