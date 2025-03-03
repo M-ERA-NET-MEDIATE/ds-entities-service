@@ -28,7 +28,7 @@ def test_get_entity(
     from fastapi import status
 
     with client() as client_:
-        response = client_.get(ENDPOINT, params={"id": [parameterized_entity.identity]}, timeout=5)
+        response = client_.get(ENDPOINT, params={"id": [parameterized_entity.identity]})
 
     try:
         resolved_entity = response.json()
@@ -54,7 +54,7 @@ def test_get_entity_instance(
     from dlite import Instance
 
     with client() as client_:
-        response = client_.get(ENDPOINT, params={"id": [parameterized_entity.identity]}, timeout=5)
+        response = client_.get(ENDPOINT, params={"id": [parameterized_entity.identity]})
 
     try:
         resolved_entity = response.json()
@@ -81,7 +81,7 @@ def test_get_entity_not_found(client: ClientFixture) -> None:
 
     namespace, version, name = "http://onto-ns.com/meta", "0.0", "NonExistentEntity"
     with client() as client_:
-        response = client_.get(ENDPOINT, params={"id": [f"{namespace}/{version}/{name}"]}, timeout=5)
+        response = client_.get(ENDPOINT, params={"id": [f"{namespace}/{version}/{name}"]})
 
     try:
         response_json = response.json()
@@ -106,7 +106,7 @@ def test_get_entity_invalid_identity(client: ClientFixture) -> None:
 
     namespace, version, name = "http://onto-ns.com/meta", "1.0", "EntityName"
     with client() as client_:
-        response = client_.get(ENDPOINT, params={"id": [f"{namespace}/{name}/{version}"]}, timeout=5)
+        response = client_.get(ENDPOINT, params={"id": [f"{namespace}/{name}/{version}"]})
 
     try:
         response_json = response.json()
