@@ -145,7 +145,7 @@ def test_update(parameterized_entity: ParameterizeGetEntities) -> None:
     entity_from_backend = backend._collection.find_one(
         {
             "$or": [
-                {"namespace": namespace, "version": version, "name": name},
+                {"namespace": str(namespace), "version": version, "name": name},
                 {"identity": parameterized_entity.identity},
             ]
         },
@@ -172,7 +172,7 @@ def test_delete(parameterized_entity: ParameterizeGetEntities) -> None:
     entity_from_backend = backend._collection.find_one(
         {
             "$or": [
-                {"namespace": namespace, "version": version, "name": name},
+                {"namespace": str(namespace), "version": version, "name": name},
                 {"identity": parameterized_entity.identity},
             ]
         },
@@ -192,7 +192,7 @@ def test_delete(parameterized_entity: ParameterizeGetEntities) -> None:
     entity_from_backend = backend._collection.find_one(
         {
             "$or": [
-                {"namespace": namespace, "version": version, "name": name},
+                {"namespace": str(namespace), "version": version, "name": name},
                 {"identity": parameterized_entity.identity},
             ]
         },
@@ -221,7 +221,7 @@ def test_search(parameterized_entity: ParameterizeGetEntities) -> None:
         backend.search(
             {
                 "$or": [
-                    {"namespace": namespace, "version": version, "name": name},
+                    {"namespace": str(namespace), "version": version, "name": name},
                     {"identity": parameterized_entity.identity},
                 ]
             }
@@ -259,7 +259,7 @@ def test_count(parameterized_entity: ParameterizeGetEntities) -> None:
         backend.count(
             {
                 "$or": [
-                    {"namespace": namespace, "version": version, "name": name},
+                    {"namespace": str(namespace), "version": version, "name": name},
                     {"identity": parameterized_entity.identity},
                 ]
             }
