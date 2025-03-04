@@ -15,7 +15,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Generator, Iterator
     from typing import Any
 
-    from pydantic import AnyHttpUrl
+    from s7.pydantic_models.soft7_entity import SOFT7IdentityURIType
 
 
 LOGGER = logging.getLogger(__name__)
@@ -121,21 +121,23 @@ class Backend(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def read(self, entity_identity: AnyHttpUrl | str) -> dict[str, Any] | None:  # pragma: no cover
+    def read(
+        self, entity_identity: SOFT7IdentityURIType | str
+    ) -> dict[str, Any] | None:  # pragma: no cover
         """Read an entity from the backend."""
         raise NotImplementedError
 
     @abstractmethod
     def update(
         self,
-        entity_identity: AnyHttpUrl | str,
+        entity_identity: SOFT7IdentityURIType | str,
         entity: SOFT7Entity | dict[str, Any],
     ) -> None:  # pragma: no cover
         """Update an entity in the backend."""
         raise NotImplementedError
 
     @abstractmethod
-    def delete(self, entity_identities: Iterable[AnyHttpUrl | str]) -> None:  # pragma: no cover
+    def delete(self, entity_identities: Iterable[SOFT7IdentityURIType | str]) -> None:  # pragma: no cover
         """Delete one or more entities in the backend."""
         raise NotImplementedError
 

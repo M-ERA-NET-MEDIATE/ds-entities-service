@@ -98,15 +98,16 @@ def test_get_entity_invalid_identity(client: ClientFixture) -> None:
     """Test that the service raises a pydantic ValidationError and returns an
     Unprocessable Entity (422) for invalid identities.
 
-    Test by reversing version and name in identity, thereby making it invalid.
+    Test by providing a non URL URI/IRI, i.e., a string that is not a URL.
+    Here we will test with a UUID as string.
     """
     import json
+    from uuid import uuid4
 
     from fastapi import status
 
-    namespace, version, name = "http://onto-ns.com/meta", "1.0", "EntityName"
     with client() as client_:
-        response = client_.get(ENDPOINT, params={"id": [f"{namespace}/{name}/{version}"]})
+        response = client_.get(ENDPOINT, params={"id": [str(uuid4())]})
 
     try:
         response_json = response.json()

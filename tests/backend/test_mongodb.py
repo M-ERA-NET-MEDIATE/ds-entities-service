@@ -109,8 +109,9 @@ def test_update(parameterized_entity: ParameterizeGetEntities) -> None:
     """Test the update method."""
     from copy import deepcopy
 
+    from s7.pydantic_models.soft7_entity import SOFT7IdentityURI, parse_identity
+
     from dataspaces_entities.backend import get_backend
-    from dataspaces_entities.backend.mongodb import URI_REGEX
 
     backend = get_backend()
 
@@ -138,11 +139,13 @@ def test_update(parameterized_entity: ParameterizeGetEntities) -> None:
     # Apply the change
     backend.update(parameterized_entity.identity, changed_raw_entity)
 
+    namespace, version, name = parse_identity(SOFT7IdentityURI(parameterized_entity.identity))
+
     # Retrieve the entity again
     entity_from_backend = backend._collection.find_one(
         {
             "$or": [
-                URI_REGEX.match(parameterized_entity.identity).groupdict(),
+                {"namespace": namespace, "version": version, "name": name},
                 {"identity": parameterized_entity.identity},
             ]
         },
@@ -156,16 +159,20 @@ def test_update(parameterized_entity: ParameterizeGetEntities) -> None:
 
 def test_delete(parameterized_entity: ParameterizeGetEntities) -> None:
     """Test the delete method."""
+
+    from s7.pydantic_models.soft7_entity import SOFT7IdentityURI, parse_identity
+
     from dataspaces_entities.backend import get_backend
-    from dataspaces_entities.backend.mongodb import URI_REGEX
 
     backend = get_backend()
+
+    namespace, version, name = parse_identity(SOFT7IdentityURI(parameterized_entity.identity))
 
     # Ensure the entity currently exists in the backend
     entity_from_backend = backend._collection.find_one(
         {
             "$or": [
-                URI_REGEX.match(parameterized_entity.identity).groupdict(),
+                {"namespace": namespace, "version": version, "name": name},
                 {"identity": parameterized_entity.identity},
             ]
         },
@@ -185,7 +192,7 @@ def test_delete(parameterized_entity: ParameterizeGetEntities) -> None:
     entity_from_backend = backend._collection.find_one(
         {
             "$or": [
-                URI_REGEX.match(parameterized_entity.identity).groupdict(),
+                {"namespace": namespace, "version": version, "name": name},
                 {"identity": parameterized_entity.identity},
             ]
         },
@@ -201,17 +208,20 @@ def test_search(parameterized_entity: ParameterizeGetEntities) -> None:
 
     Note, this method only accepts valid MongoDB queries.
     """
+    from s7.pydantic_models.soft7_entity import SOFT7IdentityURI, parse_identity
+
     from dataspaces_entities.backend import get_backend
-    from dataspaces_entities.backend.mongodb import URI_REGEX
 
     backend = get_backend()
+
+    namespace, version, name = parse_identity(SOFT7IdentityURI(parameterized_entity.identity))
 
     # Search for the entity
     entities_from_backend = list(
         backend.search(
             {
                 "$or": [
-                    URI_REGEX.match(parameterized_entity.identity).groupdict(),
+                    {"namespace": namespace, "version": version, "name": name},
                     {"identity": parameterized_entity.identity},
                 ]
             }
@@ -232,8 +242,9 @@ def test_search(parameterized_entity: ParameterizeGetEntities) -> None:
 
 def test_count(parameterized_entity: ParameterizeGetEntities) -> None:
     """Test the count method."""
+    from s7.pydantic_models.soft7_entity import SOFT7IdentityURI, parse_identity
+
     from dataspaces_entities.backend import get_backend
-    from dataspaces_entities.backend.mongodb import URI_REGEX
 
     backend = get_backend()
 
@@ -241,12 +252,14 @@ def test_count(parameterized_entity: ParameterizeGetEntities) -> None:
     number_of_entities = len(backend)
     assert backend.count({}) == number_of_entities
 
+    namespace, version, name = parse_identity(SOFT7IdentityURI(parameterized_entity.identity))
+
     # Count the entity
     assert (
         backend.count(
             {
                 "$or": [
-                    URI_REGEX.match(parameterized_entity.identity).groupdict(),
+                    {"namespace": namespace, "version": version, "name": name},
                     {"identity": parameterized_entity.identity},
                 ]
             }

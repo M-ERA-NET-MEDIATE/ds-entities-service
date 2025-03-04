@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Annotated, Any
+from typing import Annotated, Any, get_args
 
 from dataspaces_auth.fastapi import has_role
 from fastapi import (
@@ -16,12 +16,13 @@ from fastapi import (
     status,
 )
 from fastapi.exceptions import RequestValidationError
-from pydantic import Field, ValidationError, conlist
+from pydantic import ValidationError, conlist
 from s7 import SOFT7Entity
+from s7.pydantic_models.soft7_entity import SOFT7IdentityURIType
 
 from dataspaces_entities.backend import get_backend
 from dataspaces_entities.config import get_config
-from dataspaces_entities.models import URI_REGEX, DSAPIRole, HTTPError
+from dataspaces_entities.models import DSAPIRole, HTTPError
 from dataspaces_entities.requests import YamlRequest, YamlRoute
 from dataspaces_entities.utils import get_identity
 
@@ -33,7 +34,6 @@ ROUTER = APIRouter(
     route_class=YamlRoute,
 )
 
-URIStrictType = Annotated[str, Field(pattern=URI_REGEX.pattern)]
 EmptyList: type[list[Any]] = conlist(Any, min_length=0, max_length=0)  # type: ignore[arg-type]
 
 
@@ -49,7 +49,7 @@ EmptyList: type[list[Any]] = conlist(Any, min_length=0, max_length=0)  # type: i
 )
 async def get_entities(
     identities: Annotated[
-        list[URIStrictType] | None,
+        list[SOFT7IdentityURIType] | None,
         Query(
             title="Entity identity",
             description="The identity (URI/IRI) of the entity to retrieve.",
@@ -94,14 +94,19 @@ async def get_entities(
 
     LOGGER.error(
         "Could not find entities:\n  identities=%s\n  properties=%s\n  dimensions=%s",
-        ", ".join(identities) if identities else "None",
+        str(identities) if identities else "None",
         ", ".join(properties) if properties else "None",
         ", ".join(dimensions) if dimensions else "None",
     )
 
     raise HTTPException(
         status_code=status.HTTP_404_NOT_FOUND,
-        detail=f"Could not find entities: identities={identities}",
+        detail=(
+            f"Could not find entities:"
+            f"{' identities=' + str(identities) if identities else ''}"
+            f"{' properties=' + str(properties) if properties else ''}"
+            f"{' dimensions=' + str(dimensions) if dimensions else ''}"
+        ),
     )
 
 
@@ -357,7 +362,7 @@ async def patch_entities(request: YamlRequest, response: Response) -> list[Any] 
 
 @ROUTER.delete(
     "/",
-    response_model=list[URIStrictType] | URIStrictType,
+    response_model=list[SOFT7IdentityURIType] | SOFT7IdentityURIType,
     status_code=status.HTTP_200_OK,
     dependencies=[Depends(has_role(DSAPIRole.ENTITIES_DELETE))],
     summary="Delete one or more Entities.",
@@ -369,25 +374,25 @@ async def patch_entities(request: YamlRequest, response: Response) -> list[Any] 
 )
 async def delete_entities(
     identities_body: Annotated[
-        list[URIStrictType] | URIStrictType | None,
+        list[SOFT7IdentityURIType] | SOFT7IdentityURIType | None,
         Body(
             title="Entity identity",
             description="The identity/-ies (URI/IRI) of the entity/-ies to delete.",
         ),
     ] = None,
     identities_query: Annotated[
-        list[URIStrictType] | None,
+        list[SOFT7IdentityURIType] | None,
         Query(
             title="Entity identity",
             description="The identity (URI/IRI) of the entity to delete.",
             alias="id",
         ),
     ] = None,
-) -> list[URIStrictType] | URIStrictType:
+) -> list[SOFT7IdentityURIType] | SOFT7IdentityURIType:
     """Delete one or more Entities."""
-    identities: set[URIStrictType] = set()
+    identities: set[SOFT7IdentityURIType] = set()
 
-    if isinstance(identities_body, str):
+    if isinstance(identities_body, get_args(SOFT7IdentityURIType)):
         identities.add(identities_body)
     elif isinstance(identities_body, list):
         identities.update(identities_body)

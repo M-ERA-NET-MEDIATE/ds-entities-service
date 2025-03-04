@@ -6,7 +6,7 @@ import logging
 from functools import lru_cache
 from typing import TYPE_CHECKING, Annotated, Literal
 
-from pydantic import Field, SecretStr
+from pydantic import Field, SecretStr, ValidationError
 from pymongo.errors import (
     BulkWriteError,
     InvalidDocument,
@@ -16,6 +16,7 @@ from pymongo.errors import (
     WriteError,
 )
 from s7 import SOFT7Entity, get_entity
+from s7.pydantic_models.soft7_entity import SOFT7IdentityURI
 
 from dataspaces_entities.backend import Backends
 from dataspaces_entities.backend.backend import (
@@ -25,16 +26,15 @@ from dataspaces_entities.backend.backend import (
     BackendWriteAccessError,
 )
 from dataspaces_entities.config import MongoDsn, get_config
-from dataspaces_entities.models import URI_REGEX
 
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Generator, Iterable, Iterator
     from typing import Any
 
-    from pydantic import AnyHttpUrl
     from pymongo import MongoClient
     from pymongo.collection import Collection as MongoCollection
     from s7 import SOFT7Entity
+    from s7.pydantic_models.soft7_entity import SOFT7IdentityURIType
 
 
 LOGGER = logging.getLogger(__name__)
@@ -185,26 +185,29 @@ class MongoDBBackend(Backend):
 
         return self._collection.find_one({"_id": result.inserted_ids[0]}, projection={"_id": False})
 
-    def read(self, entity_identity: AnyHttpUrl | str) -> dict[str, Any] | None:
+    def read(self, entity_identity: SOFT7IdentityURIType | str) -> dict[str, Any] | None:
         """Read an entity from the MongoDB."""
-        filter = self._single_identity_query(str(entity_identity))
+        filter = self._single_identity_query(entity_identity)
         return self._collection.find_one(filter, projection={"_id": False})
 
     def update(
         self,
-        entity_identity: AnyHttpUrl | str,
+        entity_identity: SOFT7IdentityURIType | str,
         entity: SOFT7Entity | dict[str, Any],
     ) -> None:
         """Update an entity in the MongoDB."""
         entity = self._prepare_entity(entity)
-        filter = self._single_identity_query(str(entity_identity))
+        filter = self._single_identity_query(entity_identity)
         self._collection.update_one(filter, {"$set": entity})
 
-    def delete(self, entity_identities: Iterable[AnyHttpUrl | str]) -> None:
+    def delete(self, entity_identities: Iterable[SOFT7IdentityURIType | str]) -> None:
         """Delete one or more entities in the MongoDB."""
         for identity in entity_identities:
-            if URI_REGEX.match(str(identity)) is None:
-                raise MongoDBBackendError(f"Invalid entity identity: {identity}")
+            if isinstance(identity, str):
+                try:
+                    SOFT7IdentityURI(identity)
+                except (TypeError, ValidationError) as exc:
+                    raise MongoDBBackendError(f"Invalid entity identity: {identity}") from exc
 
         filter = {"identity": {"$in": [str(identity) for identity in entity_identities]}}
 
@@ -218,7 +221,7 @@ class MongoDBBackend(Backend):
         raw_query: Any = None,
         by_properties: list[str] | None = None,
         by_dimensions: list[str] | None = None,
-        by_identity: list[AnyHttpUrl] | list[str] | None = None,
+        by_identity: list[SOFT7IdentityURIType] | list[str] | None = None,
     ) -> Generator[dict[str, Any]]:
         """Search for entities.
 
@@ -251,8 +254,11 @@ class MongoDBBackend(Backend):
                 )
             if by_identity:
                 for identity in by_identity:
-                    if URI_REGEX.match(str(identity)) is None:
-                        raise ValueError(f"Invalid entity identity: {identity}")
+                    if isinstance(identity, str):
+                        try:
+                            SOFT7IdentityURI(identity)
+                        except (TypeError, ValidationError) as exc:
+                            raise ValueError(f"Invalid entity identity: {identity}") from exc
 
                 query["$or"].extend(
                     [
@@ -277,12 +283,15 @@ class MongoDBBackend(Backend):
         return self._collection.count_documents(query)
 
     # MongoDBBackend specific methods
-    def _single_identity_query(self, identity: str) -> dict[str, Any]:
+    def _single_identity_query(self, identity: SOFT7IdentityURIType | str) -> dict[str, Any]:
         """Build a query for a single identity."""
-        if URI_REGEX.match(identity) is None:
-            raise ValueError(f"Invalid entity identity: {identity}")
+        if isinstance(identity, str):
+            try:
+                SOFT7IdentityURI(identity)
+            except (TypeError, ValidationError) as exc:
+                raise ValueError(f"Invalid entity identity: {identity}") from exc
 
-        return {"identity": identity}
+        return {"identity": str(identity)}
 
     def _prepare_entity(self, entity: SOFT7Entity | dict[str, Any]) -> dict[str, Any]:
         """Prepare the entity for interactions with the MongoDB backend."""

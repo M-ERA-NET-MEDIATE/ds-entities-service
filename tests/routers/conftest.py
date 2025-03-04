@@ -12,8 +12,8 @@ if TYPE_CHECKING:
     from pathlib import Path
     from typing import Any
 
-    from pydantic import AnyHttpUrl
     from s7 import SOFT7Entity
+    from s7.pydantic_models.soft7_entity import SOFT7IdentityURIType
 
 
 @pytest.fixture(autouse=True)
@@ -30,7 +30,8 @@ def _mock_backend(
     from copy import deepcopy
 
     import yaml
-    from pydantic import ConfigDict
+    from pydantic import ConfigDict, ValidationError
+    from s7.pydantic_models.soft7_entity import SOFT7IdentityURI
 
     from dataspaces_entities.backend.backend import (
         BackendError,
@@ -38,7 +39,6 @@ def _mock_backend(
         BackendWriteAccessError,
     )
     from dataspaces_entities.backend.mongodb import MongoDBBackend
-    from dataspaces_entities.models import URI_REGEX
     from dataspaces_entities.utils import get_identity
 
     class MockBackendError(BackendError):
@@ -121,7 +121,15 @@ def _mock_backend(
 
             return entities[0]
 
-        def read(self, entity_identity: AnyHttpUrl | str) -> dict[str, Any] | None:
+        def read(self, entity_identity: SOFT7IdentityURIType | str) -> dict[str, Any] | None:
+            if isinstance(entity_identity, str):
+                try:
+                    entity_identity = SOFT7IdentityURI(entity_identity)
+                except (TypeError, ValidationError) as exc:
+                    raise MockBackendError(f"Invalid entity identity: {entity_identity}") from exc
+
+            entity_identity = str(entity_identity)
+
             if entity_identity in self.__test_data_uris:
                 return self._test_data[self.__test_data_uris.index(entity_identity)]
 
@@ -129,22 +137,36 @@ def _mock_backend(
 
         def update(
             self,
-            entity_identity: AnyHttpUrl | str,
+            entity_identity: SOFT7IdentityURIType | str,
             entity: SOFT7Entity | dict[str, Any],
         ) -> None:
-            if URI_REGEX.match(str(entity_identity)) is None:
-                raise MockBackendError(f"Invalid entity identity: {entity_identity}")
+            if isinstance(entity_identity, str):
+                try:
+                    entity_identity = SOFT7IdentityURI(entity_identity)
+                except (TypeError, ValidationError) as exc:
+                    raise MockBackendError(f"Invalid entity identity: {entity_identity}") from exc
 
             entity = self._prepare_entity(entity)
+
+            entity_identity = str(entity_identity)
 
             if entity_identity in self.__test_data_uris:
                 self.__test_data[self.__test_data_uris.index(entity_identity)] = deepcopy(entity)
 
             return
 
-        def delete(self, entity_identities: Iterable[AnyHttpUrl | str]) -> None:
-            if any(URI_REGEX.match(str(identity)) is None for identity in entity_identities):
-                raise MockBackendError("One or more invalid entity identities given.")
+        def delete(self, entity_identities: Iterable[SOFT7IdentityURIType | str]) -> None:
+            try:
+                entity_identities = [
+                    (
+                        str(SOFT7IdentityURI(entity_identity))
+                        if isinstance(entity_identity, str)
+                        else str(entity_identity)
+                    )
+                    for entity_identity in entity_identities
+                ]
+            except (TypeError, ValidationError) as exc:
+                raise MockBackendError("One or more invalid entity identities given.") from exc
 
             for identity in entity_identities:
                 if identity in self.__test_data_uris:
@@ -156,7 +178,7 @@ def _mock_backend(
             raw_query: Any = None,
             by_properties: list[str] | None = None,
             by_dimensions: list[str] | None = None,
-            by_identity: list[AnyHttpUrl] | list[str] | None = None,
+            by_identity: list[SOFT7IdentityURIType] | list[str] | None = None,
         ) -> Generator[dict[str, Any]]:
             if raw_query is not None:
                 raise MockBackendError(f"Raw queries are not supported by {self.__class__.__name__}.")
@@ -197,6 +219,11 @@ def _mock_backend(
 
             if by_identity:
                 for identity in by_identity:
+                    if isinstance(identity, str):
+                        identity = str(SOFT7IdentityURI(identity))  # noqa: PLW2901
+                    else:
+                        identity = str(identity)  # noqa: PLW2901
+
                     if identity in self.__test_data_uris:
                         results.append(self._test_data[self.__test_data_uris.index(identity)])
 
