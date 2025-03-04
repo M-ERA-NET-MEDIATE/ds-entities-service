@@ -2,17 +2,43 @@
 
 ## [Unreleased](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/tree/HEAD)
 
-[Full Changelog](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/compare/v0.5.0...HEAD)
+[Full Changelog](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/compare/v0.5.1...HEAD)
 
-# Remove the need for an X.509 certificate
+## Loosen URI requirements
 
-The need for a certificate between the service REST API and the underlying MongoDB is leftover from the origins of this repository. It originates from [SINTEF/entities-service](https://github.com/SINTEF/entities-service), which was meant to connect via an X.509 certificate to MongoDB Atlas. This is, however, not relevant for this re-implementation.
+Defer to `s7.pydantic_models.soft7_entity.SOFT7IdentityURI` and its accompanying type for determining the validity of an entity's URI value.
 
-Removing this, also removes a lot of logic pertaining to different MongoDB-specific users, simplifying the code base significantly.
+Currently, the only requirement for the URI is to be a valid URL with either of the `http`, `https`, or `file` schemes.
 
-## QoL for DX
+## Update dependencies
 
-Dependencies and dev tools have been updated, along with the CI/CD workflows to accommodate the removal of extra MongoDB authentication.
+Update various dependencies and dev. tools.
+
+## [v0.5.1](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/tree/v0.5.1) (2025-03-04)
+
+[Full Changelog](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/compare/v0.5.0...v0.5.1)
+
+## Loosen URI requirements
+
+Defer to `s7.pydantic_models.soft7_entity.SOFT7IdentityURI` and its accompanying type for determining the validity of an entity's URI value.
+
+Currently, the only requirement for the URI is to be a valid URL with either of the `http`, `https`, or `file` schemes.
+
+## Update dependencies
+
+Update various dependencies and dev. tools.
+
+**Implemented enhancements:**
+
+- Use SOFT7IdentityURI and type from s7 [\#112](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/112) ([CasperWA](https://github.com/CasperWA))
+
+**Merged pull requests:**
+
+- \[pre-commit.ci\] pre-commit autoupdate [\#111](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/111) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
+- \[pre-commit.ci\] pre-commit autoupdate [\#110](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/110) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
+- \[pre-commit.ci\] pre-commit autoupdate [\#107](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/107) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
+- \[pre-commit.ci\] pre-commit autoupdate [\#105](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/105) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
+- \[pre-commit.ci\] pre-commit autoupdate [\#104](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/104) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
 
 ## [v0.5.0](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/tree/v0.5.0) (2025-01-30)
 
