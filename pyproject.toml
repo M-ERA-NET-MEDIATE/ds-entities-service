@@ -64,7 +64,7 @@ server = [
     "gunicorn ~=23.0",
 ]
 dev = [
-    "pre-commit ~=4.1",
+    "pre-commit ~=4.2",
     "DataSpaces-Entities[testing]",
 ]
 
