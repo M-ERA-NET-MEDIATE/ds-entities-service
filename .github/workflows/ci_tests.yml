@@ -23,17 +23,8 @@ jobs:
       run_pre-commit: false
 
       # pylint & safety
-      python_version_pylint_safety: "3.10"
-      pip_index_url_pylint_safety: "${{ vars.EXTERNAL_PYPI_INDEX_URL }}"
       run_pylint: false
-
-      run_safety: true
-      # ID: 70612
-      #   Package: Jinja2
-      #   Has been disputed by the maintainer and multiple third parties.
-      #   For more information see: https://github.com/advisories/GHSA-f6pv-j8mr-w6rr
-      safety_options: |
-        --ignore=70612
+      run_safety: false
 
       # Build dist
       python_version_package: "3.10"
@@ -42,6 +33,28 @@ jobs:
 
       # Build documentation
       run_build_docs: false
+
+  pip-audit:
+    name: pip-audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout ${{ github.repository }}
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install pip-audit
+        run: |
+          python -m pip install -U pip
+          pip install -U setuptools wheel
+          pip install -e .[dev,server]
+
+      - name: Run pip-audit
+        uses: pypa/gh-action-pip-audit@v1.1.0
 
   docker:
     name: Docker

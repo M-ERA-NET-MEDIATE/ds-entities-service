@@ -47,10 +47,10 @@ RUN --mount=type=bind,source=docker/requirements_development.txt,target=/tmp/req
 # Run static security check and linters
 RUN --mount=type=bind,source=docker/.pre-commit-config_docker.yaml,target=/app/.pre-commit-config.yaml \
     --mount=type=bind,source=pyproject.toml,target=/app/pyproject.toml \
-    --mount=type=cache,target=${HOME}/.cache/pre-commit \
-    git init && git add . && /tmp/dev_venv/bin/pre-commit run --all-files || ( cat ${HOME}/.cache/pre-commit/pre-commit.log && exit 1 )
+    --mount=type=cache,target=~/.cache/pre-commit \
+    git init && git add . && /tmp/dev_venv/bin/pre-commit run --all-files || ( cat ~/.cache/pre-commit/pre-commit.log && exit 1 )
 RUN --mount=type=bind,source=docker/pyproject_requirements.txt,target=/tmp/requirements.txt \
-    /tmp/dev_venv/bin/safety check -r /tmp/requirements.txt --full-report
+    /tmp/dev_venv/bin/pip-audit -r /tmp/requirements.txt --desc on
 
 # Clean up
 RUN rm -rf ${HOME}/.cache /tmp/* /app/.git && pip cache purge
