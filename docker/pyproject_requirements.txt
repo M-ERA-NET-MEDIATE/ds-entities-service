@@ -1,10 +1,10 @@
-# This file is here to "safety check" all the dependencies listed in pyproject.toml
+# This file is here to "pip-audit" all the dependencies listed in pyproject.toml
 --index-url "https://gitlab.sintef.no/api/v4/projects/17883/packages/pypi/simple"
 DataSpaces-Auth[fastapi]~=0.3.1
 fastapi>=0.115.5,<1
 httpx>=0.27.2,<1
-pydantic-settings~=2.8
-pymongo~=4.11
+pydantic-settings~=2.9
+pymongo~=4.12
 python-dotenv~=1.1
 pyyaml~=6.0
 soft7>=0.3.0,<1
