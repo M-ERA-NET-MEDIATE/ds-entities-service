@@ -43,7 +43,7 @@ dynamic = ["version", "description"]
 dependencies = [
     "DataSpaces-Auth[fastapi] ~=0.3.1",  # From SINTEF's GitLab (SemanticMatter group)
     "fastapi >=0.115.5,<1",
-    "httpx >=0.27.2,<1",  # Support on v0.27 for the
+    "httpx ~=0.28.1",
     "pydantic-settings ~=2.9",
     "pymongo ~=4.12",
     "python-dotenv ~=1.1",
@@ -54,8 +54,7 @@ dependencies = [
 
 [project.optional-dependencies]
 testing = [
-    # Pytest runs, end in Segmentation Fault for dlite-python versions >0.5.23
-    "dlite-python <=0.5.23; python_version<'3.13'",  # DLite is not yet compatible with Python 3.13
+    "dlite-python ~=0.5.29",
     "pytest ~=8.3",
     "pytest-cov ~=6.1",
     "pytest-httpx ~=0.35.0",
@@ -145,6 +144,9 @@ filterwarnings = [
     # Keep this only for as long as SemanticMatter/ds-auth#32 is not fixed.
     # Link: https://github.com/SemanticMatter/ds-auth/issues/32
     "ignore:.*The realm-export\\.json file was not found.*:UserWarning",
+
+    # Avoid SegmentationFault from DLite
+    "ignore::DeprecationWarning:dlite",
 ]
 
 [tool.coverage.run]

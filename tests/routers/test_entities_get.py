@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import sys
 from typing import TYPE_CHECKING
 
 import pytest
@@ -43,7 +42,6 @@ def test_get_entity(
     assert resolved_entity == parameterized_entity.parsed_entity, json.dumps(resolved_entity, indent=2)
 
 
-@pytest.mark.skipif(sys.version_info >= (3, 13), reason="DLite does not support Python 3.13+")
 def test_get_entity_instance(
     parameterized_entity: ParameterizeGetEntities,
     client: ClientFixture,
