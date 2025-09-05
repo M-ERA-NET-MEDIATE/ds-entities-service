@@ -58,7 +58,7 @@ async def lifespan(app: FastAPI):  # noqa: ARG001
     """Add lifespan events to the application."""
     config = get_config()
 
-    LOGGER.debug("DataSpaces-Graphs configuration: %s", config)
+    LOGGER.debug("DataSpaces-Entities configuration: %s", config)
 
     # Initialize backend
     get_backend(config.backend).initialize()
