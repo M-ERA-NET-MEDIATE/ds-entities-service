@@ -4,7 +4,7 @@ DataSpaces-Auth[fastapi]~=0.3.1
 fastapi>=0.115.5,<1
 httpx~=0.28.1
 pydantic-settings~=2.10
-pymongo~=4.14
+pymongo~=4.15
 python-dotenv~=1.1
 pyyaml~=6.0
 soft7>=0.3.0,<1
@@ -13,7 +13,7 @@ uvicorn-worker>=0.3.0,<1
 # 'testing' extra
 dlite-python~=0.5.29
 pytest~=8.4
-pytest-cov~=6.3
+pytest-cov~=7.0
 pytest-httpx~=0.35.0
 
 # 'server' extra
