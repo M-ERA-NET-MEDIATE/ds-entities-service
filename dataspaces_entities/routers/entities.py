@@ -140,7 +140,7 @@ async def create_entities(
         LOGGER.error("Could not parse entities from request.")
         LOGGER.exception(err)
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail="Invalid entities provided. Cannot parse request.",
         ) from err
 
@@ -217,7 +217,7 @@ async def update_entities(
         LOGGER.error("Could not parse entities from request.")
         LOGGER.exception(err)
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail="Invalid entities provided. Cannot parse request.",
         ) from err
 
@@ -310,7 +310,7 @@ async def patch_entities(request: YamlRequest, response: Response) -> list[Any] 
         LOGGER.error("Could not parse (partial) entities from request.")
         LOGGER.exception(err)
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail="Invalid (partial) entities provided. Cannot parse request.",
         ) from err
 
