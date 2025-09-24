@@ -114,5 +114,5 @@ def test_get_entity_invalid_identity(client: ClientFixture) -> None:
 
     assert not response.is_success, "Invalid identity returned an OK response!"
     assert (
-        response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+        response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
     ), f"Response:\n{json.dumps(response_json, indent=2)}"
