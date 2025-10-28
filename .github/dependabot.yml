@@ -10,6 +10,10 @@ updates:
   labels:
     - CI/CD
     - skip_changelog
+  groups:
+    github-actions:
+      patterns:
+        - "*"
 
 - package-ecosystem: pip
   directories:
