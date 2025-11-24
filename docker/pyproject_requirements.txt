@@ -3,7 +3,7 @@
 DataSpaces-Auth[fastapi]~=0.3.1
 fastapi>=0.115.5,<1
 httpx~=0.28.1
-pydantic-settings~=2.11
+pydantic-settings~=2.12
 pymongo~=4.15
 python-dotenv~=1.2
 pyyaml~=6.0
@@ -12,7 +12,7 @@ uvicorn-worker>=0.3.0,<1
 
 # 'testing' extra
 dlite-python~=0.5.29
-pytest~=8.4
+pytest~=9.0
 pytest-cov~=7.0
 pytest-httpx~=0.35.0
 
@@ -20,4 +20,4 @@ pytest-httpx~=0.35.0
 gunicorn~=23.0
 
 # 'dev' extra
-pre-commit~=4.3
+pre-commit~=4.5
