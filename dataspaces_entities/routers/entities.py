@@ -10,7 +10,6 @@ from fastapi import (
     APIRouter,
     Body,
     Depends,
-    HTTPException,
     Query,
     Response,
     status,
@@ -22,7 +21,14 @@ from s7.pydantic_models.soft7_entity import SOFT7IdentityURIType
 
 from dataspaces_entities.backend import get_backend
 from dataspaces_entities.config import get_config
-from dataspaces_entities.models import DSAPIRole, HTTPError
+from dataspaces_entities.exceptions import (
+    EntityExists,
+    EntityNotFound,
+    InvalidEntityError,
+    RequestError,
+    WriteError,
+)
+from dataspaces_entities.models import DSAPIRole
 from dataspaces_entities.requests import YamlRequest, YamlRoute
 from dataspaces_entities.utils import get_identity
 
@@ -45,7 +51,6 @@ EmptyList: type[list[Any]] = conlist(Any, min_length=0, max_length=0)  # type: i
     dependencies=[Depends(has_role(DSAPIRole.ENTITIES_READ))],
     summary="Retrieve one or more Entity.",
     response_description="Retrieved Entity or Entities.",
-    responses={404: {"description": "Entites not found", "model": HTTPError}},
 )
 async def get_entities(
     identities: Annotated[
@@ -99,8 +104,8 @@ async def get_entities(
         ", ".join(dimensions) if dimensions else "None",
     )
 
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
+    raise EntityNotFound(
+        entity_id=str(identities) if identities else "see detail",
         detail=(
             f"Could not find entities:"
             f"{' identities=' + str(identities) if identities else ''}"
@@ -121,7 +126,6 @@ async def get_entities(
     response_description="Created Entity or Entities.",
     responses={
         200: {"description": "There are no Entities to replace or create", "model": EmptyList},
-        502: {"description": "Internal write error", "model": HTTPError},
     },
 )
 async def create_entities(
@@ -133,16 +137,11 @@ async def create_entities(
     try:
         entities = await request.parse_entities()
     except ValidationError as err:
-        logger.error("Could not validate entities from request.")
-        logger.exception(err)
+        logger.exception("Could not validate entities from request.")
         raise RequestValidationError(errors=err.errors(), body=await request.body()) from err
     except (ValueError, TypeError) as err:
-        logger.error("Could not parse entities from request.")
-        logger.exception(err)
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-            detail="Invalid entities provided. Cannot parse request.",
-        ) from err
+        logger.exception("Could not parse entities from request.")
+        raise InvalidEntityError("Invalid entities provided. Cannot parse request.") from err
 
     # Check client-sent content
     if isinstance(entities, list):
@@ -153,27 +152,43 @@ async def create_entities(
     else:
         entities = [entities]
 
-    write_fail_exception = HTTPException(
-        status_code=status.HTTP_502_BAD_GATEWAY,
-        detail=(
-            "Could not create entit"
-            "{suffix} with identit{suffix}: {identities}".format(
-                suffix="y" if len(entities) == 1 else "ies",
-                identities=", ".join(get_identity(entity) for entity in entities),
-            )
-        ),
-    )
-
     entities_backend = get_backend(get_config().backend)
+
+    # Check for existing entities
+    existing_entity_ids = [
+        get_identity(entity) for entity in entities if get_identity(entity) in entities_backend
+    ]
+    if existing_entity_ids:
+        logger.error(
+            "Cannot create already existing entities: identities=[%s]",
+            ", ".join(existing_entity_ids),
+        )
+        raise EntityExists(
+            entity_id=", ".join(existing_entity_ids),
+            detail=(
+                "Cannot create entit"
+                "{suffix} with identit{suffix} already existing: {identities}".format(
+                    suffix="y" if len(existing_entity_ids) == 1 else "ies",
+                    identities=", ".join(existing_entity_ids),
+                )
+            ),
+        )
+
+    write_fail_exception = WriteError(
+        "Could not create entit"
+        "{suffix} with identit{suffix}: {identities}".format(
+            suffix="y" if len(entities) == 1 else "ies",
+            identities=", ".join(get_identity(entity) for entity in entities),
+        )
+    )
 
     try:
         created_entities = entities_backend.create(entities)
     except entities_backend.write_access_exception as err:
-        logger.error(
+        logger.exception(
             "Could not create entities: identities=[%s]",
             ", ".join(get_identity(entity) for entity in entities),
         )
-        logger.exception(err)
         raise write_fail_exception from err
 
     if (
@@ -198,7 +213,6 @@ async def create_entities(
     responses={
         200: {"description": "There are no Entities to replace or create", "model": EmptyList},
         204: {"description": "Replaced (not created) Entity or Entitites"},
-        502: {"description": "Internal write error", "model": HTTPError},
     },
 )
 async def update_entities(
@@ -210,16 +224,11 @@ async def update_entities(
     try:
         entities = await request.parse_entities()
     except ValidationError as err:
-        logger.error("Could not validate entities from request.")
-        logger.exception(err)
+        logger.exception("Could not validate entities from request.")
         raise RequestValidationError(errors=err.errors(), body=await request.body()) from err
     except (ValueError, TypeError) as err:
-        logger.error("Could not parse entities from request.")
-        logger.exception(err)
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-            detail="Invalid entities provided. Cannot parse request.",
-        ) from err
+        logger.exception("Could not parse entities from request.")
+        raise InvalidEntityError("Invalid entities provided. Cannot parse request.") from err
 
     # Check client-sent content
     if isinstance(entities, list):
@@ -230,15 +239,12 @@ async def update_entities(
     else:
         entities = [entities]
 
-    write_fail_exception = HTTPException(
-        status_code=status.HTTP_502_BAD_GATEWAY,
-        detail=(
-            "Could not put/update entit"
-            "{suffix} with identit{suffix}: {identities}".format(
-                suffix="y" if len(entities) == 1 else "ies",
-                identities=", ".join(get_identity(entity) for entity in entities),
-            )
-        ),
+    write_fail_exception = WriteError(
+        "Could not put/update entit"
+        "{suffix} with identit{suffix}: {identities}".format(
+            suffix="y" if len(entities) == 1 else "ies",
+            identities=", ".join(get_identity(entity) for entity in entities),
+        )
     )
 
     entities_backend = get_backend(get_config().backend)
@@ -249,11 +255,10 @@ async def update_entities(
         try:
             created_entities = entities_backend.create(new_entities)
         except entities_backend.write_access_exception as err:
-            logger.error(
+            logger.exception(
                 "Could not create entities: identities=[%s]",
                 ", ".join(get_identity(entity) for entity in new_entities),
             )
-            logger.exception(err)
             raise write_fail_exception from err
 
         if (
@@ -268,17 +273,25 @@ async def update_entities(
         if entity in new_entities:
             continue
 
-        if (identity := get_identity(entity)) in entities_backend:
-            try:
-                entities_backend.update(identity, entity)
-            except entities_backend.write_access_exception as err:
-                logger.error(
-                    "Could not update entities: identities=[%s]",
-                    ", ".join(get_identity(entity) for entity in entities),
-                )
-                logger.error("Error happened when updating entity: identity=%s", identity)
-                logger.exception(err)
-                raise write_fail_exception from err
+        if (identity := get_identity(entity)) not in entities_backend:  # pragma: no cover
+            # This should not be able to happen, as we already checked for new entities
+            # But we keep this here for safety
+            logger.error(
+                "Cannot update non-existent entity: identity=%s",
+                identity,
+            )
+            raise write_fail_exception
+
+        try:
+            entities_backend.update(identity, entity)
+        except entities_backend.write_access_exception as err:
+            logger.exception(
+                "Could not update entities: identities=[%s]\n"
+                "Error happened when updating entity: identity=%s",
+                ", ".join(get_identity(entity) for entity in entities),
+                identity,
+            )
+            raise write_fail_exception from err
 
     if new_entities:
         return created_entities
@@ -298,7 +311,6 @@ async def update_entities(
     response_description="Updated Entity or Entities.",
     responses={
         200: {"description": "There are no Entities to update", "model": EmptyList},
-        502: {"description": "Internal write error", "model": HTTPError},
     },
 )
 async def patch_entities(request: YamlRequest, response: Response) -> list[Any] | None:
@@ -307,12 +319,8 @@ async def patch_entities(request: YamlRequest, response: Response) -> list[Any] 
     try:
         entities = await request.parse_partial_entities()
     except (ValueError, TypeError) as err:
-        logger.error("Could not parse (partial) entities from request.")
-        logger.exception(err)
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-            detail="Invalid (partial) entities provided. Cannot parse request.",
-        ) from err
+        logger.exception("Could not parse (partial) entities from request.")
+        raise InvalidEntityError("Invalid (partial) entities provided. Cannot parse request.") from err
 
     # Check client-sent content
     if isinstance(entities, list):
@@ -323,39 +331,37 @@ async def patch_entities(request: YamlRequest, response: Response) -> list[Any] 
     else:
         entities = [entities]
 
-    write_fail_exception = HTTPException(
-        status_code=status.HTTP_502_BAD_GATEWAY,
-        detail=(
-            "Could not patch/update entit"
-            "{suffix} with identit{suffix}: {identities}".format(
-                suffix="y" if len(entities) == 1 else "ies",
-                identities=", ".join(get_identity(entity) for entity in entities),
-            )
-        ),
-    )
-
     entities_backend = get_backend(get_config().backend)
 
     # First, check all entities already exist
-    non_existing_entities = [entity for entity in entities if get_identity(entity) not in entities_backend]
-    if non_existing_entities:
-        logger.error(
-            "Cannot patch non-existent entities: identities=[%s]",
-            ", ".join(get_identity(entity) for entity in non_existing_entities),
+    non_existing_entity_ids = [
+        get_identity(entity) for entity in entities if get_identity(entity) not in entities_backend
+    ]
+    if non_existing_entity_ids:
+        err_msg = "Cannot patch non-existent entities: identities=[%s]" % ", ".join(non_existing_entity_ids)
+        logger.error(err_msg)
+        raise EntityNotFound(
+            entity_id=", ".join(non_existing_entity_ids),
+            detail=err_msg,
         )
-        raise write_fail_exception
 
     for entity in entities:
         try:
             entities_backend.update(get_identity(entity), entity)
         except entities_backend.write_access_exception as err:
-            logger.error(
-                "Could not update entities: identities=[%s]",
+            logger.exception(
+                "Could not update entities: identities=[%s]\n"
+                "Error happened when updating entity: identity=%s",
                 ", ".join(get_identity(entity) for entity in entities),
+                get_identity(entity),
             )
-            logger.error("Error happened when updating entity: identity=%s", get_identity(entity))
-            logger.exception(err)
-            raise write_fail_exception from err
+            raise WriteError(
+                "Could not patch/update entit"
+                "{suffix} with identit{suffix}: {identities}".format(
+                    suffix="y" if len(entities) == 1 else "ies",
+                    identities=", ".join(get_identity(entity) for entity in entities),
+                )
+            ) from err
 
     return None
 
@@ -367,10 +373,6 @@ async def patch_entities(request: YamlRequest, response: Response) -> list[Any] 
     dependencies=[Depends(has_role(DSAPIRole.ENTITIES_DELETE))],
     summary="Delete one or more Entities.",
     response_description="Deleted Entity identity or identities.",
-    responses={
-        400: {"description": "No Entity identities provided", "model": HTTPError},
-        502: {"description": "Internal write error", "model": HTTPError},
-    },
 )
 async def delete_entities(
     identities_body: Annotated[
@@ -401,30 +403,23 @@ async def delete_entities(
         identities.update(identities_query)
 
     if not identities:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="No Entity identities provided.",
-        )
+        raise RequestError("At least one entity identity must be provided to delete entities.")
 
     entities_backend = get_backend(get_config().backend)
 
     try:
         entities_backend.delete(identities)
     except entities_backend.write_access_exception as err:
-        logger.error(
+        logger.exception(
             "Could not delete entities: identity=%s",
             ", ".join(str(identity) for identity in identities),
         )
-        logger.exception(err)
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=(
-                "Could not delete entit"
-                "{suffix} with identit{suffix}: {identities}".format(
-                    suffix="y" if len(identities) == 1 else "ies",
-                    identities=", ".join(str(identity) for identity in identities),
-                )
-            ),
+        raise WriteError(
+            "Could not delete entit"
+            "{suffix} with identit{suffix}: {identities}".format(
+                suffix="y" if len(identities) == 1 else "ies",
+                identities=", ".join(str(identity) for identity in identities),
+            )
         ) from err
 
     if len(identities) == 1:

@@ -90,10 +90,34 @@ class EntityExists(DSEntitiesAPIException):
         self.entity_id = entity_id
 
 
+class InvalidEntityError(DSEntitiesAPIException):
+    """Invalid entity error."""
+
+    status_code = status.HTTP_422_UNPROCESSABLE_CONTENT
+    title = "Invalid Entity"
+
+
+class WriteError(DSEntitiesAPIException):
+    """Error writing entity to backend."""
+
+    status_code = status.HTTP_502_BAD_GATEWAY
+    title = "Internal Write Error"
+
+
+class RequestError(DSEntitiesAPIException):
+    """Error with the client request."""
+
+    status_code = status.HTTP_400_BAD_REQUEST
+    title = "Bad Request"
+
+
 ERRORS_WITH_STATUS_CODES: list[type[DSEntitiesAPIException]] = [
     DSEntitiesGeneralException,
     EntityNotFound,
     EntityExists,
+    InvalidEntityError,
+    WriteError,
+    RequestError,
 ]
 """List of exceptions that should be returned with an HTTP status code.
 

@@ -22,6 +22,12 @@ pytestmark = [
 ENDPOINT = "/entities"
 
 
+@pytest.fixture
+def backend_test_data() -> list[dict[str, Any]]:
+    """Start the backend with no entities."""
+    return []
+
+
 def test_create_single_entity(
     client: ClientFixture,
     parameterized_entity: ParameterizeGetEntities,
@@ -94,6 +100,8 @@ def test_create_invalid_entity(
     """Test creating an invalid entity."""
     import json
 
+    from dataspaces_entities.models import ErrorResponse
+
     # Load invalid entities
     entities: list[dict[str, Any]] = [
         json.loads(invalid_entity_file.read_text())
@@ -112,14 +120,20 @@ def test_create_invalid_entity(
     # Check response
     assert response.status_code == 422, json.dumps(response_json, indent=2)
     assert isinstance(response_json, dict), json.dumps(response_json, indent=2)
-    assert "detail" in response_json, json.dumps(response_json, indent=2)
+
+    # Parse as ErrorResponse model
+    parsed_response = ErrorResponse.model_validate(response_json)
+    assert len(parsed_response.errors) >= 1, json.dumps(response_json, indent=2)
+    for error in parsed_response.errors:
+        assert error.status == 422, json.dumps(response_json, indent=2)
+        assert error.title == "RequestValidationError", json.dumps(response_json, indent=2)
 
     # Create single invalid entities
     for entity in entities:
         identity = entity.get("uri", entity.get("identity", None)) or (
             f"{entity.get('namespace', '')}/{entity.get('version', '')}/{entity.get('name', '')}"
         )
-        error_message = f"Failed to create entity with identity {identity}"
+        error_message = f"Failed to raise error when creating invalid entity with identity {identity}"
 
         with client(raise_server_exceptions=False, allowed_role="entities:write") as client_:
             response = client_.post(ENDPOINT, json=entity)
@@ -132,20 +146,29 @@ def test_create_invalid_entity(
         # Check response
         assert response.status_code == 422, f"{error_message}\n{json.dumps(response_json, indent=2)}"
         assert isinstance(response_json, dict), f"{error_message}\n{json.dumps(response_json, indent=2)}"
-        assert "detail" in response_json, f"{error_message}\n{json.dumps(response_json, indent=2)}"
+
+        # Parse as ErrorResponse model
+        parsed_response = ErrorResponse.model_validate(response_json)
+        assert len(parsed_response.errors) == 1, f"{error_message}\n{json.dumps(response_json, indent=2)}"
+        error = parsed_response.errors[0]
+        assert error.status == 422, f"{error_message}\n{json.dumps(response_json, indent=2)}"
+        assert (
+            error.title == "RequestValidationError"
+        ), f"{error_message}\n{json.dumps(response_json, indent=2)}"
 
 
 @pytest.mark.skip_if_live_backend("Authentication is disabled in the live backend.")
 def test_user_with_no_write_access(
     static_dir: Path,
     client: ClientFixture,
-    live_backend: bool,
 ) -> None:
     """Test that a 403 Forbidden exception is raised if the user is a valid user, but does not have write
     access."""
     import json
 
     import yaml
+
+    from dataspaces_entities.models import ErrorResponse
 
     # Load entities
     entities = yaml.safe_load((static_dir / "valid_entities.yaml").read_text())
@@ -162,11 +185,14 @@ def test_user_with_no_write_access(
     # Check response
     assert response.status_code == 403, json.dumps(response_json, indent=2)
     assert isinstance(response_json, dict), json.dumps(response_json, indent=2)
-    assert "detail" in response_json, json.dumps(response_json, indent=2)
     assert "WWW-Authenticate" not in response.headers, response.headers
 
-    if not live_backend:
-        assert response_json["detail"] == "Unauthorized", json.dumps(response_json, indent=2)
+    # Parse as ErrorResponse model
+    parsed_response = ErrorResponse.model_validate(response_json)
+    assert len(parsed_response.errors) == 1, json.dumps(response_json, indent=2)
+    error = parsed_response.errors[0]
+    assert error.status == 403, json.dumps(response_json, indent=2)
+    assert error.detail == "Unauthorized", json.dumps(response_json, indent=2)
 
 
 @pytest.mark.skip_if_live_backend("Cannot mock write error in live backend.")
@@ -183,6 +209,8 @@ def test_backend_write_error_exception(
     import json
 
     import yaml
+
+    from dataspaces_entities.models import ErrorResponse
 
     valid_entity = {
         "identity": "http://onto-ns.com/meta/1.0/ValidEntity",
@@ -212,8 +240,13 @@ def test_backend_write_error_exception(
     # Check response
     assert response.status_code == 502, json.dumps(response_json, indent=2)
     assert isinstance(response_json, dict), json.dumps(response_json, indent=2)
-    assert "detail" in response_json, json.dumps(response_json, indent=2)
-    assert response_json["detail"] == (
+
+    # Parse as ErrorResponse model
+    parsed_response = ErrorResponse.model_validate(response_json)
+    assert len(parsed_response.errors) == 1, json.dumps(response_json, indent=2)
+    error = parsed_response.errors[0]
+    assert error.status == 502, json.dumps(response_json, indent=2)
+    assert error.detail == (
         f"Could not create entity with identity: {valid_entity['identity']}"
     ), json.dumps(response_json, indent=2)
 
@@ -230,8 +263,11 @@ def test_backend_create_returns_bad_value(
     Using the `parameterized_entity` fixture, to test the error response detail changes
     from the response checked in the `test_backend_write_error_exception` test.
     """
+    import json
+
     # Monkeypatch the backend create method to return an unexpected value
     from dataspaces_entities.backend import mongodb as entities_backend
+    from dataspaces_entities.models import ErrorResponse
 
     monkeypatch.setattr(
         entities_backend.MongoDBBackend,
@@ -246,9 +282,14 @@ def test_backend_create_returns_bad_value(
     response_json = response.json()
 
     # Check response
-    assert response.status_code == 502, response_json
-    assert isinstance(response_json, dict), response_json
-    assert "detail" in response_json, response_json
+    assert response.status_code == 502, json.dumps(response_json, indent=2)
+    assert isinstance(response_json, dict), json.dumps(response_json, indent=2)
+
+    # Parse as ErrorResponse model
+    parsed_response = ErrorResponse.model_validate(response_json)
+    assert len(parsed_response.errors) == 1, json.dumps(response_json, indent=2)
+    error = parsed_response.errors[0]
+    assert error.status == 502, json.dumps(response_json, indent=2)
     assert (
-        response_json["detail"] == f"Could not create entity with identity: {parameterized_entity.identity}"
-    ), response_json
+        error.detail == f"Could not create entity with identity: {parameterized_entity.identity}"
+    ), json.dumps(response_json, indent=2)
