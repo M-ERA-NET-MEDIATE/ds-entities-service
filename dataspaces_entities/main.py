@@ -11,12 +11,15 @@ from fastapi import FastAPI
 from dataspaces_entities import __version__
 from dataspaces_entities.backend import get_backend
 from dataspaces_entities.config import get_config
+from dataspaces_entities.exception_handlers import DS_ENTITIES_EXCEPTIONS
+from dataspaces_entities.exceptions import ERRORS_WITH_STATUS_CODES
+from dataspaces_entities.models import ErrorResponse
 from dataspaces_entities.routers import get_routers
 
 LOGGER = logging.getLogger(__name__)
 
 # Handle testing
-if bool(int(os.getenv("DS_ENTITIES_DISABLE_AUTH_ROLE_CHECKS", "0"))):
+if os.getenv("DS_ENTITIES_DISABLE_AUTH_ROLE_CHECKS", "false").lower() in ("1", "true", "yes", "on"):
     import dataspaces_auth.fastapi._auth as ds_auth
     from dataspaces_auth.fastapi._models import TokenData
 
@@ -63,7 +66,7 @@ async def lifespan(app: FastAPI):  # noqa: ARG001
     # Initialize backend
     get_backend(config.backend).initialize()
 
-    if bool(int(os.getenv("DS_ENTITIES_DISABLE_AUTH_ROLE_CHECKS", "0"))):
+    if os.getenv("DS_ENTITIES_DISABLE_AUTH_ROLE_CHECKS", "false").lower() in ("1", "true", "yes", "on"):
         LOGGER.debug(
             "Running in test mode.\n"
             "    - External OAuth2 authentication is disabled!\n"
@@ -76,18 +79,24 @@ async def lifespan(app: FastAPI):  # noqa: ARG001
 
 def create_app() -> FastAPI:
     """Create the ASGI application for the DataSpaces-Entities service."""
-    config = get_config()
-
     app = FastAPI(
         title="Entities Service for DataSpaces",
         version=__version__,
         description="A service for managing entities in DataSpaces.",
         lifespan=lifespan,
-        debug=config.debug,
+        debug=get_config().debug,
+        responses={
+            err.status_code: {"model": ErrorResponse, "description": err.title}
+            for err in ERRORS_WITH_STATUS_CODES
+        },
     )
 
     # Add routers
     for router in get_routers():
         app.include_router(router)
+
+    # Add exception handlers
+    for exception, handler in DS_ENTITIES_EXCEPTIONS:
+        app.add_exception_handler(exception, handler)
 
     return app
