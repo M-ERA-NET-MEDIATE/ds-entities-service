@@ -293,3 +293,110 @@ def test_backend_create_returns_bad_value(
     assert (
         error.detail == f"Could not create entity with identity: {parameterized_entity.identity}"
     ), json.dumps(response_json, indent=2)
+
+
+def test_create_entity_twice(
+    client: ClientFixture,
+    parameterized_entity: ParameterizeGetEntities,
+) -> None:
+    """Test creating the same entity twice raises a 409 Conflict error on the second attempt."""
+    import json
+
+    from dataspaces_entities.models import ErrorResponse
+
+    # Create single entity
+    with client(allowed_role="entities:write") as client_:
+        response = client_.post(ENDPOINT, json=parameterized_entity.entity)
+
+    try:
+        response_json = response.json()
+    except json.JSONDecodeError:
+        pytest.fail(f"Failed to decode response: {response.content!r}")
+
+    # Check response
+    assert response.status_code == 201, json.dumps(response_json, indent=2)
+    assert isinstance(response_json, dict), json.dumps(response_json, indent=2)
+    assert response_json == parameterized_entity.parsed_entity, json.dumps(response_json, indent=2)
+
+    # Create the same entity again
+    with client(allowed_role="entities:write") as client_:
+        response = client_.post(ENDPOINT, json=parameterized_entity.entity)
+
+    try:
+        response_json = response.json()
+    except json.JSONDecodeError:
+        pytest.fail(f"Failed to decode response: {response.content!r}")
+
+    # Check response
+    assert response.status_code == 409, json.dumps(response_json, indent=2)
+    assert isinstance(response_json, dict), json.dumps(response_json, indent=2)
+
+    # Parse as ErrorResponse model
+    parsed_response = ErrorResponse.model_validate(response_json)
+    assert len(parsed_response.errors) == 1, json.dumps(response_json, indent=2)
+    error = parsed_response.errors[0]
+    assert error.status == 409, json.dumps(response_json, indent=2)
+    assert (
+        error.detail
+        == f"Cannot create entity with identity already existing: {parameterized_entity.identity}"
+    ), json.dumps(response_json, indent=2)
+
+
+def test_creating_entities_some_already_existing(
+    static_dir: Path,
+    client: ClientFixture,
+) -> None:
+    """Test creating multiple entities where some entities already exist raises a 409 Conflict
+    error."""
+    import json
+
+    import yaml
+
+    from dataspaces_entities.models import ErrorResponse
+
+    # Load entities
+    entities: list[dict[str, Any]] = yaml.safe_load((static_dir / "valid_entities.yaml").read_text())
+
+    # Create multiple entities
+    with client(allowed_role="entities:write") as client_:
+        response = client_.post(ENDPOINT, json=entities)
+
+    try:
+        response_json = response.json()
+    except json.JSONDecodeError:
+        pytest.fail(f"Failed to decode response: {response.content!r}")
+
+    # Check response
+    assert response.status_code == 201, json.dumps(response_json, indent=2)
+    assert isinstance(response_json, list), json.dumps(response_json, indent=2)
+
+    # Extract some of the created entities
+    created_entities = response_json[: len(response_json) // 2]
+
+    # Create some of the same entities again
+    with client(raise_server_exceptions=False, allowed_role="entities:write") as client_:
+        response = client_.post(ENDPOINT, json=created_entities)
+
+    try:
+        response_json = response.json()
+    except json.JSONDecodeError:
+        pytest.fail(f"Failed to decode response: {response.content!r}")
+
+    # Check response
+    assert response.status_code == 409, json.dumps(response_json, indent=2)
+    assert isinstance(response_json, dict), json.dumps(response_json, indent=2)
+
+    # Parse as ErrorResponse model
+    parsed_response = ErrorResponse.model_validate(response_json)
+    assert len(parsed_response.errors) == 1, json.dumps(response_json, indent=2)
+    error = parsed_response.errors[0]
+    assert error.status == 409, json.dumps(response_json, indent=2)
+    assert error.detail.startswith(
+        "Cannot create entities with identities already existing"
+    ), f"Unexpected error detail: {error.detail!r}\n" + json.dumps(response_json, indent=2)
+    assert all(
+        entity_id in error.detail for entity_id in [entity["identity"] for entity in created_entities]
+    ), f"Not all existing entity identities found in error detail: {error.detail!r}\n" + json.dumps(
+        response_json,
+        indent=2,
+    )
