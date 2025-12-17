@@ -21,7 +21,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Callable, Iterable
     from typing import Any
 
-LOGGER = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 def general_exception(
@@ -46,14 +46,14 @@ def general_exception(
     debug_info = {}
     if get_config().debug:
         tb = "".join(traceback.format_exception(type(exc), value=exc, tb=exc.__traceback__))
-        LOGGER.error("Traceback:\n%s", tb)
+        logger.error("Traceback:\n%s", tb)
         debug_info["_py_traceback"] = tb
 
     title = str(getattr(exc, "title", exc.__class__.__name__))
     http_response_code = int(getattr(exc, "status_code", status_code))
     detail = str(getattr(exc, "detail", exc))
 
-    LOGGER.error(
+    logger.error(
         "HTTP %d: %s\n%s",
         http_response_code,
         title,
@@ -119,7 +119,7 @@ def validation_exception_handler(
 
     errors: list[dict[str, Any]] = []
     for error in exc.errors():
-        LOGGER.debug("error: %s", error)
+        logger.debug("error: %s", error)
         extra = {}
         if get_config().debug:
             extra = {"input": error["input"]}
@@ -133,7 +133,7 @@ def validation_exception_handler(
                     try:
                         body = jsonable_encoder(exc.body)
                     except Exception:
-                        LOGGER.exception("Failed to JSON encode body, will not add it to error details.")
+                        logger.exception("Failed to JSON encode body, will not add it to error details.")
 
                 if body:
                     extra["body"] = body

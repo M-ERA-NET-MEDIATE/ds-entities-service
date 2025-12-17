@@ -18,7 +18,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from s7.pydantic_models.soft7_entity import SOFT7IdentityURIType
 
 
-LOGGER = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 # Exceptions
@@ -81,7 +81,7 @@ class Backend(ABC):
             try:
                 item = get_entity(item)
             except (ValidationError, S7EntityError) as error:
-                LOGGER.error(
+                logger.error(
                     "item given to __contains__ is malformed, not a SOFT7 entity.\nItem: %r\nError: %s",
                     item,
                     error,

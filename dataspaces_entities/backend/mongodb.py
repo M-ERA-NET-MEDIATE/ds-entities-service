@@ -37,7 +37,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from s7.pydantic_models.soft7_entity import SOFT7IdentityURIType
 
 
-LOGGER = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 BACKEND_DRIVER_MAPPING: dict[Backends, Literal["pymongo"]] = {
@@ -103,7 +103,7 @@ def get_client(
     else:
         raise ValueError(f"Invalid MongoDB driver: {driver}. Only 'pymongo' is currently supported.")
 
-    LOGGER.debug("Creating new MongoDB client.")
+    logger.debug("Creating new MongoDB client.")
 
     return MongoClient(
         uri or str(config.mongo_uri),
@@ -154,12 +154,12 @@ class MongoDBBackend(Backend):
         # Check index exists
         if "IDENTITY" in (indices := self._collection.index_information()):
             if not indices["IDENTITY"].get("unique", False):
-                LOGGER.warning(
+                logger.warning(
                     "The IDENTITY index in the MongoDB collection is not unique. "
                     "This may cause problems when creating entities."
                 )
             if indices["IDENTITY"].get("key", False) != [("identity", 1)]:
-                LOGGER.warning(
+                logger.warning(
                     "The IDENTITY index in the MongoDB collection is not as expected. "
                     "This may cause problems when creating entities."
                 )
@@ -172,8 +172,8 @@ class MongoDBBackend(Backend):
         self, entities: Iterable[SOFT7Entity | dict[str, Any]]
     ) -> list[dict[str, Any]] | dict[str, Any] | None:
         """Create one or more entities in the MongoDB."""
-        LOGGER.info("Creating entities: %s", entities)
-        LOGGER.info("The creator's user name: %s", self._settings.mongo_username)
+        logger.info("Creating entities: %s", entities)
+        logger.info("The creator's user name: %s", self._settings.mongo_username)
 
         entities = [self._prepare_entity(entity) for entity in entities]
 

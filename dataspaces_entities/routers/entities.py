@@ -26,7 +26,7 @@ from dataspaces_entities.models import DSAPIRole, HTTPError
 from dataspaces_entities.requests import YamlRequest, YamlRoute
 from dataspaces_entities.utils import get_identity
 
-LOGGER = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 ROUTER = APIRouter(
     prefix="/entities",
@@ -92,7 +92,7 @@ async def get_entities(
             return entities[0]
         return entities
 
-    LOGGER.error(
+    logger.error(
         "Could not find entities:\n  identities=%s\n  properties=%s\n  dimensions=%s",
         str(identities) if identities else "None",
         ", ".join(properties) if properties else "None",
@@ -133,12 +133,12 @@ async def create_entities(
     try:
         entities = await request.parse_entities()
     except ValidationError as err:
-        LOGGER.error("Could not validate entities from request.")
-        LOGGER.exception(err)
+        logger.error("Could not validate entities from request.")
+        logger.exception(err)
         raise RequestValidationError(errors=err.errors(), body=await request.body()) from err
     except (ValueError, TypeError) as err:
-        LOGGER.error("Could not parse entities from request.")
-        LOGGER.exception(err)
+        logger.error("Could not parse entities from request.")
+        logger.exception(err)
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail="Invalid entities provided. Cannot parse request.",
@@ -169,11 +169,11 @@ async def create_entities(
     try:
         created_entities = entities_backend.create(entities)
     except entities_backend.write_access_exception as err:
-        LOGGER.error(
+        logger.error(
             "Could not create entities: identities=[%s]",
             ", ".join(get_identity(entity) for entity in entities),
         )
-        LOGGER.exception(err)
+        logger.exception(err)
         raise write_fail_exception from err
 
     if (
@@ -210,12 +210,12 @@ async def update_entities(
     try:
         entities = await request.parse_entities()
     except ValidationError as err:
-        LOGGER.error("Could not validate entities from request.")
-        LOGGER.exception(err)
+        logger.error("Could not validate entities from request.")
+        logger.exception(err)
         raise RequestValidationError(errors=err.errors(), body=await request.body()) from err
     except (ValueError, TypeError) as err:
-        LOGGER.error("Could not parse entities from request.")
-        LOGGER.exception(err)
+        logger.error("Could not parse entities from request.")
+        logger.exception(err)
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail="Invalid entities provided. Cannot parse request.",
@@ -249,11 +249,11 @@ async def update_entities(
         try:
             created_entities = entities_backend.create(new_entities)
         except entities_backend.write_access_exception as err:
-            LOGGER.error(
+            logger.error(
                 "Could not create entities: identities=[%s]",
                 ", ".join(get_identity(entity) for entity in new_entities),
             )
-            LOGGER.exception(err)
+            logger.exception(err)
             raise write_fail_exception from err
 
         if (
@@ -272,12 +272,12 @@ async def update_entities(
             try:
                 entities_backend.update(identity, entity)
             except entities_backend.write_access_exception as err:
-                LOGGER.error(
+                logger.error(
                     "Could not update entities: identities=[%s]",
                     ", ".join(get_identity(entity) for entity in entities),
                 )
-                LOGGER.error("Error happened when updating entity: identity=%s", identity)
-                LOGGER.exception(err)
+                logger.error("Error happened when updating entity: identity=%s", identity)
+                logger.exception(err)
                 raise write_fail_exception from err
 
     if new_entities:
@@ -307,8 +307,8 @@ async def patch_entities(request: YamlRequest, response: Response) -> list[Any] 
     try:
         entities = await request.parse_partial_entities()
     except (ValueError, TypeError) as err:
-        LOGGER.error("Could not parse (partial) entities from request.")
-        LOGGER.exception(err)
+        logger.error("Could not parse (partial) entities from request.")
+        logger.exception(err)
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail="Invalid (partial) entities provided. Cannot parse request.",
@@ -339,7 +339,7 @@ async def patch_entities(request: YamlRequest, response: Response) -> list[Any] 
     # First, check all entities already exist
     non_existing_entities = [entity for entity in entities if get_identity(entity) not in entities_backend]
     if non_existing_entities:
-        LOGGER.error(
+        logger.error(
             "Cannot patch non-existent entities: identities=[%s]",
             ", ".join(get_identity(entity) for entity in non_existing_entities),
         )
@@ -349,12 +349,12 @@ async def patch_entities(request: YamlRequest, response: Response) -> list[Any] 
         try:
             entities_backend.update(get_identity(entity), entity)
         except entities_backend.write_access_exception as err:
-            LOGGER.error(
+            logger.error(
                 "Could not update entities: identities=[%s]",
                 ", ".join(get_identity(entity) for entity in entities),
             )
-            LOGGER.error("Error happened when updating entity: identity=%s", get_identity(entity))
-            LOGGER.exception(err)
+            logger.error("Error happened when updating entity: identity=%s", get_identity(entity))
+            logger.exception(err)
             raise write_fail_exception from err
 
     return None
@@ -411,11 +411,11 @@ async def delete_entities(
     try:
         entities_backend.delete(identities)
     except entities_backend.write_access_exception as err:
-        LOGGER.error(
+        logger.error(
             "Could not delete entities: identity=%s",
             ", ".join(str(identity) for identity in identities),
         )
-        LOGGER.exception(err)
+        logger.exception(err)
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail=(

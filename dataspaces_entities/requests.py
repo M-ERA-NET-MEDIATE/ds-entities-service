@@ -26,7 +26,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from starlette.routing import BaseRoute
 
 
-LOGGER = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class YamlRequest(Request):
@@ -115,7 +115,7 @@ class YamlRequest(Request):
         # and will therefore work for both).
         # If it does exist, raise an error, as the correct content type is not specified.
         if "Content-Type" not in self.headers:
-            LOGGER.warning(
+            logger.warning(
                 "No 'Content-Type' header found in the request. Falling back to parsing body using the "
                 "YAML parser as it is a super-set of JSON (expecting content to be either JSON or YAML)."
             )
@@ -168,7 +168,7 @@ class YamlRequest(Request):
         # and will therefore work for both).
         # If it does exist, raise an error, as the correct content type is not specified.
         if "Content-Type" not in self.headers:
-            LOGGER.warning(
+            logger.warning(
                 "No 'Content-Type' header found in the request. Falling back to parsing body using the "
                 "YAML parser as it is a super-set of JSON (expecting content to be either JSON or YAML)."
             )
