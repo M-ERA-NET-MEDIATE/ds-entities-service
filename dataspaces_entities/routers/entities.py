@@ -14,6 +14,7 @@ from fastapi import (
     Response,
     status,
 )
+from fastapi.exceptions import RequestValidationError
 from pydantic import ValidationError, conlist
 from s7 import SOFT7Entity
 from s7.pydantic_models.soft7_entity import SOFT7IdentityURIType
@@ -135,9 +136,9 @@ async def create_entities(
     # Parse entities from request
     try:
         entities = await request.parse_entities()
-    except ValidationError:
+    except ValidationError as err:
         logger.exception("Could not validate entities from request.")
-        raise
+        raise RequestValidationError(errors=err.errors(), body=await request.body()) from err
     except (ValueError, TypeError) as err:
         logger.exception("Could not parse entities from request.")
         raise InvalidEntityError("Invalid entities provided. Cannot parse request.") from err
@@ -224,9 +225,9 @@ async def update_entities(
     # Parse entities from request
     try:
         entities = await request.parse_entities()
-    except ValidationError:
+    except ValidationError as err:
         logger.exception("Could not validate entities from request.")
-        raise
+        raise RequestValidationError(errors=err.errors(), body=await request.body()) from err
     except (ValueError, TypeError) as err:
         logger.exception("Could not parse entities from request.")
         raise InvalidEntityError("Invalid entities provided. Cannot parse request.") from err
