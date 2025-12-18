@@ -358,7 +358,9 @@ def _reset_mongo_test_collection(
 
     backend: MongoDBBackend = get_backend()
     backend._collection.delete_many({})
-    backend._collection.insert_many(backend_test_data)
+    if backend_test_data:
+        # When overriding test data to an empty list, avoid calling insert_many
+        backend._collection.insert_many(backend_test_data)
 
 
 @pytest.fixture
