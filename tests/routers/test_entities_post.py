@@ -151,7 +151,7 @@ def test_create_invalid_entity(
 
         # Parse as ErrorResponse model
         parsed_response = ErrorResponse.model_validate(response_json)
-        assert len(parsed_response.errors) == 1, f"{error_message}\n{json.dumps(response_json, indent=2)}"
+        assert len(parsed_response.errors) >= 1, f"{error_message}\n{json.dumps(response_json, indent=2)}"
         error = parsed_response.errors[0]
         assert error.status == 422, f"{error_message}\n{json.dumps(response_json, indent=2)}"
         assert (

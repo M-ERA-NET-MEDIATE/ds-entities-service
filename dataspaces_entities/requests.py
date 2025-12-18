@@ -81,7 +81,6 @@ class YamlRequest(Request):
             line_errors: list[InitErrorDetails] = []
             for validation_error in errors:
                 for error in validation_error.errors():
-                    # error_ = json.loads(error)
                     init_error_details = {
                         "type": error["type"],
                         "input": error["input"],
@@ -91,7 +90,10 @@ class YamlRequest(Request):
                     if error.get("ctx"):
                         if isinstance(error["ctx"], dict):
                             init_error_details["ctx"] = {
-                                str(key): str(value) for key, value in error["ctx"].items()
+                                str(key): (
+                                    value if isinstance(value, (int, float, bool, str)) else str(value)
+                                )
+                                for key, value in error["ctx"].items()
                             }
                         else:
                             init_error_details["ctx"] = error["ctx"]
@@ -300,21 +302,6 @@ class YamlRoute(APIRoute):
                     "application/yaml": {"schema": {"anyOf": entities_type_schema, "title": "Entities"}},
                 },
             }
-
-            # if not is_patch:
-            #     # Manually add 422 - Validation Error to the OpenAPI documentation.
-            #     # This is because it is not automatically added when using the `request` parameter
-            #     # straight up. Which is how this Route should always be used.
-            #     responses = responses or {}
-            #     if 422 not in responses or "422" not in responses:
-            #         responses[422] = {
-            #             "description": "Validation Error",
-            #             "content": {
-            #                 "application/json": {
-            #                     "schema": {"$ref": "#/components/schemas/HTTPValidationError"}
-            #                 }
-            #             },
-            #         }
 
         super().__init__(
             path,
