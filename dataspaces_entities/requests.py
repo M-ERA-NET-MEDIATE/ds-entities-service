@@ -80,15 +80,16 @@ class YamlRequest(Request):
         if errors:
             line_errors: list[InitErrorDetails] = []
             for validation_error in errors:
-                for error in validation_error.errors():
+                for error in validation_error.json():
+                    error_ = yaml.safe_load(error)
                     init_error_details = {
-                        "type": error["type"],
-                        "input": error["input"],
+                        "type": error_["type"],
+                        "input": error_["input"],
                     }
-                    if error.get("loc"):
-                        init_error_details["loc"] = error["loc"]
-                    if error.get("ctx"):
-                        init_error_details["ctx"] = error["ctx"]
+                    if error_.get("loc"):
+                        init_error_details["loc"] = error_["loc"]
+                    if error_.get("ctx"):
+                        init_error_details["ctx"] = error_["ctx"]
 
                     line_errors.append(init_error_details)  # type: ignore[arg-type]
 
