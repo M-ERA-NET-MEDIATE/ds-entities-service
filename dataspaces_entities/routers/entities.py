@@ -342,7 +342,7 @@ async def patch_entities(request: YamlRequest, response: Response) -> list[Any] 
             non_existing_entity_ids.append(entity_id)
 
     if non_existing_entity_ids:
-        err_msg = "Cannot patch non-existent entities: identities=[%s]" % ", ".join(non_existing_entity_ids)
+        err_msg = f"Cannot patch non-existent entities: identities=[{', '.join(non_existing_entity_ids)}]"
         logger.error(err_msg)
         raise EntityNotFound(
             entity_id=", ".join(non_existing_entity_ids),
