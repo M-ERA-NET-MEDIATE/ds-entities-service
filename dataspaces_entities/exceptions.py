@@ -24,6 +24,7 @@ class DSEntitiesAPIException(Exception, ABC):
         title: A descriptive title for this exception.
         status_code: The HTTP status code accompanying this exception.
         detail: An optional string containing the details of the error.
+        headers: An optional mapping of HTTP headers to include with the response.
 
     """
 

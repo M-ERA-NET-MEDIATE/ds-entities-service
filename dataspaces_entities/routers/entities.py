@@ -155,9 +155,11 @@ async def create_entities(
     entities_backend = get_backend(get_config().backend)
 
     # Check for existing entities
-    existing_entity_ids = [
-        get_identity(entity) for entity in entities if get_identity(entity) in entities_backend
-    ]
+    existing_entity_ids: list[str] = []
+    for entity in entities:
+        if (identity := get_identity(entity)) in entities_backend:
+            existing_entity_ids.append(identity)
+
     if existing_entity_ids:
         logger.error(
             "Cannot create already existing entities: identities=[%s]",
@@ -334,9 +336,11 @@ async def patch_entities(request: YamlRequest, response: Response) -> list[Any] 
     entities_backend = get_backend(get_config().backend)
 
     # First, check all entities already exist
-    non_existing_entity_ids = [
-        get_identity(entity) for entity in entities if get_identity(entity) not in entities_backend
-    ]
+    non_existing_entity_ids: list[str] = []
+    for entity in entities:
+        if (entity_id := get_identity(entity)) not in entities_backend:
+            non_existing_entity_ids.append(entity_id)
+
     if non_existing_entity_ids:
         err_msg = "Cannot patch non-existent entities: identities=[%s]" % ", ".join(non_existing_entity_ids)
         logger.error(err_msg)

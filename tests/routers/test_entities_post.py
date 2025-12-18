@@ -123,6 +123,8 @@ def test_create_invalid_entity(
 
     # Parse as ErrorResponse model
     parsed_response = ErrorResponse.model_validate(response_json)
+    # When sending multiple invalid entities, the backend may group or split validation
+    # issues, so the exact number of errors can vary; we only require at least one.
     assert len(parsed_response.errors) >= 1, json.dumps(response_json, indent=2)
     for error in parsed_response.errors:
         assert error.status == 422, json.dumps(response_json, indent=2)

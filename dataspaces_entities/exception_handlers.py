@@ -192,7 +192,7 @@ def permissions_exception_handler(request: Request, exc: PermissionError) -> JSO
 
     Returns:
         A JSON HTTP response through
-        [`general_exception()`][dataspaces.exception_handlers.general_exception].
+        [`general_exception()`][dataspaces_entities.exception_handlers.general_exception].
 
     """
     status = http_status.HTTP_403_FORBIDDEN
