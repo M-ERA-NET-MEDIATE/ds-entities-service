@@ -109,7 +109,7 @@ def test_create_invalid_entity(
     ]
 
     # Create multiple invalid entities
-    with client(raise_server_exceptions=False, allowed_role="entities:write") as client_:
+    with client(allowed_role="entities:write") as client_:
         response = client_.post(ENDPOINT, json=entities)
 
     try:
@@ -137,7 +137,7 @@ def test_create_invalid_entity(
         )
         error_message = f"Failed to raise error when creating invalid entity with identity {identity}"
 
-        with client(raise_server_exceptions=False, allowed_role="entities:write") as client_:
+        with client(allowed_role="entities:write") as client_:
             response = client_.post(ENDPOINT, json=entity)
 
         try:
@@ -231,7 +231,7 @@ def test_backend_write_error_exception(
     assert valid_entity not in entities, valid_entity
 
     # Create single entity
-    with client(raise_server_exceptions=False, allowed_role="entities:write") as client_:
+    with client(allowed_role="entities:write") as client_:
         response = client_.post(ENDPOINT, json=valid_entity)
 
     try:
@@ -376,7 +376,7 @@ def test_creating_entities_some_already_existing(
     created_entities = response_json[: len(response_json) // 2]
 
     # Create some of the same entities again
-    with client(raise_server_exceptions=False, allowed_role="entities:write") as client_:
+    with client(allowed_role="entities:write") as client_:
         response = client_.post(ENDPOINT, json=created_entities)
 
     try:

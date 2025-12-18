@@ -22,7 +22,6 @@ if TYPE_CHECKING:
 
         def __call__(
             self,
-            raise_server_exceptions: bool = True,
             allowed_role: DSAPIRole | str | None = None,
         ) -> TestClient | Client: ...
 
@@ -439,7 +438,6 @@ def client(live_backend: bool, mock_valid_access_token: CreateMockValidAccessTok
     """Return the test client."""
 
     def _client(
-        raise_server_exceptions: bool = True,
         allowed_role: DSAPIRole | str | None = None,
     ) -> TestClient | Client:
         """Return the test client with the given authentication role."""
@@ -458,7 +456,6 @@ def client(live_backend: bool, mock_valid_access_token: CreateMockValidAccessTok
 
             return TestClient(
                 app=app,
-                raise_server_exceptions=raise_server_exceptions,
                 follow_redirects=True,
             )
 
