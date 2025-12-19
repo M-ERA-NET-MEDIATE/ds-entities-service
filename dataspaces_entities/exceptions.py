@@ -112,19 +112,3 @@ class RaceConditionError(DSEntitiesGeneralException):
     """Race condition error."""
 
     title = "Race Condition Error"
-
-
-ERRORS_WITH_STATUS_CODES: list[type[DSEntitiesAPIException]] = [
-    DSEntitiesGeneralException,
-    EntityNotFound,
-    EntityExists,
-    InvalidEntityError,
-    WriteError,
-    RequestError,
-]
-"""List of exceptions that should be returned with an HTTP status code.
-
-These exceptions represent errors with unique status codes.
-
-This list is used for OpenAPI documentation generation.
-"""

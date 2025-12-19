@@ -6,7 +6,7 @@ import logging
 import os
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, status
 
 from dataspaces_entities import __version__
 from dataspaces_entities.backend import get_backend
@@ -85,6 +85,7 @@ def create_app() -> FastAPI:
         description="A service for managing entities in DataSpaces.",
         lifespan=lifespan,
         debug=get_config().debug,
+        # Common error responses for all endpoints
         responses={
             InvalidEntityError.status_code: {
                 "description": "The provided request parameters (e.g., Entity/-ies) are invalid.",
@@ -92,6 +93,18 @@ def create_app() -> FastAPI:
             },
             DSEntitiesGeneralException.status_code: {
                 "description": "A general server error occurred.",
+                "model": ErrorResponse,
+            },
+            status.HTTP_401_UNAUTHORIZED: {
+                "description": "Unauthorized. Invalid or missing authentication credentials.",
+                "model": ErrorResponse,
+            },
+            status.HTTP_403_FORBIDDEN: {
+                "description": "Forbidden. The authenticated user does not have the required permissions.",
+                "model": ErrorResponse,
+            },
+            status.HTTP_501_NOT_IMPLEMENTED: {
+                "description": "Not Implemented. The requested functionality is not implemented.",
                 "model": ErrorResponse,
             },
         },
