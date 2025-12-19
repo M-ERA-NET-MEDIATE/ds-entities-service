@@ -18,7 +18,7 @@ from pymongo.errors import (
     WriteError,
 )
 from s7 import SOFT7Entity, get_entity
-from s7.pydantic_models.soft7_entity import SOFT7IdentityURI
+from s7.pydantic_models.soft7_entity import SOFT7IdentityURI, SOFT7IdentityURIType
 
 from dataspaces_entities.backend import Backends
 from dataspaces_entities.backend.backend import (
@@ -38,7 +38,6 @@ if TYPE_CHECKING:  # pragma: no cover
     from pymongo import MongoClient
     from pymongo.collection import Collection as MongoCollection
     from s7 import SOFT7Entity
-    from s7.pydantic_models.soft7_entity import SOFT7IdentityURIType
 
 
 logger = logging.getLogger(__name__)
