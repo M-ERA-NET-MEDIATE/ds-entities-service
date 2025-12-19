@@ -22,12 +22,15 @@ from s7.pydantic_models.soft7_entity import SOFT7IdentityURIType
 from dataspaces_entities.backend import get_backend
 from dataspaces_entities.config import get_config
 from dataspaces_entities.exceptions import (
+    EntityExists,
     EntityNotFound,
     InvalidEntityError,
+    RaceConditionError,
     RequestError,
     WriteError,
 )
 from dataspaces_entities.models import DSAPIRole
+from dataspaces_entities.models.errors import ErrorResponse
 from dataspaces_entities.requests import YamlRequest, YamlRoute
 from dataspaces_entities.utils import generate_error_display_ids, get_identity
 
@@ -50,6 +53,12 @@ EmptyList: type[list[Any]] = conlist(Any, min_length=0, max_length=0)  # type: i
     dependencies=[Depends(has_role(DSAPIRole.ENTITIES_READ))],
     summary="Retrieve one or more Entity.",
     response_description="Retrieved Entity or Entities.",
+    responses={
+        EntityNotFound.status_code: {
+            "description": "No Entities found matching the search criteria.",
+            "model": ErrorResponse,
+        },
+    },
 )
 async def get_entities(
     identities: Annotated[
@@ -124,7 +133,18 @@ async def get_entities(
     summary="Create one or more Entities.",
     response_description="Created Entity or Entities.",
     responses={
-        200: {"description": "There are no Entities to replace or create", "model": EmptyList},
+        status.HTTP_200_OK: {
+            "description": "There are no Entities to replace or create",
+            "model": EmptyList,
+        },
+        WriteError.status_code: {
+            "description": "Could not create the provided Entity/-ies.",
+            "model": ErrorResponse,
+        },
+        EntityExists.status_code: {
+            "description": "One or more of the provided Entity/-ies already exist.",
+            "model": ErrorResponse,
+        },
     },
 )
 async def create_entities(
@@ -194,8 +214,22 @@ async def create_entities(
     summary="Replace and/or create one or more Entities.",
     response_description="Created (not replaced) Entity or Entities.",
     responses={
-        200: {"description": "There are no Entities to replace or create", "model": EmptyList},
-        204: {"description": "Replaced (not created) Entity or Entitites"},
+        status.HTTP_200_OK: {
+            "description": "There are no Entities to replace or create",
+            "model": EmptyList,
+        },
+        status.HTTP_204_NO_CONTENT: {
+            "description": "Replaced (not created) Entity or Entitites",
+            "model": None,
+        },
+        WriteError.status_code: {
+            "description": "Could not put/update the provided Entity/-ies.",
+            "model": ErrorResponse,
+        },
+        EntityExists.status_code: {
+            "description": "One or more of the provided Entity/-ies already exist.",
+            "model": ErrorResponse,
+        },
     },
 )
 async def update_entities(
@@ -272,6 +306,25 @@ async def update_entities(
     if new_entities:
         try:
             created_entities = entities_backend.create(new_entities)
+        except EntityExists as err:
+            logger.exception(
+                "Could not create entities: identities=[%s]. While we have already checked for existing "
+                "entities, a race condition occurred, where the entities were created by another process "
+                "prior to this operation !",
+                ", ".join(get_identity(entity) for entity in new_entities),
+            )
+            raise RaceConditionError(
+                "Could not create entit"
+                "{suffix} with identit{suffix}: {identities} "
+                "because they already exist.".format(
+                    suffix="y" if len(new_entities) == 1 else "ies",
+                    identities=", ".join(
+                        generate_error_display_ids(
+                            entity_ids=[get_identity(entity) for entity in new_entities]
+                        )
+                    ),
+                )
+            ) from err
         except entities_backend.write_access_exception as err:
             logger.exception(
                 "Could not create entities: identities=[%s]; "
@@ -310,7 +363,15 @@ async def update_entities(
     summary="Update one or more Entities.",
     response_description="Updated Entity or Entities.",
     responses={
-        200: {"description": "There are no Entities to update", "model": EmptyList},
+        status.HTTP_200_OK: {"description": "There are no Entities to update", "model": EmptyList},
+        WriteError.status_code: {
+            "description": "Could not patch/update the provided Entity/-ies.",
+            "model": ErrorResponse,
+        },
+        EntityNotFound.status_code: {
+            "description": "One or more of the provided Entity/-ies do not exist.",
+            "model": ErrorResponse,
+        },
     },
 )
 async def patch_entities(request: YamlRequest, response: Response) -> list[Any] | None:
@@ -379,6 +440,16 @@ async def patch_entities(request: YamlRequest, response: Response) -> list[Any] 
     dependencies=[Depends(has_role(DSAPIRole.ENTITIES_DELETE))],
     summary="Delete one or more Entities.",
     response_description="Deleted Entity identity or identities.",
+    responses={
+        RequestError.status_code: {
+            "description": "No Entity identities were provided to delete entities.",
+            "model": ErrorResponse,
+        },
+        WriteError.status_code: {
+            "description": "Could not delete the provided Entity/-ies.",
+            "model": ErrorResponse,
+        },
+    },
 )
 async def delete_entities(
     identities_body: Annotated[

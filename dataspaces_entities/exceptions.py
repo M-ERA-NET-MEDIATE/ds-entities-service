@@ -51,7 +51,7 @@ class DSEntitiesGeneralException(DSEntitiesAPIException):
     title = "General Server Error"
 
 
-class EntityNotFound(DSEntitiesAPIException):
+class EntityNotFound(DSEntitiesGeneralException):
     """Entity not found."""
 
     status_code = status.HTTP_404_NOT_FOUND
@@ -69,7 +69,7 @@ class EntityNotFound(DSEntitiesAPIException):
         self.entity_id = entity_id
 
 
-class EntityExists(DSEntitiesAPIException):
+class EntityExists(DSEntitiesGeneralException):
     """Entity already exists."""
 
     status_code = status.HTTP_409_CONFLICT
@@ -87,25 +87,31 @@ class EntityExists(DSEntitiesAPIException):
         self.entity_id = entity_id
 
 
-class InvalidEntityError(DSEntitiesAPIException):
+class InvalidEntityError(DSEntitiesGeneralException):
     """Invalid entity error."""
 
     status_code = status.HTTP_422_UNPROCESSABLE_CONTENT
     title = "Invalid Entity"
 
 
-class WriteError(DSEntitiesAPIException):
+class WriteError(DSEntitiesGeneralException):
     """Error writing entity to backend."""
 
     status_code = status.HTTP_502_BAD_GATEWAY
     title = "Internal Write Error"
 
 
-class RequestError(DSEntitiesAPIException):
+class RequestError(DSEntitiesGeneralException):
     """Error with the client request."""
 
     status_code = status.HTTP_400_BAD_REQUEST
     title = "Bad Request"
+
+
+class RaceConditionError(DSEntitiesGeneralException):
+    """Race condition error."""
+
+    title = "Race Condition Error"
 
 
 ERRORS_WITH_STATUS_CODES: list[type[DSEntitiesAPIException]] = [

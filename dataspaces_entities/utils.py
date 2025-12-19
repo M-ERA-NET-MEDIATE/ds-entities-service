@@ -6,6 +6,8 @@ from typing import TYPE_CHECKING
 
 from s7 import SOFT7Entity
 
+from dataspaces_entities.exceptions import InvalidEntityError
+
 if TYPE_CHECKING:  # pragma: no cover
     from typing import Any
 
@@ -27,7 +29,7 @@ def get_identity(entity: SOFT7Entity | dict[str, Any]) -> str:
     if not all(
         (key in entity and isinstance(entity[key], str)) for key in ("namespace", "version", "name")
     ):
-        raise ValueError(
+        raise InvalidEntityError(
             "Entity must have either an identity/URI or all of 'namespace', 'version', and 'name' defined."
         )
 

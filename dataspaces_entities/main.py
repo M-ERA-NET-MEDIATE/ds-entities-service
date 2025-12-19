@@ -12,7 +12,7 @@ from dataspaces_entities import __version__
 from dataspaces_entities.backend import get_backend
 from dataspaces_entities.config import get_config
 from dataspaces_entities.exception_handlers import DS_ENTITIES_EXCEPTIONS
-from dataspaces_entities.exceptions import ERRORS_WITH_STATUS_CODES
+from dataspaces_entities.exceptions import DSEntitiesGeneralException, InvalidEntityError
 from dataspaces_entities.models import ErrorResponse
 from dataspaces_entities.routers import get_routers
 
@@ -86,8 +86,14 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
         debug=get_config().debug,
         responses={
-            err.status_code: {"model": ErrorResponse, "description": err.title}
-            for err in ERRORS_WITH_STATUS_CODES
+            InvalidEntityError.status_code: {
+                "description": "The provided request parameters (e.g., Entity/-ies) are invalid.",
+                "model": ErrorResponse,
+            },
+            DSEntitiesGeneralException.status_code: {
+                "description": "A general server error occurred.",
+                "model": ErrorResponse,
+            },
         },
     )
 

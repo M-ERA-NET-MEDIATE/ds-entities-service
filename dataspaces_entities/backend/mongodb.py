@@ -311,6 +311,7 @@ class MongoDBBackend(Backend):
 
         Raises:
             MongoDBBackendError: If the query is invalid.
+            InvalidEntityError: If one or more entity identities are invalid.
 
         """
         query = raw_query or {}
