@@ -200,20 +200,26 @@ class MongoDBBackend(Backend):
             existing_entities = list(self.search(by_identities=entity_ids))
             existing_entity_ids = {get_identity(entity) for entity in existing_entities}
 
-            existing_entity_ids_as_str = ", ".join(existing_entity_ids)
-
             logger.exception(
                 "Could not create entities, one or more already exist: %s",
-                existing_entity_ids_as_str,
+                ", ".join(existing_entity_ids),
             )
 
+            max_display_entities = 5
+            display_ids = entity_ids[:max_display_entities]
+            remaining_count = len(existing_entity_ids) - max_display_entities
+            if remaining_count > 0:
+                display_ids.append(f"... and {remaining_count} more")
+
+            display_ids_str = ", ".join(display_ids)
+
             raise EntityExists(
-                entity_id=existing_entity_ids_as_str,
+                entity_id=display_ids_str,
                 detail=(
                     "Cannot create entit"
                     "{suffix} with identit{suffix} already existing: {identities}".format(
                         suffix="y" if len(existing_entity_ids) == 1 else "ies",
-                        identities=existing_entity_ids_as_str,
+                        identities=display_ids_str,
                     )
                 ),
             ) from exc

@@ -41,6 +41,7 @@ def _mock_backend(
         BackendWriteAccessError,
     )
     from dataspaces_entities.backend.mongodb import MongoDBBackend
+    from dataspaces_entities.exceptions import EntityExists
     from dataspaces_entities.utils import get_identity
 
     class MockBackendError(BackendError):
@@ -110,6 +111,27 @@ def _mock_backend(
 
             if not entities:
                 return None
+
+            if any(entity_id in self.__test_data_uris for entity_id in entity_identities):
+                max_display_entities = 5
+                existing_entity_ids = [
+                    entity_id for entity_id in entity_identities if entity_id in self.__test_data_uris
+                ]
+                display_ids = existing_entity_ids[:max_display_entities]
+                remaining_count = len(existing_entity_ids) - max_display_entities
+                if remaining_count > 0:
+                    display_ids.append(f"... and {remaining_count} more")
+                display_ids_as_str = ", ".join(display_ids)
+                raise EntityExists(
+                    entity_id=display_ids_as_str,
+                    detail=(
+                        "Cannot create entit"
+                        "{suffix} with identit{suffix} already existing: {identities}".format(
+                            suffix="y" if len(existing_entity_ids) == 1 else "ies",
+                            identities=display_ids_as_str,
+                        )
+                    ),
+                )
 
             self.__test_data.extend(entities)
             self.__test_data_uris.extend(entity_identities)

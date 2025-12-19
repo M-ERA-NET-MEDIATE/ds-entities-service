@@ -104,7 +104,7 @@ async def get_entities(
     )
 
     raise EntityNotFound(
-        entity_id=", ".join(identities) if identities else "see detail",
+        entity_id=", ".join(str(identity) for identity in identities) if identities else "see detail",
         detail=(
             f"Could not find entities:"
             f"{' identities=' + str(identities) if identities else ''}"
