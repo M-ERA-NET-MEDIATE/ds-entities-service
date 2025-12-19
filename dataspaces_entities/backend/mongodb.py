@@ -295,15 +295,16 @@ class MongoDBBackend(Backend):
     ) -> Generator[dict[str, Any]]:
         """Search for entities.
 
-        If `raw_query` is given, it will be used as the query. Otherwise, the
-        `by_properties`, `by_dimensions`, and `by_identities` will be used to
-        construct the query.
+        If `raw_query` is given, it will be used as the query. Otherwise, the `by_properties`,
+        `by_dimensions`, `by_identities`, and `by_mongo_ids` will be used to construct the query.
+        Note, all parameters are combined using a logical OR.
 
         Parameters:
             raw_query: The raw MongoDB query to use.
             by_properties: List of property names to search for.
             by_dimensions: List of dimension names to search for.
             by_identities: List of entity identities to search for.
+            by_mongo_ids: List of MongoDB document IDs to search for.
 
         Yields:
             Matching entities.
