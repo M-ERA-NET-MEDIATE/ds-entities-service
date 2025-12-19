@@ -359,7 +359,14 @@ class MongoDBBackend(Backend):
             if by_mongo_ids:
                 query["$or"].extend(
                     [
-                        {"_id": {"$in": [str(_id) for _id in by_mongo_ids]}},
+                        {
+                            "_id": {
+                                "$in": [
+                                    ObjectId(mongo_id) if isinstance(mongo_id, str) else mongo_id
+                                    for mongo_id in by_mongo_ids
+                                ]
+                            }
+                        },
                     ]
                 )
 
