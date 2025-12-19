@@ -350,14 +350,9 @@ class MongoDBBackend(Backend):
                 )
             if by_mongo_ids:
                 query["$or"].extend(
-                    {
-                        "_id": {
-                            "$in": [
-                                ObjectId(_id) if not isinstance(_id, ObjectId) else _id
-                                for _id in by_mongo_ids
-                            ]
-                        }
-                    },
+                    [
+                        {"_id": {"$in": [str(_id) for _id in by_mongo_ids]}},
+                    ]
                 )
 
         cursor = self._collection.find(
