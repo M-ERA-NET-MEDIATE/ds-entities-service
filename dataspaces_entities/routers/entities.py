@@ -219,7 +219,7 @@ async def create_entities(
             "model": EmptyList,
         },
         status.HTTP_204_NO_CONTENT: {
-            "description": "Replaced (not created) Entity or Entitites",
+            "description": "Replaced (not created) Entity or Entities",
             "model": None,
         },
         WriteError.status_code: {
