@@ -22,7 +22,6 @@ from s7.pydantic_models.soft7_entity import SOFT7IdentityURIType
 from dataspaces_entities.backend import get_backend
 from dataspaces_entities.config import get_config
 from dataspaces_entities.exceptions import (
-    EntityExists,
     EntityNotFound,
     InvalidEntityError,
     RequestError,
@@ -89,7 +88,7 @@ async def get_entities(
     backend = get_backend()
 
     entities = list(
-        backend.search(by_identity=identities, by_properties=properties, by_dimensions=dimensions)
+        backend.search(by_identities=identities, by_properties=properties, by_dimensions=dimensions)
     )
 
     if entities:
@@ -105,7 +104,7 @@ async def get_entities(
     )
 
     raise EntityNotFound(
-        entity_id=str(identities) if identities else "see detail",
+        entity_id=", ".join(identities) if identities else "see detail",
         detail=(
             f"Could not find entities:"
             f"{' identities=' + str(identities) if identities else ''}"
@@ -154,33 +153,19 @@ async def create_entities(
 
     entities_backend = get_backend(get_config().backend)
 
-    # Check for existing entities
-    existing_entity_ids: list[str] = []
-    for entity in entities:
-        if (identity := get_identity(entity)) in entities_backend:
-            existing_entity_ids.append(identity)
+    entity_ids = [get_identity(entity) for entity in entities]
 
-    if existing_entity_ids:
-        logger.error(
-            "Cannot create already existing entities: identities=[%s]",
-            ", ".join(existing_entity_ids),
-        )
-        raise EntityExists(
-            entity_id=", ".join(existing_entity_ids),
-            detail=(
-                "Cannot create entit"
-                "{suffix} with identit{suffix} already existing: {identities}".format(
-                    suffix="y" if len(existing_entity_ids) == 1 else "ies",
-                    identities=", ".join(existing_entity_ids),
-                )
-            ),
-        )
+    max_display_entities = 5
+    display_ids = entity_ids[:max_display_entities]
+    remaining_count = len(entity_ids) - max_display_entities
+    if remaining_count > 0:
+        display_ids.append(f"... and {remaining_count} more")
 
     write_fail_exception = WriteError(
         "Could not create entit"
         "{suffix} with identit{suffix}: {identities}".format(
             suffix="y" if len(entities) == 1 else "ies",
-            identities=", ".join(get_identity(entity) for entity in entities),
+            identities=", ".join(display_ids),
         )
     )
 
@@ -189,14 +174,14 @@ async def create_entities(
     except entities_backend.write_access_exception as err:
         logger.exception(
             "Could not create entities: identities=[%s]",
-            ", ".join(get_identity(entity) for entity in entities),
+            ", ".join(entity_ids),
         )
         raise write_fail_exception from err
 
     if (
         created_entities is None
         or (len(entities) == 1 and isinstance(created_entities, list))
-        or (len(entities) > 1 and not isinstance(created_entities, list))
+        or (len(entities) > 1 and isinstance(created_entities, dict))
     ):
         raise write_fail_exception
 
@@ -241,63 +226,86 @@ async def update_entities(
     else:
         entities = [entities]
 
+    entities_backend = get_backend(get_config().backend)
+
+    entity_ids = [get_identity(entity) for entity in entities]
+
+    max_display_entities = 5
+    display_ids = entity_ids[:max_display_entities]
+    remaining_count = len(entity_ids) - max_display_entities
+    if remaining_count > 0:
+        display_ids.append(f"... and {remaining_count} more")
+
     write_fail_exception = WriteError(
         "Could not put/update entit"
         "{suffix} with identit{suffix}: {identities}".format(
             suffix="y" if len(entities) == 1 else "ies",
-            identities=", ".join(get_identity(entity) for entity in entities),
+            identities=", ".join(display_ids),
         )
     )
 
-    entities_backend = get_backend(get_config().backend)
+    # Determine which entities need to be created vs. updated
+    existing_entities = list(entities_backend.search(by_identities=entity_ids))
+    existing_entity_ids = [get_identity(entity) for entity in existing_entities]
 
-    new_entities = [entity for entity in entities if get_identity(entity) not in entities_backend]
+    new_entities: list[SOFT7Entity] = []
+    entities_to_be_updated: list[SOFT7Entity] = []
+    for entity in entities:
+        if get_identity(entity) in existing_entity_ids:
+            entities_to_be_updated.append(entity)
+        else:
+            new_entities.append(entity)
 
+    # Update existing entities
+    for entity in entities_to_be_updated:
+        identity = get_identity(entity)
+        try:
+            entities_backend.update(identity, entity)
+        except entities_backend.write_access_exception as err:
+            logger.exception(
+                "Could not update entities: identities=[%s]; "
+                "was handling a total of %d entities in PUT /entities;"
+                "error happened when updating entity: identity=%s",
+                ", ".join(existing_entity_ids),
+                len(entities),
+                identity,
+            )
+            raise write_fail_exception from err
+
+    if entities_to_be_updated:
+        logger.info(
+            "Successfully updated existing entities: identities=[%s]",
+            ", ".join(get_identity(entity) for entity in entities_to_be_updated),
+        )
+
+    # Create new entities
     if new_entities:
         try:
             created_entities = entities_backend.create(new_entities)
         except entities_backend.write_access_exception as err:
             logger.exception(
-                "Could not create entities: identities=[%s]",
+                "Could not create entities: identities=[%s]; "
+                "was handling a total of %d entities in PUT /entities",
                 ", ".join(get_identity(entity) for entity in new_entities),
+                len(entities),
             )
             raise write_fail_exception from err
 
         if (
             created_entities is None
             or (len(new_entities) == 1 and isinstance(created_entities, list))
-            or (len(new_entities) > 1 and not isinstance(created_entities, list))
+            or (len(new_entities) > 1 and isinstance(created_entities, dict))
         ):
             raise write_fail_exception
 
-    # Update existing entities
-    for entity in entities:
-        if entity in new_entities:
-            continue
+        logger.info(
+            "Successfully created new entities: identities=[%s]",
+            ", ".join(get_identity(entity) for entity in new_entities),
+        )
 
-        if (identity := get_identity(entity)) not in entities_backend:  # pragma: no cover
-            # This should not be able to happen, as we already checked for new entities
-            # But we keep this here for safety
-            logger.error(
-                "Cannot update non-existent entity: identity=%s",
-                identity,
-            )
-            raise write_fail_exception
-
-        try:
-            entities_backend.update(identity, entity)
-        except entities_backend.write_access_exception as err:
-            logger.exception(
-                "Could not update entities: identities=[%s]\n"
-                "Error happened when updating entity: identity=%s",
-                ", ".join(get_identity(entity) for entity in entities),
-                identity,
-            )
-            raise write_fail_exception from err
-
-    if new_entities:
         return created_entities
 
+    # Only updated existing entities
     response.status_code = status.HTTP_204_NO_CONTENT
     return None
 
@@ -336,34 +344,47 @@ async def patch_entities(request: YamlRequest, response: Response) -> list[Any] 
     entities_backend = get_backend(get_config().backend)
 
     # First, check all entities already exist
-    non_existing_entity_ids: list[str] = []
-    for entity in entities:
-        if (entity_id := get_identity(entity)) not in entities_backend:
-            non_existing_entity_ids.append(entity_id)
+    entity_ids = [get_identity(entity) for entity in entities]
+    existing_entities = list(entities_backend.search(by_identities=entity_ids))
+    existing_entity_ids = {get_identity(entity) for entity in existing_entities}
 
-    if non_existing_entity_ids:
-        err_msg = f"Cannot patch non-existent entities: identities=[{', '.join(non_existing_entity_ids)}]"
-        logger.error(err_msg)
+    if non_existing_entity_ids := list(set(entity_ids) - existing_entity_ids):
+        err_msg = "Cannot patch non-existent entities: identities=[{identities}]"
+
+        logger.error(err_msg.format(identities=", ".join(entity_ids)))
+
+        max_display_entities = 5
+        display_ids = non_existing_entity_ids[:max_display_entities]
+        remaining_count = len(non_existing_entity_ids) - max_display_entities
+        if remaining_count > 0:
+            display_ids.append(f"... and {remaining_count} more")
+
         raise EntityNotFound(
             entity_id=", ".join(non_existing_entity_ids),
-            detail=err_msg,
+            detail=err_msg.format(identities=", ".join(display_ids)),
         )
 
-    for entity in entities:
+    for entity_id, entity in zip(entity_ids, entities, strict=True):
         try:
-            entities_backend.update(get_identity(entity), entity)
+            entities_backend.update(entity_id, entity)
         except entities_backend.write_access_exception as err:
             logger.exception(
-                "Could not update entities: identities=[%s]\n"
-                "Error happened when updating entity: identity=%s",
-                ", ".join(get_identity(entity) for entity in entities),
-                get_identity(entity),
+                "Could not update entities: identities=[%s]; "
+                "error happened when updating entity: identity=%s",
+                ", ".join(entity_ids),
+                entity_id,
             )
+
+            max_display_entities = 5
+            display_ids = entity_ids[:max_display_entities]
+            remaining_count = len(entity_ids) - max_display_entities
+            if remaining_count > 0:
+                display_ids.append(f"... and {remaining_count} more")
             raise WriteError(
                 "Could not patch/update entit"
                 "{suffix} with identit{suffix}: {identities}".format(
                     suffix="y" if len(entities) == 1 else "ies",
-                    identities=", ".join(get_identity(entity) for entity in entities),
+                    identities=", ".join(display_ids),
                 )
             ) from err
 

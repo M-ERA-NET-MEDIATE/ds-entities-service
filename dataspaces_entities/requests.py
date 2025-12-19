@@ -173,15 +173,20 @@ class YamlRequest(Request):
 
             if "application/json" in content_type or content_type.endswith("+json"):
                 parsed_entities = await self.json()
-                if not isinstance(parsed_entities, (list, dict)) or (
-                    isinstance(parsed_entities, list)
-                    and not all(isinstance(raw_entity, dict) for raw_entity in parsed_entities)
+
+                # Check that the parsed entities are either a list of dicts or a single dict
+                if isinstance(parsed_entities, list) and not all(
+                    isinstance(raw_entity, dict) for raw_entity in parsed_entities
                 ):
                     raise TypeError(
-                        "Invalid (partial) entities provided. Cannot be parsed individually as dicts or "
-                        "as a single dict."
+                        "Invalid (partial) entities provided. Cannot be parsed individually as dicts."
+                    )
+                if not isinstance(parsed_entities, dict):
+                    raise TypeError(
+                        "Invalid (partial) entities provided. Cannot be parsed as a single dict."
                     )
 
+                # Return either a single dict or the list of dicts (if multiple were provided)
                 if isinstance(parsed_entities, dict):
                     return parsed_entities
 

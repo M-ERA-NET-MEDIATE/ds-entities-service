@@ -148,12 +148,12 @@ class Backend(ABC):
         raw_query: Any = None,
         by_properties: list[str] | None = None,
         by_dimensions: list[str] | None = None,
-        by_identity: list[str] | None = None,
+        by_identities: list[str] | None = None,
     ) -> Generator[dict[str, Any]]:  # pragma: no cover
         """Search for entities.
 
         If `raw_query` is given, it will be used as the query. Otherwise, the
-        `by_properties`, `by_dimensions`, and `by_identity` will be used to
+        `by_properties`, `by_dimensions`, and `by_identities` will be used to
         construct the query.
 
         If no arguments are given, all entities will be returned.

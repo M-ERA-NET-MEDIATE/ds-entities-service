@@ -3,12 +3,8 @@
 from __future__ import annotations
 
 from abc import ABC
-from typing import TYPE_CHECKING
 
 from fastapi import status
-
-if TYPE_CHECKING:  # pragma: no cover
-    from typing import Any
 
 
 class DSEntitiesAPIException(Exception, ABC):
@@ -28,14 +24,14 @@ class DSEntitiesAPIException(Exception, ABC):
 
     """
 
-    title: str | None = None
+    title: str = ""
     status_code: int = status.HTTP_500_INTERNAL_SERVER_ERROR
     detail: str | None = None
-    headers: dict[str, Any] | None = None
+    headers: dict[str, str] | None = None
 
     def __init__(self, detail: str | None = None, headers: dict[str, str] | None = None) -> None:
         """Initialize the exception with an optional detail message."""
-        if self.title is None:
+        if not self.title:
             self.title = self.__class__.__name__
 
         self.detail = detail

@@ -176,7 +176,7 @@ def _mock_backend(
             raw_query: Any = None,
             by_properties: list[str] | None = None,
             by_dimensions: list[str] | None = None,
-            by_identity: list[SOFT7IdentityURIType] | list[str] | None = None,
+            by_identities: list[SOFT7IdentityURIType] | list[str] | None = None,
         ) -> Generator[dict[str, Any]]:
             if raw_query is not None:
                 raise MockBackendError(f"Raw queries are not supported by {self.__class__.__name__}.")
@@ -215,8 +215,8 @@ def _mock_backend(
                     else:
                         raise MockBackendError("Invalid entity dimensions.")
 
-            if by_identity:
-                for identity in by_identity:
+            if by_identities:
+                for identity in by_identities:
                     if isinstance(identity, str):
                         identity = str(SOFT7IdentityURI(identity))  # noqa: PLW2901
                     else:
