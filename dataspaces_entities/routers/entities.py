@@ -226,8 +226,11 @@ async def create_entities(
             "description": "Could not put/update the provided Entity/-ies.",
             "model": ErrorResponse,
         },
-        EntityExists.status_code: {
-            "description": "One or more of the provided Entity/-ies already exist.",
+        RaceConditionError.status_code: {
+            "description": (
+                "Could not create one or more of the provided Entity/-ies because they were created by "
+                "another process in the time between checking for existence and creating them."
+            ),
             "model": ErrorResponse,
         },
     },

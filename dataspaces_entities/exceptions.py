@@ -111,4 +111,5 @@ class RequestError(DSEntitiesGeneralException):
 class RaceConditionError(DSEntitiesGeneralException):
     """Race condition error."""
 
+    status_code = status.HTTP_409_CONFLICT
     title = "Race Condition Error"
