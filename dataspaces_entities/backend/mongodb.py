@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from functools import lru_cache
-from typing import TYPE_CHECKING, Annotated, Literal
+from typing import TYPE_CHECKING, Annotated, Literal, get_args
 
 from bson import ObjectId
 from pydantic import Field, SecretStr, ValidationError
@@ -330,6 +330,11 @@ class MongoDBBackend(Backend):
                 query = {"$or": []}
 
             if by_properties:
+                if not isinstance(by_properties, list) or not all(
+                    isinstance(prop, str) for prop in by_properties
+                ):
+                    raise MongoDBBackendError("by_properties must be a list of strings.")
+
                 query["$or"].extend(
                     [
                         {"properties": {"$in": by_properties}},
@@ -337,6 +342,11 @@ class MongoDBBackend(Backend):
                     ]
                 )
             if by_dimensions:
+                if not isinstance(by_dimensions, list) or not all(
+                    isinstance(dim, str) for dim in by_dimensions
+                ):
+                    raise MongoDBBackendError("by_dimensions must be a list of strings.")
+
                 query["$or"].extend(
                     [
                         {"dimension": {"$in": by_dimensions}},
@@ -344,6 +354,14 @@ class MongoDBBackend(Backend):
                     ]
                 )
             if by_identities:
+                if not isinstance(by_identities, list) or not all(
+                    isinstance(identity, (str, *get_args(SOFT7IdentityURIType)))
+                    for identity in by_identities
+                ):
+                    raise MongoDBBackendError(
+                        "by_identities must be a list of strings or SOFT7IdentityURI."
+                    )
+
                 for identity in by_identities:
                     if isinstance(identity, str):
                         try:
@@ -357,16 +375,16 @@ class MongoDBBackend(Backend):
                     ]
                 )
             if by_mongo_ids:
+                if not isinstance(by_mongo_ids, list) or not all(
+                    isinstance(mongo_id, (str, ObjectId)) for mongo_id in by_mongo_ids
+                ):
+                    raise MongoDBBackendError(
+                        "by_mongo_ids must be a list of strings or ObjectId instances."
+                    )
+
                 query["$or"].extend(
                     [
-                        {
-                            "_id": {
-                                "$in": [
-                                    ObjectId(mongo_id) if isinstance(mongo_id, str) else mongo_id
-                                    for mongo_id in by_mongo_ids
-                                ]
-                            }
-                        },
+                        {"_id": {"$in": [ObjectId(mongo_id) for mongo_id in by_mongo_ids]}},
                     ]
                 )
 
