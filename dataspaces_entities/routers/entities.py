@@ -107,9 +107,9 @@ async def get_entities(
         entity_id=", ".join(str(identity) for identity in identities) if identities else "see detail",
         detail=(
             f"Could not find entities:"
-            f"{' identities=' + str(identities) if identities else ''}"
-            f"{' properties=' + str(properties) if properties else ''}"
-            f"{' dimensions=' + str(dimensions) if dimensions else ''}"
+            f"{' identities=' + ', '.join(str(identity) for identity in identities) if identities else ''}"
+            f"{' properties=' + ', '.join(properties) if properties else ''}"
+            f"{' dimensions=' + ', '.join(dimensions) if dimensions else ''}"
         ),
     )
 

@@ -194,7 +194,14 @@ class MongoDBBackend(Backend):
 
         try:
             result = self._collection.insert_many(entities)
-        except DuplicateKeyError as exc:
+        except (DuplicateKeyError, BulkWriteError) as exc:
+            # Check if BulkWriteError is due to duplicate key error
+            if isinstance(exc, BulkWriteError):
+                if not any(error.get("code") == 11000 for error in exc.details.get("writeErrors", [])):
+                    raise
+
+                logger.error("Bulk write error due to duplicate key error: %s", exc)
+
             # One or more entities already exist
             entity_ids = [get_identity(entity) for entity in entities]
             existing_entities = list(self.search(by_identities=entity_ids))
