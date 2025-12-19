@@ -318,7 +318,7 @@ class MongoDBBackend(Backend):
             raise MongoDBBackendError(f"Query must be a dict for {self.__class__.__name__}.")
 
         if not query:
-            if any((by_properties, by_dimensions, by_identities)):
+            if any((by_properties, by_dimensions, by_identities, by_mongo_ids)):
                 query = {"$or": []}
 
             if by_properties:
@@ -349,7 +349,7 @@ class MongoDBBackend(Backend):
                     ]
                 )
             if by_mongo_ids:
-                query["$or"].append(
+                query["$or"].extend(
                     {
                         "_id": {
                             "$in": [
