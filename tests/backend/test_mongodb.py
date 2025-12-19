@@ -54,12 +54,14 @@ def test_create(parameterized_entity: ParameterizeGetEntities) -> None:
     from dataspaces_entities.backend import get_backend
 
     backend = get_backend()
+    assert backend.count() == 0
 
     # Create a single entity
     entity_from_backend = backend.create([parameterized_entity.parsed_entity])
 
     assert isinstance(entity_from_backend, dict)
     assert entity_from_backend == parameterized_entity.parsed_entity
+    assert backend.count() == 1
 
     # Create multiple entities
     raw_entities = [
@@ -83,7 +85,7 @@ def test_create(parameterized_entity: ParameterizeGetEntities) -> None:
         },
     ]
 
-    assert parameterized_entity.parsed_entity not in raw_entities
+    assert parameterized_entity.identity not in [entity["identity"] for entity in raw_entities]
 
     entities_from_backend = backend.create(raw_entities)
 
@@ -91,6 +93,7 @@ def test_create(parameterized_entity: ParameterizeGetEntities) -> None:
     assert len(entities_from_backend) == 2
     assert entities_from_backend[0] in raw_entities
     assert entities_from_backend[1] in raw_entities
+    assert backend.count() == 3
 
 
 def test_read(parameterized_entity: ParameterizeGetEntities) -> None:
