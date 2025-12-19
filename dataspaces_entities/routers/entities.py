@@ -29,7 +29,7 @@ from dataspaces_entities.exceptions import (
 )
 from dataspaces_entities.models import DSAPIRole
 from dataspaces_entities.requests import YamlRequest, YamlRoute
-from dataspaces_entities.utils import get_identity
+from dataspaces_entities.utils import generate_error_display_ids, get_identity
 
 logger = logging.getLogger(__name__)
 
@@ -151,21 +151,17 @@ async def create_entities(
     else:
         entities = [entities]
 
-    entities_backend = get_backend(get_config().backend)
+    config = get_config()
+
+    entities_backend = get_backend(config.backend)
 
     entity_ids = [get_identity(entity) for entity in entities]
-
-    max_display_entities = 5
-    display_ids = entity_ids[:max_display_entities]
-    remaining_count = len(entity_ids) - max_display_entities
-    if remaining_count > 0:
-        display_ids.append(f"... and {remaining_count} more")
 
     write_fail_exception = WriteError(
         "Could not create entit"
         "{suffix} with identit{suffix}: {identities}".format(
             suffix="y" if len(entities) == 1 else "ies",
-            identities=", ".join(display_ids),
+            identities=", ".join(generate_error_display_ids(entity_ids=entity_ids)),
         )
     )
 
@@ -230,17 +226,11 @@ async def update_entities(
 
     entity_ids = [get_identity(entity) for entity in entities]
 
-    max_display_entities = 5
-    display_ids = entity_ids[:max_display_entities]
-    remaining_count = len(entity_ids) - max_display_entities
-    if remaining_count > 0:
-        display_ids.append(f"... and {remaining_count} more")
-
     write_fail_exception = WriteError(
         "Could not put/update entit"
         "{suffix} with identit{suffix}: {identities}".format(
             suffix="y" if len(entities) == 1 else "ies",
-            identities=", ".join(display_ids),
+            identities=", ".join(generate_error_display_ids(entity_ids=entity_ids)),
         )
     )
 
@@ -351,17 +341,13 @@ async def patch_entities(request: YamlRequest, response: Response) -> list[Any] 
     if non_existing_entity_ids := list(set(entity_ids) - existing_entity_ids):
         err_msg = "Cannot patch non-existent entities: identities=[{identities}]"
 
-        logger.error(err_msg.format(identities=", ".join(entity_ids)))
-
-        max_display_entities = 5
-        display_ids = non_existing_entity_ids[:max_display_entities]
-        remaining_count = len(non_existing_entity_ids) - max_display_entities
-        if remaining_count > 0:
-            display_ids.append(f"... and {remaining_count} more")
+        logger.error(err_msg.format(identities=", ".join(non_existing_entity_ids)))
 
         raise EntityNotFound(
             entity_id=", ".join(non_existing_entity_ids),
-            detail=err_msg.format(identities=", ".join(display_ids)),
+            detail=err_msg.format(
+                identities=", ".join(generate_error_display_ids(entity_ids=non_existing_entity_ids))
+            ),
         )
 
     for entity_id, entity in zip(entity_ids, entities, strict=True):
@@ -375,16 +361,11 @@ async def patch_entities(request: YamlRequest, response: Response) -> list[Any] 
                 entity_id,
             )
 
-            max_display_entities = 5
-            display_ids = entity_ids[:max_display_entities]
-            remaining_count = len(entity_ids) - max_display_entities
-            if remaining_count > 0:
-                display_ids.append(f"... and {remaining_count} more")
             raise WriteError(
                 "Could not patch/update entit"
                 "{suffix} with identit{suffix}: {identities}".format(
                     suffix="y" if len(entities) == 1 else "ies",
-                    identities=", ".join(display_ids),
+                    identities=", ".join(generate_error_display_ids(entity_ids=entity_ids)),
                 )
             ) from err
 

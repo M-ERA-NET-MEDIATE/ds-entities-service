@@ -29,7 +29,7 @@ from dataspaces_entities.backend.backend import (
 )
 from dataspaces_entities.config import MongoDsn, get_config
 from dataspaces_entities.exceptions import EntityExists, InvalidEntityError
-from dataspaces_entities.utils import get_identity
+from dataspaces_entities.utils import generate_error_display_ids, get_identity
 
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Generator, Iterable, Iterator
@@ -204,20 +204,14 @@ class MongoDBBackend(Backend):
             # One or more entities already exist
             entity_ids = [get_identity(entity) for entity in entities]
             existing_entities = list(self.search(by_identities=entity_ids))
-            existing_entity_ids = {get_identity(entity) for entity in existing_entities}
+            existing_entity_ids = [get_identity(entity) for entity in existing_entities]
 
             logger.exception(
                 "Could not create entities, one or more already exist: %s",
                 ", ".join(existing_entity_ids),
             )
 
-            max_display_entities = 5
-            display_ids = entity_ids[:max_display_entities]
-            remaining_count = len(existing_entity_ids) - max_display_entities
-            if remaining_count > 0:
-                display_ids.append(f"... and {remaining_count} more")
-
-            display_ids_str = ", ".join(display_ids)
+            display_ids_str = ", ".join(generate_error_display_ids(entity_ids=existing_entity_ids))
 
             raise EntityExists(
                 entity_id=display_ids_str,
@@ -366,7 +360,7 @@ class MongoDBBackend(Backend):
                         try:
                             SOFT7IdentityURI(identity)
                         except (TypeError, ValidationError) as exc:
-                            raise ValueError(f"Invalid entity identity: {identity}") from exc
+                            raise InvalidEntityError(f"Invalid entity identity: {identity}") from exc
 
                 query["$or"].extend(
                     [
@@ -383,7 +377,14 @@ class MongoDBBackend(Backend):
 
                 query["$or"].extend(
                     [
-                        {"_id": {"$in": [ObjectId(mongo_id) for mongo_id in by_mongo_ids]}},
+                        {
+                            "_id": {
+                                "$in": [
+                                    mongo_id if isinstance(mongo_id, ObjectId) else ObjectId(mongo_id)
+                                    for mongo_id in by_mongo_ids
+                                ]
+                            }
+                        },
                     ]
                 )
 

@@ -181,7 +181,7 @@ class YamlRequest(Request):
                     raise TypeError(
                         "Invalid (partial) entities provided. Cannot be parsed individually as dicts."
                     )
-                if not isinstance(parsed_entities, dict):
+                if not isinstance(parsed_entities, (dict, list)):
                     raise TypeError(
                         "Invalid (partial) entities provided. Cannot be parsed as a single dict."
                     )

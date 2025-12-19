@@ -32,6 +32,7 @@ def _mock_backend(
     from copy import deepcopy
 
     import yaml
+    from bson import ObjectId
     from pydantic import ConfigDict, ValidationError
     from s7.pydantic_models.soft7_entity import SOFT7IdentityURI
 
@@ -42,7 +43,7 @@ def _mock_backend(
     )
     from dataspaces_entities.backend.mongodb import MongoDBBackend
     from dataspaces_entities.exceptions import EntityExists
-    from dataspaces_entities.utils import get_identity
+    from dataspaces_entities.utils import generate_error_display_ids, get_identity
 
     class MockBackendError(BackendError):
         """Mock backend error."""
@@ -113,15 +114,10 @@ def _mock_backend(
                 return None
 
             if any(entity_id in self.__test_data_uris for entity_id in entity_identities):
-                max_display_entities = 5
                 existing_entity_ids = [
                     entity_id for entity_id in entity_identities if entity_id in self.__test_data_uris
                 ]
-                display_ids = existing_entity_ids[:max_display_entities]
-                remaining_count = len(existing_entity_ids) - max_display_entities
-                if remaining_count > 0:
-                    display_ids.append(f"... and {remaining_count} more")
-                display_ids_as_str = ", ".join(display_ids)
+                display_ids_as_str = ", ".join(generate_error_display_ids(entity_ids=existing_entity_ids))
                 raise EntityExists(
                     entity_id=display_ids_as_str,
                     detail=(
@@ -199,6 +195,7 @@ def _mock_backend(
             by_properties: list[str] | None = None,
             by_dimensions: list[str] | None = None,
             by_identities: list[SOFT7IdentityURIType] | list[str] | None = None,
+            by_mongo_ids: list[ObjectId] | list[str] | None = None,
         ) -> Generator[dict[str, Any]]:
             if raw_query is not None:
                 raise MockBackendError(f"Raw queries are not supported by {self.__class__.__name__}.")
@@ -246,6 +243,9 @@ def _mock_backend(
 
                     if identity in self.__test_data_uris:
                         results.append(self.__test_data[self.__test_data_uris.index(identity)])
+
+            if by_mongo_ids:
+                raise MockBackendError(f"Mongo IDs are not supported by {self.__class__.__name__}.")
 
             yield from results
 
