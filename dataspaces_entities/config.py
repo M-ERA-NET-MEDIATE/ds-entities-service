@@ -30,6 +30,14 @@ class ServiceConfig(BaseSettings):
         ),
     ] = Backends.MONGODB
 
+    max_entities_in_errors: Annotated[
+        int,
+        Field(
+            description="Maximum number of entities to include in error messages.",
+            ge=1,
+        ),
+    ] = 5
+
     # MongoDB backend settings
     mongo_uri: Annotated[
         MongoDsn,

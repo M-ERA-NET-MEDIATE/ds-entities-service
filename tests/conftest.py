@@ -22,7 +22,6 @@ if TYPE_CHECKING:
 
         def __call__(
             self,
-            raise_server_exceptions: bool = True,
             allowed_role: DSAPIRole | str | None = None,
         ) -> TestClient | Client: ...
 
@@ -358,7 +357,9 @@ def _reset_mongo_test_collection(
 
     backend: MongoDBBackend = get_backend()
     backend._collection.delete_many({})
-    backend._collection.insert_many(backend_test_data)
+    if backend_test_data:
+        # When overriding test data to an empty list, avoid calling insert_many
+        backend._collection.insert_many(backend_test_data)
 
 
 @pytest.fixture
@@ -437,7 +438,6 @@ def client(live_backend: bool, mock_valid_access_token: CreateMockValidAccessTok
     """Return the test client."""
 
     def _client(
-        raise_server_exceptions: bool = True,
         allowed_role: DSAPIRole | str | None = None,
     ) -> TestClient | Client:
         """Return the test client with the given authentication role."""
@@ -456,7 +456,6 @@ def client(live_backend: bool, mock_valid_access_token: CreateMockValidAccessTok
 
             return TestClient(
                 app=app,
-                raise_server_exceptions=raise_server_exceptions,
                 follow_redirects=True,
             )
 

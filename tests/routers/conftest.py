@@ -15,6 +15,8 @@ if TYPE_CHECKING:
     from s7 import SOFT7Entity
     from s7.pydantic_models.soft7_entity import SOFT7IdentityURIType
 
+    from dataspaces_entities.backend.mongodb import MongoDBBackend
+
 
 @pytest.fixture(autouse=True)
 def _mock_backend(
@@ -22,14 +24,15 @@ def _mock_backend(
     backend_test_data: list[dict[str, Any]],
     monkeypatch: pytest.MonkeyPatch,
     static_dir: Path,
-) -> None:
+) -> type[MongoDBBackend] | None:
     """Mock the backend if not using a live backend."""
     if live_backend:
-        return
+        return None
 
     from copy import deepcopy
 
     import yaml
+    from bson import ObjectId
     from pydantic import ConfigDict, ValidationError
     from s7.pydantic_models.soft7_entity import SOFT7IdentityURI
 
@@ -39,7 +42,8 @@ def _mock_backend(
         BackendWriteAccessError,
     )
     from dataspaces_entities.backend.mongodb import MongoDBBackend
-    from dataspaces_entities.utils import get_identity
+    from dataspaces_entities.exceptions import EntityExists
+    from dataspaces_entities.utils import generate_error_display_ids, get_identity
 
     class MockBackendError(BackendError):
         """Mock backend error."""
@@ -70,12 +74,8 @@ def _mock_backend(
         def write_access_exception(self) -> tuple:
             return MockBackendWriteAccessError
 
-        @property
-        def _test_data(self) -> list[dict[str, Any]]:
-            return deepcopy(self.__test_data)
-
         def __iter__(self) -> Iterator[dict[str, Any]]:
-            return iter(self._test_data)
+            return iter(self.__test_data)
 
         def __len__(self) -> int:
             return len(self.__test_data)
@@ -113,6 +113,22 @@ def _mock_backend(
             if not entities:
                 return None
 
+            if any(entity_id in self.__test_data_uris for entity_id in entity_identities):
+                existing_entity_ids = [
+                    entity_id for entity_id in entity_identities if entity_id in self.__test_data_uris
+                ]
+                display_ids_as_str = ", ".join(generate_error_display_ids(entity_ids=existing_entity_ids))
+                raise EntityExists(
+                    entity_id=display_ids_as_str,
+                    detail=(
+                        "Cannot create entit"
+                        "{suffix} with identit{suffix} already existing: {identities}".format(
+                            suffix="y" if len(existing_entity_ids) == 1 else "ies",
+                            identities=display_ids_as_str,
+                        )
+                    ),
+                )
+
             self.__test_data.extend(entities)
             self.__test_data_uris.extend(entity_identities)
 
@@ -131,7 +147,7 @@ def _mock_backend(
             entity_identity = str(entity_identity)
 
             if entity_identity in self.__test_data_uris:
-                return self._test_data[self.__test_data_uris.index(entity_identity)]
+                return self.__test_data[self.__test_data_uris.index(entity_identity)]
 
             return None
 
@@ -178,7 +194,8 @@ def _mock_backend(
             raw_query: Any = None,
             by_properties: list[str] | None = None,
             by_dimensions: list[str] | None = None,
-            by_identity: list[SOFT7IdentityURIType] | list[str] | None = None,
+            by_identities: list[SOFT7IdentityURIType] | list[str] | None = None,
+            by_mongo_ids: list[ObjectId] | list[str] | None = None,
         ) -> Generator[dict[str, Any]]:
             if raw_query is not None:
                 raise MockBackendError(f"Raw queries are not supported by {self.__class__.__name__}.")
@@ -186,7 +203,7 @@ def _mock_backend(
             results = []
 
             if by_properties:
-                for entity in self._test_data:
+                for entity in self.__test_data:
                     if isinstance(entity.get("properties", {}), dict):
                         # SOFT7
                         if any(prop in entity["properties"] for prop in by_properties):
@@ -202,7 +219,7 @@ def _mock_backend(
                         raise MockBackendError("Invalid entity properties.")
 
             if by_dimensions:
-                for entity in self._test_data:
+                for entity in self.__test_data:
                     if isinstance(entity.get("dimensions", {}), dict):
                         # SOFT7
                         if any(dim in entity["dimensions"] for dim in by_dimensions):
@@ -217,15 +234,18 @@ def _mock_backend(
                     else:
                         raise MockBackendError("Invalid entity dimensions.")
 
-            if by_identity:
-                for identity in by_identity:
+            if by_identities:
+                for identity in by_identities:
                     if isinstance(identity, str):
                         identity = str(SOFT7IdentityURI(identity))  # noqa: PLW2901
                     else:
                         identity = str(identity)  # noqa: PLW2901
 
                     if identity in self.__test_data_uris:
-                        results.append(self._test_data[self.__test_data_uris.index(identity)])
+                        results.append(self.__test_data[self.__test_data_uris.index(identity)])
+
+            if by_mongo_ids:
+                raise MockBackendError(f"Mongo IDs are not supported by {self.__class__.__name__}.")
 
             yield from results
 
@@ -236,3 +256,5 @@ def _mock_backend(
             return len(self.__test_data)
 
     monkeypatch.setattr("dataspaces_entities.backend.mongodb.MongoDBBackend", MockBackend)
+
+    return MockBackend

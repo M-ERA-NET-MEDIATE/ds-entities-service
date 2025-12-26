@@ -12,7 +12,10 @@ from fastapi.responses import JSONResponse
 from fastapi.routing import APIRoute
 from fastapi.utils import generate_unique_id
 from pydantic import ValidationError
+from pydantic_core import InitErrorDetails
 from s7 import get_entity
+
+from dataspaces_entities.config import get_config
 
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Callable, Coroutine, Sequence
@@ -21,12 +24,11 @@ if TYPE_CHECKING:  # pragma: no cover
 
     from fastapi import IncEx, params
     from fastapi.datastructures import DefaultPlaceholder
-    from pydantic_core import ErrorDetails
     from s7 import SOFT7Entity
     from starlette.routing import BaseRoute
 
 
-LOGGER = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class YamlRequest(Request):
@@ -76,17 +78,33 @@ class YamlRequest(Request):
 
         # Handle any caught ValidationErrors
         if errors:
-            line_errors: list[ErrorDetails] = []
+            line_errors: list[InitErrorDetails] = []
             for validation_error in errors:
-                line_errors.extend(validation_error.errors())
+                for error in validation_error.errors():
+                    init_error_details = {
+                        "type": error["type"],
+                        "input": error["input"],
+                    }
+                    if error.get("loc"):
+                        init_error_details["loc"] = error["loc"]
+                    if error.get("ctx"):
+                        if isinstance(error["ctx"], dict):
+                            init_error_details["ctx"] = {
+                                str(key): (
+                                    value if isinstance(value, (int, float, bool, str)) else str(value)
+                                )
+                                for key, value in error["ctx"].items()
+                            }
+                        else:
+                            init_error_details["ctx"] = error["ctx"]
+
+                    line_errors.append(init_error_details)  # type: ignore[arg-type]
 
             raise ValidationError.from_exception_data(
                 title=errors[0].title,
-                # Arg-type is ignored, since line_errors expects `list[InitErrorDetails]`,
-                # which is a sub-set of `list[ErrorDetails]`.
-                line_errors=line_errors,  # type: ignore[arg-type]
-                input_type="python",
-                hide_input=False,
+                line_errors=line_errors,
+                input_type="json",
+                hide_input=not get_config().debug,
             )
 
         # Return entities, since no errors were found
@@ -94,12 +112,12 @@ class YamlRequest(Request):
 
     async def parse_entities(self) -> list[SOFT7Entity] | SOFT7Entity:
         """Parse and return the request body as SOFT entities."""
+        parsed_entities: list[SOFT7Entity] = []
+
         # Parse entities based on the Content-Type header
         for content_type in self.headers.getlist("Content-Type"):
             # Handle YAML (Content-Type: application/yaml)
             if "application/yaml" in content_type or content_type.endswith("+yaml"):
-                parsed_entities: list[SOFT7Entity] = []
-
                 for yaml_doc in await self.yaml():
                     parsed_entities.extend(await self._raw_to_entities(yaml_doc))
 
@@ -115,7 +133,7 @@ class YamlRequest(Request):
         # and will therefore work for both).
         # If it does exist, raise an error, as the correct content type is not specified.
         if "Content-Type" not in self.headers:
-            LOGGER.warning(
+            logger.warning(
                 "No 'Content-Type' header found in the request. Falling back to parsing body using the "
                 "YAML parser as it is a super-set of JSON (expecting content to be either JSON or YAML)."
             )
@@ -130,11 +148,14 @@ class YamlRequest(Request):
 
     async def parse_partial_entities(self) -> list[dict[str, Any]] | dict[str, Any]:
         """Parse and return the request body as partial SOFT entities."""
+        parsed_entities: list[dict[str, Any]] | dict[str, Any] = []
+
         # Parse entities based on the Content-Type header
         for content_type in self.headers.getlist("Content-Type"):
             # Handle YAML (Content-Type: application/yaml)
             if "application/yaml" in content_type or content_type.endswith("+yaml"):
-                parsed_entities: list[dict[str, Any]] = []
+                if TYPE_CHECKING:  # pragma: no cover
+                    assert isinstance(parsed_entities, list)  # nosec
 
                 for yaml_doc in await self.yaml():
                     if isinstance(yaml_doc, dict):
@@ -152,13 +173,22 @@ class YamlRequest(Request):
 
             if "application/json" in content_type or content_type.endswith("+json"):
                 parsed_entities = await self.json()
-                if not isinstance(parsed_entities, dict) or (
-                    isinstance(parsed_entities, list)
-                    and not all(isinstance(raw_entity, dict) for raw_entity in parsed_entities)
+
+                # Check that the parsed entities are either a list of dicts or a single dict
+                if isinstance(parsed_entities, list) and not all(
+                    isinstance(raw_entity, dict) for raw_entity in parsed_entities
                 ):
                     raise TypeError(
                         "Invalid (partial) entities provided. Cannot be parsed individually as dicts."
                     )
+                if not isinstance(parsed_entities, (dict, list)):
+                    raise TypeError(
+                        "Invalid (partial) entities provided. Cannot be parsed as a single dict."
+                    )
+
+                # Return either a single dict or the list of dicts (if multiple were provided)
+                if isinstance(parsed_entities, dict):
+                    return parsed_entities
 
                 return parsed_entities[0] if len(parsed_entities) == 1 else parsed_entities
 
@@ -168,11 +198,13 @@ class YamlRequest(Request):
         # and will therefore work for both).
         # If it does exist, raise an error, as the correct content type is not specified.
         if "Content-Type" not in self.headers:
-            LOGGER.warning(
+            logger.warning(
                 "No 'Content-Type' header found in the request. Falling back to parsing body using the "
                 "YAML parser as it is a super-set of JSON (expecting content to be either JSON or YAML)."
             )
-            parsed_entities = []
+
+            if TYPE_CHECKING:  # pragma: no cover
+                assert isinstance(parsed_entities, list)  # nosec
 
             for yaml_doc in await self.yaml():
                 if isinstance(yaml_doc, dict):
@@ -188,7 +220,10 @@ class YamlRequest(Request):
 
             return parsed_entities[0] if len(parsed_entities) == 1 else parsed_entities
 
-        raise ValueError("Could not parse the (partial) entities from the request body.")
+        raise ValueError(
+            "Could not parse the (partial) entities from the request body, only 'application/json' and "
+            "'application/yaml' are supported."
+        )
 
 
 class YamlRoute(APIRoute):
@@ -272,21 +307,6 @@ class YamlRoute(APIRoute):
                     "application/yaml": {"schema": {"anyOf": entities_type_schema, "title": "Entities"}},
                 },
             }
-
-            if not is_patch:
-                # Manually add 422 - Validation Error to the OpenAPI documentation.
-                # This is because it is not automatically added when using the `request` parameter
-                # straight up. Which is how this Route should always be used.
-                responses = responses or {}
-                if 422 not in responses or "422" not in responses:
-                    responses[422] = {
-                        "description": "Validation Error",
-                        "content": {
-                            "application/json": {
-                                "schema": {"$ref": "#/components/schemas/HTTPValidationError"}
-                            }
-                        },
-                    }
 
         super().__init__(
             path,
