@@ -8,7 +8,7 @@ on:
       - 'push-action/**'  # Allow pushing to protected branches (using CasperWA/push-protected)
 
 env:
-  PIP_INDEX_URL: "${{ vars.EXTERNAL_PYPI_INDEX_URL}}"
+  PIP_INDEX_URL: "${{ vars.EXTERNAL_PYPI_INDEX_URL }}"
   PYTEST_ADDOPTS: "--color=yes"
 
 jobs:
@@ -54,7 +54,7 @@ jobs:
           pip install -U -r .github/utils/requirements_audit.txt
 
       - name: Prepare for pip-audit
-        run: pip-compile --output-file="${{ runner.temp }}/requirements.txt" --all-extras --allow-unsafe --verbose --color "${{ github.workspace }}/pyproject.toml"
+        run: pip-compile --index-url="${{ env.PIP_INDEX_URL }}" --output-file="${{ runner.temp }}/requirements.txt" --extra=pre-commit --extra=testing --extra=server --verbose --color "${{ github.workspace }}/pyproject.toml"
 
       - name: Run pip-audit
         uses: pypa/gh-action-pip-audit@v1.1.0

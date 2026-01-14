@@ -25,8 +25,9 @@ repos:
       name: Check YAML
     - id: debug-statements
     - id: end-of-file-fixer
+      exclude: ^(CHANGELOG\.md|docker/requirements\.txt)$
     - id: mixed-line-ending
-      exclude: ^CHANGELOG.md$
+      exclude: ^(CHANGELOG\.md|docker/requirements\.txt)$
     - id: name-tests-test
       args: ["--pytest-test-first"]
     - id: trailing-whitespace

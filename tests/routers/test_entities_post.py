@@ -100,7 +100,7 @@ def test_create_invalid_entity(
     """Test creating an invalid entity."""
     import json
 
-    from dataspaces_entities.models import ErrorResponse
+    from dataspaces_utils.fastapi.models import ErrorResponse
 
     # Load invalid entities
     entities: list[dict[str, Any]] = [
@@ -169,8 +169,7 @@ def test_user_with_no_write_access(
     import json
 
     import yaml
-
-    from dataspaces_entities.models import ErrorResponse
+    from dataspaces_utils.fastapi.models import ErrorResponse
 
     # Load entities
     entities = yaml.safe_load((static_dir / "valid_entities.yaml").read_text())
@@ -211,8 +210,7 @@ def test_backend_write_error_exception(
     import json
 
     import yaml
-
-    from dataspaces_entities.models import ErrorResponse
+    from dataspaces_utils.fastapi.models import ErrorResponse
 
     valid_entity = {
         "identity": "http://onto-ns.com/meta/1.0/ValidEntity",
@@ -267,9 +265,10 @@ def test_backend_create_returns_bad_value(
     """
     import json
 
+    from dataspaces_utils.fastapi.models import ErrorResponse
+
     # Monkeypatch the backend create method to return an unexpected value
     from dataspaces_entities.backend import mongodb as entities_backend
-    from dataspaces_entities.models import ErrorResponse
 
     monkeypatch.setattr(
         entities_backend.MongoDBBackend,
@@ -304,7 +303,7 @@ def test_create_entity_twice(
     """Test creating the same entity twice raises a 409 Conflict error on the second attempt."""
     import json
 
-    from dataspaces_entities.models import ErrorResponse
+    from dataspaces_utils.fastapi.models import ErrorResponse
 
     # Create single entity
     with client(allowed_role="entities:write") as client_:
@@ -353,8 +352,7 @@ def test_creating_entities_some_already_existing(
     import json
 
     import yaml
-
-    from dataspaces_entities.models import ErrorResponse
+    from dataspaces_utils.fastapi.models import ErrorResponse
 
     # Load entities
     entities: list[dict[str, Any]] = yaml.safe_load((static_dir / "valid_entities.yaml").read_text())

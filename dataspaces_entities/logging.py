@@ -48,4 +48,11 @@ def setup_logging():
         "propagate": False,
     }
 
+    # Add the DataSpaces Utils API logger
+    logging_dict["loggers"]["dataspaces_utils"] = {
+        "handlers": ["console"],
+        "level": "DEBUG",
+        "propagate": False,
+    }
+
     logging.config.dictConfig(logging_dict)
