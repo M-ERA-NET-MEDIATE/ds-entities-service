@@ -2,9 +2,6 @@ name: CI - Update API Documentation
 
 on:
   pull_request:
-  push:
-    branches:
-      - main
 
 jobs:
   generate_openapi_doc:
@@ -19,4 +16,3 @@ jobs:
       markdown-file-path: openapi.md
       disable-auth-env-var: DS_ENTITIES_DISABLE_AUTH_ROLE_CHECKS
       markdownlint-config-path: .markdownlint.yaml
-      push-changes: ${{ github.event_name == 'pull_request' }}
