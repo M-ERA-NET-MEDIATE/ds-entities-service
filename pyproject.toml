@@ -150,8 +150,20 @@ filterwarnings = [
     # Avoid SegmentationFault from DLite
     "ignore::DeprecationWarning:dlite",
 ]
+log_level = "DEBUG"
 
 [tool.coverage.run]
 sigterm = true
 relative_files = true
 source = ["dataspaces_entities"]
+
+[tool.pip-tools.compile]
+upgrade = true
+strip-extras = false
+annotate = false
+quiet = true
+extra = ["server"]
+output-file = "docker/requirements.txt"
+newline = "lf"
+allow-unsafe = false
+emit-index-url = true
