@@ -2,14 +2,48 @@
 
 ## [Unreleased](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/tree/HEAD)
 
-[Full Changelog](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/compare/v0.5.2...HEAD)
+[Full Changelog](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/compare/v0.6.0...HEAD)
 
-## Update dependencies and the developer experience (DX)
+## Better error responses
 
-Several Python dependencies have had their minimum version updated.
-The dev tools and CI/CD actions have been updated.
+Custom exceptions and exception handlers ensure better error responses.
+Instead of raising the generic `fastapi.HTTPException`, we now utilize FastAPI's (Starlette's) exception handler system to provide more explanatory custom exceptions in the code and better error message responses in the REST API.
 
-Deprecated parts from pydantic has been updated to non-deprecated parts.
+## Check entity existence
+
+Prior to creating new entities, it is checked whether the entity's URI/identity already exists in the database. If yes, then a `409 CONFLICT` HTTP response is returned. This is true if any of a list of entities to be created already exist.
+
+## Miscellaneous
+
+Update development tools and requirements.
+
+**Implemented enhancements:**
+
+- Check and return if entity exists for POST [\#132](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/issues/132)
+
+## [v0.6.0](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/tree/v0.6.0) (2026-01-05)
+
+[Full Changelog](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/compare/v0.5.2...v0.6.0)
+
+## Better error responses
+
+Custom exceptions and exception handlers ensure better error responses.
+Instead of raising the generic `fastapi.HTTPException`, we now utilize FastAPI's (Starlette's) exception handler system to provide more explanatory custom exceptions in the code and better error message responses in the REST API.
+
+## Check entity existence
+
+Prior to creating new entities, it is checked whether the entity's URI/identity already exists in the database. If yes, then a `409 CONFLICT` HTTP response is returned. This is true if any of a list of entities to be created already exist.
+
+## Miscellaneous
+
+Update development tools and requirements.
+
+**Merged pull requests:**
+
+- \[pre-commit.ci\] pre-commit autoupdate [\#188](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/188) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
+- Custom exceptions and handlers [\#187](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/187) ([CasperWA](https://github.com/CasperWA))
+- \[pre-commit.ci\] pre-commit autoupdate [\#186](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/186) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
+- \[pre-commit.ci\] pre-commit autoupdate [\#183](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/183) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
 
 ## [v0.5.2](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/tree/v0.5.2) (2025-12-03)
 
