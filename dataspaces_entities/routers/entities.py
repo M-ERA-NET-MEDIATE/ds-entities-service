@@ -6,6 +6,8 @@ import logging
 from typing import Annotated, Any, get_args
 
 from dataspaces_auth.fastapi import has_role
+from dataspaces_utils.fastapi.exceptions import ResourceNotFound
+from dataspaces_utils.fastapi.models import ErrorResponse
 from fastapi import (
     APIRouter,
     Body,
@@ -23,14 +25,12 @@ from dataspaces_entities.backend import get_backend
 from dataspaces_entities.config import get_config
 from dataspaces_entities.exceptions import (
     EntityExists,
-    EntityNotFound,
     InvalidEntityError,
     RaceConditionError,
     RequestError,
     WriteError,
 )
 from dataspaces_entities.models import DSAPIRole
-from dataspaces_entities.models.errors import ErrorResponse
 from dataspaces_entities.requests import YamlRequest, YamlRoute
 from dataspaces_entities.utils import generate_error_display_ids, get_identity
 
@@ -54,7 +54,7 @@ EmptyList: type[list[Any]] = conlist(Any, min_length=0, max_length=0)  # type: i
     summary="Retrieve one or more Entity.",
     response_description="Retrieved Entity or Entities.",
     responses={
-        EntityNotFound.status_code: {
+        ResourceNotFound.status_code: {
             "description": "No Entities found matching the search criteria.",
             "model": ErrorResponse,
         },
@@ -112,8 +112,11 @@ async def get_entities(
         ", ".join(dimensions) if dimensions else "None",
     )
 
-    raise EntityNotFound(
-        entity_id=", ".join(str(identity) for identity in identities) if identities else "see detail",
+    raise ResourceNotFound(
+        resource_type="Entity",
+        resource_identifier=(
+            ", ".join(str(identity) for identity in identities) if identities else "see detail"
+        ),
         detail=(
             f"Could not find entities:"
             f"{' identities=' + ', '.join(str(identity) for identity in identities) if identities else ''}"
@@ -371,7 +374,7 @@ async def update_entities(
             "description": "Could not patch/update the provided Entity/-ies.",
             "model": ErrorResponse,
         },
-        EntityNotFound.status_code: {
+        ResourceNotFound.status_code: {
             "description": "One or more of the provided Entity/-ies do not exist.",
             "model": ErrorResponse,
         },
@@ -407,8 +410,9 @@ async def patch_entities(request: YamlRequest, response: Response) -> list[Any] 
 
         logger.error(err_msg.format(identities=", ".join(non_existing_entity_ids)))
 
-        raise EntityNotFound(
-            entity_id=", ".join(non_existing_entity_ids),
+        raise ResourceNotFound(
+            resource_type="Entity",
+            resource_identifier=", ".join(non_existing_entity_ids),
             detail=err_msg.format(
                 identities=", ".join(generate_error_display_ids(entity_ids=non_existing_entity_ids))
             ),

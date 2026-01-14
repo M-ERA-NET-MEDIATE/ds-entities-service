@@ -5,10 +5,11 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import Annotated
 
+from dataspaces_utils.fastapi.settings import DataSpacesSettings
 from pydantic import Field, SecretStr
 from pydantic.networks import UrlConstraints
 from pydantic_core import MultiHostUrl
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import SettingsConfigDict
 
 from dataspaces_entities.backend import Backends
 
@@ -16,12 +17,12 @@ MongoDsn = Annotated[MultiHostUrl, UrlConstraints(allowed_schemes=["mongodb", "m
 """Support MongoDB schemes with hidden port (avoid default_port constraint)."""
 
 
-class ServiceConfig(BaseSettings):
+class ServiceConfig(DataSpacesSettings):
     """Service app configuration."""
 
-    model_config = SettingsConfigDict(env_prefix="ds_entities_", env_file=".env", extra="ignore")
-
-    debug: Annotated[bool, Field(description="Enable debug mode.")] = False
+    model_config = SettingsConfigDict(
+        env_prefix="DS_ENTITIES_", env_file_encoding="utf-8", case_sensitive=False, extra="ignore"
+    )
 
     backend: Annotated[
         Backends,
