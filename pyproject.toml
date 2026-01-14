@@ -41,7 +41,7 @@ requires-python = "~=3.10"
 dynamic = ["version", "description"]
 
 dependencies = [
-    "DataSpaces-Auth[fastapi] ~=0.3.1",  # From SINTEF's GitLab (SemanticMatter group)
+    "DataSpaces-Auth[fastapi] ~=0.3.2",  # From SINTEF's GitLab (SemanticMatter group)
     "DataSpaces-Utils[fastapi] ~=0.3.0",  # From SINTEF's GitLab (SemanticMatter group)
     "fastapi >=0.123.0,<1",
     "httpx ~=0.28.1",

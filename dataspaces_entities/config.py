@@ -21,7 +21,11 @@ class ServiceConfig(DataSpacesSettings):
     """Service app configuration."""
 
     model_config = SettingsConfigDict(
-        env_prefix="DS_ENTITIES_", env_file_encoding="utf-8", case_sensitive=False, extra="ignore"
+        env_prefix="DS_ENTITIES_",
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        extra="ignore",
     )
 
     backend: Annotated[
