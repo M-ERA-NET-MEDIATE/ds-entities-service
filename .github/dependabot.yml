@@ -11,7 +11,12 @@ updates:
     - CI/CD
     - skip_changelog
   groups:
-    github-actions:
+    actions:
+      applies-to: "version-updates"
+      patterns:
+        - "*"
+    actions-security:
+      applies-to: "security-updates"
       patterns:
         - "*"
 
@@ -19,7 +24,8 @@ updates:
   directories:
     - "/"
     - "/.github/utils"
-    - "/docker"
+  exclude-paths:
+    - "docker/**"
   schedule:
     interval: weekly
     time: "05:16"
