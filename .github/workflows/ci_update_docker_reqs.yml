@@ -2,7 +2,7 @@ name: CI - Update Docker requirements
 
 on:
   schedule:
-    # Run every Monday at 4:00 AM
+    # Run every Monday at 3:09 AM
     - cron: '09 3 * * 1'
   workflow_dispatch:
 
