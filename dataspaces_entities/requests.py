@@ -272,6 +272,7 @@ class YamlRoute(APIRoute):
         generate_unique_id_function: Callable[[APIRoute], str] | DefaultPlaceholder = Default(
             generate_unique_id
         ),
+        strict_content_type: bool | DefaultPlaceholder = Default(True),
     ) -> None:
         # Ensure that the Route only extends the OpenAPI spec for methods that expect an entities body.
         body_entities_methods = {"POST", "PUT", "PATCH"}
@@ -335,4 +336,5 @@ class YamlRoute(APIRoute):
             callbacks=callbacks,
             openapi_extra=openapi_extra,
             generate_unique_id_function=generate_unique_id_function,
+            strict_content_type=strict_content_type,
         )

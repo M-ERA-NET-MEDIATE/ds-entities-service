@@ -43,7 +43,7 @@ dynamic = ["version", "description"]
 dependencies = [
     "DataSpaces-Auth[fastapi] ~=0.3.2",  # From SINTEF's GitLab (SemanticMatter group)
     "DataSpaces-Utils[fastapi] ~=0.3.0",  # From SINTEF's GitLab (SemanticMatter group)
-    "fastapi >=0.123.0,<1",
+    "fastapi >=0.132.0,<1",
     "httpx ~=0.28.1",
     "pydantic-settings ~=2.12",
     "pymongo ~=4.15",
@@ -56,7 +56,7 @@ dependencies = [
 [project.optional-dependencies]
 pre-commit = ["pre-commit ~=4.5"]
 testing = [
-    "dlite-python ~=0.5.29",
+    "dlite-python ~=0.5.29,!=0.5.40",  # Avoid SegmentationFault from DLite (v0.5.40)
     "pytest ~=9.0",
     "pytest-cov ~=7.0",
     "pytest-httpx ~=0.36.0",
