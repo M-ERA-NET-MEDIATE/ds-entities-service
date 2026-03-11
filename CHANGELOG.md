@@ -2,7 +2,49 @@
 
 ## [Unreleased](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/tree/HEAD)
 
-[Full Changelog](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/compare/v0.6.0...HEAD)
+[Full Changelog](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/compare/v0.6.1...HEAD)
+
+## Support latest FastAPI
+
+Update the custom `YamlRequest` class to support the latest FastAPI version (v0.132) that extends the `Request` signature.
+
+## DX
+
+Utilize [DataSpaces-Utils](https://github.com/SemanticMatter/ds-utils) for its FastAPI-specific error exception handling, base configuration, and error models.
+Update the routers' response documentation accordingly.
+
+Update dependencies and dev tools.
+
+## [v0.6.1](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/tree/v0.6.1) (2026-03-02)
+
+[Full Changelog](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/compare/v0.6.0...v0.6.1)
+
+## Support latest FastAPI
+
+Update the custom `YamlRequest` class to support the latest FastAPI version (v0.132) that extends the `Request` signature.
+
+## DX
+
+Utilize [DataSpaces-Utils](https://github.com/SemanticMatter/ds-utils) for its FastAPI-specific error exception handling, base configuration, and error models.
+Update the routers' response documentation accordingly.
+
+Update dependencies and dev tools.
+
+**Merged pull requests:**
+
+- \[pre-commit.ci\] pre-commit autoupdate [\#204](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/204) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
+- \[pre-commit.ci\] pre-commit autoupdate [\#202](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/202) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
+- Bump pillow from 12.1.0 to 12.1.1 in /docker in the pip group across 1 directory [\#201](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/201) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump cryptography from 46.0.3 to 46.0.5 in /docker in the pip group across 1 directory [\#199](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/199) ([dependabot[bot]](https://github.com/apps/dependabot))
+- \[pre-commit.ci\] pre-commit autoupdate [\#198](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/198) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
+- \[pre-commit.ci\] pre-commit autoupdate [\#196](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/196) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
+- \[pre-commit.ci\] pre-commit autoupdate [\#193](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/193) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
+- Use DataSpaces-Utils [\#192](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/192) ([CasperWA](https://github.com/CasperWA))
+- \[pre-commit.ci\] pre-commit autoupdate [\#191](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/191) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
+
+## [v0.6.0](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/tree/v0.6.0) (2026-01-06)
+
+[Full Changelog](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/compare/v0.5.2...v0.6.0)
 
 ## Better error responses
 
@@ -20,23 +62,6 @@ Update development tools and requirements.
 **Implemented enhancements:**
 
 - Check and return if entity exists for POST [\#132](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/issues/132)
-
-## [v0.6.0](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/tree/v0.6.0) (2026-01-05)
-
-[Full Changelog](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/compare/v0.5.2...v0.6.0)
-
-## Better error responses
-
-Custom exceptions and exception handlers ensure better error responses.
-Instead of raising the generic `fastapi.HTTPException`, we now utilize FastAPI's (Starlette's) exception handler system to provide more explanatory custom exceptions in the code and better error message responses in the REST API.
-
-## Check entity existence
-
-Prior to creating new entities, it is checked whether the entity's URI/identity already exists in the database. If yes, then a `409 CONFLICT` HTTP response is returned. This is true if any of a list of entities to be created already exist.
-
-## Miscellaneous
-
-Update development tools and requirements.
 
 **Merged pull requests:**
 

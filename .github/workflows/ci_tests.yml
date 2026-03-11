@@ -8,7 +8,7 @@ on:
       - 'push-action/**'  # Allow pushing to protected branches (using CasperWA/push-protected)
 
 env:
-  PIP_INDEX_URL: "${{ vars.EXTERNAL_PYPI_INDEX_URL}}"
+  PIP_INDEX_URL: "${{ vars.EXTERNAL_PYPI_INDEX_URL }}"
   PYTEST_ADDOPTS: "--color=yes"
 
 jobs:
@@ -54,12 +54,18 @@ jobs:
           pip install -U -r .github/utils/requirements_audit.txt
 
       - name: Prepare for pip-audit
-        run: pip-compile --output-file="${{ runner.temp }}/requirements.txt" --all-extras --allow-unsafe --verbose --color "${{ github.workspace }}/pyproject.toml"
+        run: pip-compile --index-url="${{ env.PIP_INDEX_URL }}" --output-file="${{ runner.temp }}/requirements.txt" --extra=pre-commit --extra=testing --extra=server --verbose --color "${{ github.workspace }}/pyproject.toml"
 
       - name: Run pip-audit
         uses: pypa/gh-action-pip-audit@v1.1.0
         with:
           inputs: '${{ runner.temp }}/requirements.txt'
+          # CVE-2025-69872: DiskCache 5.6.3
+          #   DiskCache (python-diskcache) through 5.6.3 uses Python pickle for serialization by default.
+          #   An attacker with write access to the cache directory can achieve arbitrary code execution
+          #   when a victim application reads from the cache.
+          ignore-vulns: |
+            CVE-2025-69872
 
   docker:
     name: Docker

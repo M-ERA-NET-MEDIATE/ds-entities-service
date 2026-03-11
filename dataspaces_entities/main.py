@@ -6,14 +6,14 @@ import logging
 import os
 from contextlib import asynccontextmanager
 
+from dataspaces_utils.fastapi.exception_handlers import DS_EXCEPTIONS
+from dataspaces_utils.fastapi.models import ErrorResponse
 from fastapi import FastAPI, status
 
 from dataspaces_entities import __version__
 from dataspaces_entities.backend import get_backend
 from dataspaces_entities.config import get_config
-from dataspaces_entities.exception_handlers import DS_ENTITIES_EXCEPTIONS
 from dataspaces_entities.exceptions import DSEntitiesGeneralException, InvalidEntityError
-from dataspaces_entities.models import ErrorResponse
 from dataspaces_entities.routers import get_routers
 
 logger = logging.getLogger(__name__)
@@ -115,7 +115,7 @@ def create_app() -> FastAPI:
         app.include_router(router)
 
     # Add exception handlers
-    for exception, handler in DS_ENTITIES_EXCEPTIONS:
+    for exception, handler in DS_EXCEPTIONS:
         app.add_exception_handler(exception, handler)
 
     return app
