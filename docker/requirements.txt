@@ -15,7 +15,7 @@ billiard==4.2.4
 celery==5.6.2
 certifi==2026.2.25
 cffi==2.0.0
-charset-normalizer==3.4.5
+charset-normalizer==3.4.6
 click==8.3.1
 click-didyoumean==0.3.1
 click-plugins==1.1.1.2
@@ -46,7 +46,7 @@ pycparser==3.0
 pydantic==2.12.5
 pydantic-core==2.41.5
 pydantic-settings==2.13.1
-pyjwt[crypto]==2.11.0
+pyjwt[crypto]==2.12.1
 pymongo==4.16.0
 pynacl==1.6.2
 pysftp==0.2.9
