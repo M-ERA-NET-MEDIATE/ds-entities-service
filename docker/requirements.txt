@@ -40,8 +40,8 @@ packaging==26.2
 paramiko==3.5.1
 pillow==12.2.0
 prompt-toolkit==3.0.52
-psycopg[binary]==3.3.3
-psycopg-binary==3.3.3
+psycopg[binary]==3.3.4
+psycopg-binary==3.3.4
 pycparser==3.0
 pydantic==2.13.3
 pydantic-core==2.46.3
@@ -65,4 +65,4 @@ urllib3==2.6.3
 uvicorn==0.46.0
 uvicorn-worker==0.4.0
 vine==5.1.0
-wcwidth==0.6.0
+wcwidth==0.7.0
