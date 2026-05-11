@@ -62,7 +62,7 @@ testing = [
     "pytest-httpx ~=0.36.2",
 ]
 server = [
-    "gunicorn ~=25.3",
+    "gunicorn ~=26.0",
 ]
 dev = ["DataSpaces-Entities[pre-commit,testing]"]
 
