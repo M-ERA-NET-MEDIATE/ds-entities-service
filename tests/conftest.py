@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 
     from dataspaces_auth.fastapi._pytest_fixtures import CreateMockValidAccessToken
     from fastapi.testclient import TestClient
-    from httpx import Client, Request
+    from httpx2 import Client, Request
 
     from dataspaces_entities.backend.mongodb import MongoDBBackend
     from dataspaces_entities.models.auth import DSAPIRole
@@ -459,7 +459,7 @@ def client(live_backend: bool, mock_valid_access_token: CreateMockValidAccessTok
                 follow_redirects=True,
             )
 
-        from httpx import Client
+        from httpx2 import Client
 
         return Client(base_url="http://localhost:7000", follow_redirects=True, timeout=10)
 
