@@ -2,18 +2,50 @@
 
 ## [Unreleased](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/tree/HEAD)
 
-[Full Changelog](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/compare/v0.6.1...HEAD)
+[Full Changelog](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/compare/v0.6.2...HEAD)
 
-## Support latest FastAPI
+## Update DataSpaces dependencies & use HTTPX2
 
-Update the custom `YamlRequest` class to support the latest FastAPI version (v0.132) that extends the `Request` signature.
+Update to use the pydantic-managed HTTPX2 package via updating DataSpaces-Auth to v0.4.
+Also update DataSpaces-Utils to v0.4.
 
-## DX
+It follows that `pytest-httpx` also needed to be updated to `httpx2-pytest`.
 
-Utilize [DataSpaces-Utils](https://github.com/SemanticMatter/ds-utils) for its FastAPI-specific error exception handling, base configuration, and error models.
-Update the routers' response documentation accordingly.
+## Misc.
 
-Update dependencies and dev tools.
+Updated dependencies, GitHub Actions, and dev tools.
+
+## [v0.6.2](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/tree/v0.6.2) (2026-06-02)
+
+[Full Changelog](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/compare/v0.6.1...v0.6.2)
+
+## Update DataSpaces dependencies & use HTTPX2
+
+Update to use the pydantic-managed HTTPX2 package via updating DataSpaces-Auth to v0.4.
+Also update DataSpaces-Utils to v0.4.
+
+It follows that `pytest-httpx` also needed to be updated to `httpx2-pytest`.
+
+## Misc.
+
+Updated dependencies, GitHub Actions, and dev tools.
+
+**Merged pull requests:**
+
+- \[pre-commit.ci\] pre-commit autoupdate [\#241](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/241) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
+- \[pre-commit.ci\] pre-commit autoupdate [\#239](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/239) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
+- \[pre-commit.ci\] pre-commit autoupdate [\#237](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/237) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
+- \[pre-commit.ci\] pre-commit autoupdate [\#234](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/234) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
+- \[pre-commit.ci\] pre-commit autoupdate [\#230](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/230) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
+- \[pre-commit.ci\] pre-commit autoupdate [\#226](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/226) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
+- \[pre-commit.ci\] pre-commit autoupdate [\#222](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/222) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
+- \[pre-commit.ci\] pre-commit autoupdate [\#219](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/219) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
+- Bump requests from 2.32.5 to 2.33.0 in /docker in the pip group across 1 directory [\#215](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/215) ([dependabot[bot]](https://github.com/apps/dependabot))
+- \[pre-commit.ci\] pre-commit autoupdate [\#214](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/214) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
+- Update Python requirements for Dockerfile [\#213](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/213) ([SemanticMatterBOT](https://github.com/SemanticMatterBOT))
+- \[pre-commit.ci\] pre-commit autoupdate [\#212](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/212) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
+- \[pre-commit.ci\] pre-commit autoupdate [\#210](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/210) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
+- \[pre-commit.ci\] pre-commit autoupdate [\#208](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/208) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
 
 ## [v0.6.1](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/tree/v0.6.1) (2026-03-02)
 
