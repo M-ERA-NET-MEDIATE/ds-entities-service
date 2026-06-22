@@ -16,7 +16,7 @@ jobs:
 
     steps:
       - name: Checkout ${{ github.repository }}
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       # The python version must match the one in Dockerfile
       - name: Set up Python 3.12
