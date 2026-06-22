@@ -46,7 +46,7 @@ psycopg-binary==3.3.4
 pycparser==3.0
 pydantic==2.13.4
 pydantic-core==2.46.4
-pydantic-settings==2.14.1
+pydantic-settings==2.14.2
 pyjwt[crypto]==2.13.0
 pymongo==4.17.0
 pynacl==1.6.2
