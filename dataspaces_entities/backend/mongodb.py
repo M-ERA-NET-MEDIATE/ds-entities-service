@@ -37,7 +37,6 @@ if TYPE_CHECKING:  # pragma: no cover
 
     from pymongo import MongoClient
     from pymongo.collection import Collection as MongoCollection
-    from s7 import SOFT7Entity
 
 
 logger = logging.getLogger(__name__)
