@@ -53,6 +53,9 @@ jobs:
           pip install -U setuptools wheel
           pip install -U -r .github/utils/requirements_audit.txt
 
+          # Temporary workaround for pip-tools
+          pip install "pip<26.2"
+
       - name: Prepare for pip-audit
         run: pip-compile --index-url="${{ env.PIP_INDEX_URL }}" --output-file="${{ runner.temp }}/requirements.txt" --extra=pre-commit --extra=testing --extra=server --verbose --color "${{ github.workspace }}/pyproject.toml"
 
@@ -64,13 +67,8 @@ jobs:
           #   DiskCache (python-diskcache) through 5.6.3 uses Python pickle for serialization by default.
           #   An attacker with write access to the cache directory can achieve arbitrary code execution
           #   when a victim application reads from the cache.
-          # CVE-2026-4539: pygments 2.19.2
-          #   The impacted element is the function AdlLexer of the file pygments/lexers/archetype.py.
-          #   The manipulation results in inefficient regular expression complexity. The attack is only
-          #   possible with local access.
           ignore-vulns: |
             CVE-2025-69872
-            CVE-2026-4539
 
   docker:
     name: Docker
