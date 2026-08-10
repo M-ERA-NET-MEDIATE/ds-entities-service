@@ -30,6 +30,9 @@ jobs:
           pip install -U setuptools wheel
           pip install -U -r .github/utils/requirements_audit.txt
 
+          # Temporary workaround for pip-tools
+          pip install "pip<26.2"
+
       - name: Setup git
         run: |
           git config --global user.name "${{ vars.CI_CD_GIT_USER }}"
