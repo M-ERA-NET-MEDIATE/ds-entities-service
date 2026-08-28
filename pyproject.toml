@@ -44,7 +44,7 @@ dependencies = [
     "DataSpaces-Auth[fastapi] ~=0.4.0",  # From SINTEF's GitLab (SemanticMatter group)
     "DataSpaces-Utils[fastapi] ~=0.4.1",  # From SINTEF's GitLab (SemanticMatter group)
     "fastapi >=0.141.1,<1",
-    "httpx2 ~=2.10",
+    "httpx2 ~=2.12",
     "pydantic-settings ~=2.15",
     "pymongo ~=4.17",
     "python-dotenv ~=1.2",
@@ -62,7 +62,7 @@ testing = [
     "pytest-cov ~=7.1",
 ]
 server = [
-    "gunicorn ~=26.0",
+    "gunicorn ~=26.2",
 ]
 dev = ["DataSpaces-Entities[pre-commit,testing]"]
 
