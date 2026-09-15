@@ -74,7 +74,7 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
 
         # If the tests are run with a live backend, do the following:
         # - skip the tests marked with 'skip_if_live_backend'
-        # - add non-mocked hosts list to the httpx_mock marker
+        # - add non-mocked hosts list to the httpx2_mock marker
         prefix_reason = "Live backend used: {reason}"
         default_reason = "Test is skipped when using a live backend"
         for item in items:
@@ -102,19 +102,19 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
                 non_mocked_hosts = ["localhost", "localhost:7000"]
                 return request.url.host not in non_mocked_hosts
 
-            # Handle the case of the httpx_mock marker already being present
-            if "httpx_mock" in item.keywords:
-                marker: pytest.Mark = item.keywords["httpx_mock"]
+            # Handle the case of the httpx2_mock marker already being present
+            if "httpx2_mock" in item.keywords:
+                marker: pytest.Mark = item.keywords["httpx2_mock"]
 
                 # The marker already has defined "should_mock" hosts - ignore
                 if "should_mock" in marker.kwargs:
                     continue
 
                 # Add the "should_mock" hosts to the marker
-                item.add_marker(pytest.mark.httpx_mock(should_mock=_mock_hosts))
+                item.add_marker(pytest.mark.httpx2_mock(should_mock=_mock_hosts))
             else:
-                # Add the httpx_mock marker with the "should_mock" hosts
-                item.add_marker(pytest.mark.httpx_mock(should_mock=_mock_hosts))
+                # Add the httpx2_mock marker with the "should_mock" hosts
+                item.add_marker(pytest.mark.httpx2_mock(should_mock=_mock_hosts))
     else:
         # If the tests are not run with a live backend, skip the tests marked with
         # 'skip_if_not_live_backend'
