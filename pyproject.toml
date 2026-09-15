@@ -147,6 +147,9 @@ filterwarnings = [
 
     # Avoid SegmentationFault from DLite
     "ignore::DeprecationWarning:dlite",
+
+    # Ignore deprecation warning from anyio BlockingPortal usage (used by Starlette)
+    "ignore:.*BlockingPortal.*:DeprecationWarning",
 ]
 log_level = "DEBUG"
 
