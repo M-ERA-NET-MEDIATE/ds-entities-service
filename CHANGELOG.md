@@ -2,18 +2,45 @@
 
 ## [Unreleased](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/tree/HEAD)
 
-[Full Changelog](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/compare/v0.6.2...HEAD)
-
-## Update DataSpaces dependencies & use HTTPX2
-
-Update to use the pydantic-managed HTTPX2 package via updating DataSpaces-Auth to v0.4.
-Also update DataSpaces-Utils to v0.4.
-
-It follows that `pytest-httpx` also needed to be updated to `httpx2-pytest`.
+[Full Changelog](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/compare/v0.6.3...HEAD)
 
 ## Misc.
 
-Updated dependencies, GitHub Actions, and dev tools.
+Updated Python dependencies (FastAPI, httpx2, pydantic-settings, gunicorn) and dev/CI tooling (pre-commit hooks, GitHub Actions, Dockerfile requirements).
+
+Adjusted the test suite to match the `httpx2-pytest` marker rename (`httpx_mock` → `httpx2_mock`) introduced in the httpx2 bump, removed an unused import, and silenced a deprecation warning from `anyio`'s `BlockingPortal` (used by Starlette).
+
+No functional or API changes.
+
+## [v0.6.3](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/tree/v0.6.3) (2026-09-15)
+
+[Full Changelog](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/compare/v0.6.2...v0.6.3)
+
+## Misc.
+
+Updated Python dependencies (FastAPI, httpx2, pydantic-settings, gunicorn) and dev/CI tooling (pre-commit hooks, GitHub Actions, Dockerfile requirements).
+
+Adjusted the test suite to match the `httpx2-pytest` marker rename (`httpx_mock` → `httpx2_mock`) introduced in the httpx2 bump, removed an unused import, and silenced a deprecation warning from `anyio`'s `BlockingPortal` (used by Starlette).
+
+No functional or API changes.
+
+**Merged pull requests:**
+
+- Update to the latest ds-auth [\#285](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/285) ([CasperWA](https://github.com/CasperWA))
+- \[pre-commit.ci\] pre-commit autoupdate [\#284](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/284) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
+- \[pre-commit.ci\] pre-commit autoupdate [\#281](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/281) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
+- \[pre-commit.ci\] pre-commit autoupdate [\#278](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/278) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
+- \[pre-commit.ci\] pre-commit autoupdate [\#276](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/276) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
+- \[pre-commit.ci\] pre-commit autoupdate [\#273](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/273) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
+- Cap pip at \<26.2 due to pip-tools [\#269](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/269) ([CasperWA](https://github.com/CasperWA))
+- \[pre-commit.ci\] pre-commit autoupdate [\#267](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/267) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
+- \[pre-commit.ci\] pre-commit autoupdate [\#265](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/265) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
+- \[pre-commit.ci\] pre-commit autoupdate [\#262](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/262) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
+- \[pre-commit.ci\] pre-commit autoupdate [\#260](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/260) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
+- \[pre-commit.ci\] pre-commit autoupdate [\#258](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/258) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
+- \[pre-commit.ci\] pre-commit autoupdate [\#255](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/255) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
+- \[pre-commit.ci\] pre-commit autoupdate [\#250](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/250) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
+- \[pre-commit.ci\] pre-commit autoupdate [\#247](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/247) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
 
 ## [v0.6.2](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/tree/v0.6.2) (2026-06-02)
 
