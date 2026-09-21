@@ -6,12 +6,12 @@
 #
 --index-url https://gitlab.sintef.no/api/v4/projects/17883/packages/pypi/simple
 
-amqp==5.3.1
+amqp==5.4.0
 annotated-doc==0.0.5
 annotated-types==0.8.0
 anyio==4.15.1
 bcrypt==5.0.0
-billiard==4.2.4
+billiard==4.3.0
 celery==5.6.3
 certifi==2026.7.22
 cffi==2.1.1
@@ -19,9 +19,9 @@ charset-normalizer==3.5.1
 click==8.5.0
 click-didyoumean==0.3.1
 click-plugins==1.1.1.2
-click-repl==0.3.0
+click-repl==0.4.0
 cryptography==50.0.1
-dataspaces-auth[fastapi]==0.4.0
+dataspaces-auth[fastapi]==0.5.0
 dataspaces-utils[common-fastapi,fastapi]==0.4.2
 diskcache==5.6.3
 dnspython==2.8.0
@@ -31,7 +31,7 @@ gunicorn==26.2.0
 h11==0.16.0
 httpcore2==2.13.0
 httpx2==2.13.0
-idna==3.19
+idna==3.20
 invoke==3.0.3
 kombu==5.6.2
 openpyxl==3.1.5
@@ -41,8 +41,8 @@ packaging==26.3
 paramiko==5.0.0
 pillow==12.3.0
 prompt-toolkit==3.0.53
-psycopg[binary]==3.3.5
-psycopg-binary==3.3.5
+psycopg[binary]==3.3.6
+psycopg-binary==3.3.6
 pycparser==3.0
 pydantic==2.13.5
 pydantic-core==2.46.5
@@ -62,8 +62,8 @@ typing-extensions==4.16.0
 typing-inspection==0.4.4
 tzdata==2026.4
 tzlocal==5.4.4
-urllib3==2.7.0
+urllib3==2.8.0
 uvicorn==0.53.0
 uvicorn-worker==0.4.0
 vine==5.1.0
-wcwidth==0.8.3
+wcwidth==0.8.4
