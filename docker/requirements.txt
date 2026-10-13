@@ -6,7 +6,7 @@
 #
 --index-url https://gitlab.sintef.no/api/v4/projects/17883/packages/pypi/simple
 
-amqp==5.4.0
+amqp==5.4.1
 annotated-doc==0.0.5
 annotated-types==0.8.0
 anyio==4.15.1
@@ -24,9 +24,9 @@ cryptography==50.0.2
 dataspaces-auth[fastapi]==0.5.0
 dataspaces-utils[common-fastapi,fastapi]==0.4.2
 diskcache==5.6.3
-dnspython==2.8.0
+dnspython==2.9.0
 et-xmlfile==2.0.0
-fastapi==0.142.2
+fastapi==0.143.0
 gunicorn==26.2.0
 h11==0.16.0
 httpcore2==2.13.1
@@ -35,7 +35,7 @@ idna==3.20
 invoke==3.0.3
 kombu==5.6.2
 openpyxl==3.1.5
-opentelemetry-api==1.45.0
+opentelemetry-api==1.45.1
 oteapi-core==1.0.2
 otelib==1.0.0
 packaging==26.3
@@ -44,12 +44,12 @@ pillow==12.3.0
 prompt-toolkit==3.0.53
 psycopg[binary]==3.3.6
 psycopg-binary==3.3.6
-pycparser==3.0
-pydantic==2.13.5
-pydantic-core==2.46.5
+pycparser==3.11
+pydantic==2.14.1
+pydantic-core==2.50.1
 pydantic-settings==2.15.0
 pyjwt[crypto]==2.15.1
-pymongo==4.18.2
+pymongo==4.18.3
 pynacl==1.6.2
 python-dateutil==2.9.0.post0
 python-dotenv==1.2.4
