@@ -56,7 +56,6 @@ dependencies = [
 pre-commit = ["pre-commit ~=4.7"]
 testing = [
     "DataSpaces-Auth[pytest]",
-    "dlite-python ~=0.5.29,<0.5.40",  # Avoid SegmentationFault from DLite (v0.5.40+)
     "httpx2-pytest ~=2.0",
     "pytest ~=9.2",
     "pytest-cov ~=7.1",
@@ -144,9 +143,6 @@ filterwarnings = [
     # Keep this only for as long as SemanticMatter/ds-auth#32 is not fixed.
     # Link: https://github.com/SemanticMatter/ds-auth/issues/32
     "ignore:.*The realm-export\\.json file was not found.*:UserWarning",
-
-    # Avoid SegmentationFault from DLite
-    "ignore::DeprecationWarning:dlite",
 
     # Ignore deprecation warning from anyio BlockingPortal usage (used by Starlette)
     "ignore:.*BlockingPortal.*:DeprecationWarning",

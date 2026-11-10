@@ -23,10 +23,6 @@ cd ds-entities-service
 pip install -U --index-url="https://gitlab.sintef.no/api/v4/projects/17883/packages/pypi/simple" -e .
 ```
 
-> **Important**: If using this service locally alongside [DLite](https://github.com/SINTEF/dlite), it is important to note that issues may occur if [NumPy](https://numpy.org) v2 is used.
-> There is no known issues with NumPy v1.
-> This is a registered issue found for DLite v0.5.16.
-
 ## Run the service
 
 The service requires a MongoDB server to be running, and the service needs to be able to connect to it.

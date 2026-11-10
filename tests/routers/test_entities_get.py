@@ -44,35 +44,6 @@ def test_get_entity(
     assert resolved_entity == parameterized_entity.parsed_entity, json.dumps(resolved_entity, indent=2)
 
 
-def test_get_entity_instance(
-    parameterized_entity: ParameterizeGetEntities,
-    client: ClientFixture,
-) -> None:
-    """Validate that we can instantiate a DLite Instance from the response"""
-    import json
-
-    from dlite import Instance
-
-    with client() as client_:
-        response = client_.get(ENDPOINT, params={"id": [parameterized_entity.identity]})
-
-    try:
-        resolved_entity = response.json()
-    except json.JSONDecodeError:
-        pytest.fail(f"Response not JSON: {response.text}")
-
-    assert resolved_entity == parameterized_entity.parsed_entity, resolved_entity
-
-    # Tweak resolved entity to be DLite compatible
-    resolved_entity["uri"] = resolved_entity.pop("identity")
-    for property_name, property_value in list(resolved_entity["properties"].items()):
-        if property_value["type"].startswith("http"):
-            resolved_entity["properties"][property_name]["$ref"] = property_value["type"]
-            resolved_entity["properties"][property_name]["type"] = "ref"
-
-    Instance.from_dict(resolved_entity)
-
-
 def test_get_multiple_entities(
     backend_test_data: list[dict[str, Any]],
     client: ClientFixture,
