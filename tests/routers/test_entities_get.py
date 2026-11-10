@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 if TYPE_CHECKING:
+    from pathlib import Path
     from typing import Any
 
     from ..conftest import ClientFixture, ParameterizeGetEntities
@@ -45,18 +46,21 @@ def test_get_entity(
 
 
 def test_get_multiple_entities(
-    backend_test_data: list[dict[str, Any]],
+    static_dir: Path,
     client: ClientFixture,
 ) -> None:
     """Test the route to retrieve multiple entities (a list response)."""
     import json
 
+    import yaml
     from fastapi import status
 
+    # Load the entities fresh from file, since the `backend_test_data` fixture's entities are mutated when
+    # inserted into a live MongoDB backend (an `_id` field is added).
+    entities: list[dict[str, Any]] = yaml.safe_load((static_dir / "valid_entities_soft7.yaml").read_text())
+
     with client() as client_:
-        response = client_.get(
-            ENDPOINT, params={"id": [entity["identity"] for entity in backend_test_data]}
-        )
+        response = client_.get(ENDPOINT, params={"id": [entity["identity"] for entity in entities]})
 
     try:
         resolved_entities = response.json()
@@ -69,7 +73,7 @@ def test_get_multiple_entities(
     def sort_key(entity: dict[str, Any]) -> str:
         return entity["identity"]
 
-    assert sorted(resolved_entities, key=sort_key) == sorted(backend_test_data, key=sort_key), json.dumps(
+    assert sorted(resolved_entities, key=sort_key) == sorted(entities, key=sort_key), json.dumps(
         resolved_entities, indent=2
     )
 

@@ -70,6 +70,7 @@ jobs:
   docker:
     name: Docker
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     strategy:
       fail-fast: false
@@ -95,15 +96,38 @@ jobs:
       - name: Run MongoDB
         run: |
           # Pull mongo:8 image and run it
+          # Note: The container is not removed if it exits (no `--rm`), so its logs remain available.
           docker pull mongo:8
-          docker run --rm -d \
+          docker run -d \
             --env MONGO_INITDB_ROOT_USERNAME=root \
             --env MONGO_INITDB_ROOT_PASSWORD=root \
             --name "mongo" \
             --network "host" \
             --volume "${{ github.workspace }}/docker/docker_init/create_users.js:/docker-entrypoint-initdb.d/0_create_users.js" \
             mongo:8
-          sleep 10  # Wait for the database to start
+
+          # Wait for the database to finish its initialization and accept authenticated connections.
+          # Fail fast with the container's status and logs if it does not become ready.
+          for _ in $(seq 1 60); do
+            if [ "$(docker inspect --format '{{.State.Running}}' mongo 2>/dev/null)" != "true" ]; then
+              echo "MongoDB container is not running!"
+              break
+            fi
+            if docker logs mongo 2>&1 | grep -q "MongoDB init process complete" && \
+               docker exec mongo mongosh --quiet \
+                 "mongodb://dataspaces:dataspaces@localhost:27017/entities_service?authSource=admin" \
+                 --eval "db.runCommand({ ping: 1 }).ok" >/dev/null 2>&1; then
+              echo "MongoDB is ready."
+              exit 0
+            fi
+            sleep 1
+          done
+
+          echo "MongoDB did not become ready. Container status:"
+          docker ps --all --filter "name=mongo"
+          echo -e "\nMongoDB container logs:"
+          docker logs mongo
+          exit 1
 
       - name: Build Docker image
         run: |
