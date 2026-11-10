@@ -8,17 +8,8 @@ Currently implemented backends:
 
 from __future__ import annotations
 
-import sys
+from enum import StrEnum
 from typing import TYPE_CHECKING
-
-if sys.version_info >= (3, 11):
-    from enum import StrEnum
-else:
-    from enum import Enum
-
-    class StrEnum(str, Enum):
-        """Enum with string values."""
-
 
 if TYPE_CHECKING:  # pragma: no cover
     from typing import Any
