@@ -17,7 +17,7 @@ from fastapi import (
     status,
 )
 from fastapi.exceptions import RequestValidationError
-from pydantic import ValidationError, conlist
+from pydantic import Field, ValidationError, conlist
 from s7 import SOFT7Entity
 from s7.pydantic_models.soft7_entity import SOFT7IdentityURIType
 
@@ -44,10 +44,20 @@ ROUTER = APIRouter(
 
 EmptyList: type[list[Any]] = conlist(Any, min_length=0, max_length=0)  # type: ignore[arg-type]
 
+# Response models for one or more entities.
+# Validate the union members left to right, so a list is only ever validated as `list[SOFT7Entity]`.
+# With pydantic's default "smart" union mode, a list is also passed to `SOFT7Entity`'s own validators,
+# which are not guaranteed to reject non-mapping input with a `ValidationError` (e.g., soft7 v0.6.0
+# raises a `TypeError`, resulting in an HTTP 500 response).
+EntityOrEntities = Annotated[list[SOFT7Entity] | SOFT7Entity, Field(union_mode="left_to_right")]
+OptionalEntityOrEntities = Annotated[
+    list[SOFT7Entity] | SOFT7Entity | None, Field(union_mode="left_to_right")
+]
+
 
 @ROUTER.get(
     "/",
-    response_model=list[SOFT7Entity] | SOFT7Entity,
+    response_model=EntityOrEntities,
     response_model_by_alias=True,
     response_model_exclude_unset=True,
     dependencies=[Depends(has_role(DSAPIRole.ENTITIES_READ))],
@@ -128,7 +138,7 @@ async def get_entities(
 
 @ROUTER.post(
     "/",
-    response_model=list[SOFT7Entity] | SOFT7Entity | None,
+    response_model=OptionalEntityOrEntities,
     response_model_by_alias=True,
     response_model_exclude_unset=True,
     status_code=status.HTTP_201_CREATED,
@@ -209,7 +219,7 @@ async def create_entities(
 
 @ROUTER.put(
     "/",
-    response_model=list[SOFT7Entity] | SOFT7Entity | None,
+    response_model=OptionalEntityOrEntities,
     response_model_by_alias=True,
     response_model_exclude_unset=True,
     status_code=status.HTTP_201_CREATED,

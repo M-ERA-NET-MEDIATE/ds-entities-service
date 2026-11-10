@@ -7,6 +7,8 @@ from typing import TYPE_CHECKING
 import pytest
 
 if TYPE_CHECKING:
+    from typing import Any
+
     from ..conftest import ClientFixture, ParameterizeGetEntities
 
 pytestmark = [
@@ -69,6 +71,36 @@ def test_get_entity_instance(
             resolved_entity["properties"][property_name]["type"] = "ref"
 
     Instance.from_dict(resolved_entity)
+
+
+def test_get_multiple_entities(
+    backend_test_data: list[dict[str, Any]],
+    client: ClientFixture,
+) -> None:
+    """Test the route to retrieve multiple entities (a list response)."""
+    import json
+
+    from fastapi import status
+
+    with client() as client_:
+        response = client_.get(
+            ENDPOINT, params={"id": [entity["identity"] for entity in backend_test_data]}
+        )
+
+    try:
+        resolved_entities = response.json()
+    except json.JSONDecodeError:
+        pytest.fail(f"Response not JSON: {response.text}")
+
+    assert response.status_code == status.HTTP_200_OK, json.dumps(resolved_entities, indent=2)
+    assert isinstance(resolved_entities, list), json.dumps(resolved_entities, indent=2)
+
+    def sort_key(entity: dict[str, Any]) -> str:
+        return entity["identity"]
+
+    assert sorted(resolved_entities, key=sort_key) == sorted(backend_test_data, key=sort_key), json.dumps(
+        resolved_entities, indent=2
+    )
 
 
 def test_get_entity_not_found(client: ClientFixture) -> None:
