@@ -95,16 +95,16 @@ jobs:
 
       - name: Run MongoDB
         run: |
-          # Pull mongo:8 image and run it
+          # Pull mongo:9 image and run it
           # Note: The container is not removed if it exits (no `--rm`), so its logs remain available.
-          docker pull mongo:8
+          docker pull mongo:9
           docker run -d \
             --env MONGO_INITDB_ROOT_USERNAME=root \
             --env MONGO_INITDB_ROOT_PASSWORD=root \
             --name "mongo" \
             --network "host" \
             --volume "${{ github.workspace }}/docker/docker_init/create_users.js:/docker-entrypoint-initdb.d/0_create_users.js" \
-            mongo:8
+            mongo:9
 
           # Wait for the database to finish its initialization and accept authenticated connections.
           # Fail fast with the container's status and logs if it does not become ready.

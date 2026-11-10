@@ -40,7 +40,7 @@ docker run --rm -d \
   --publish "27017:27017" \
   --network "dataspaces_entities_net" \
   --volume "${PWD}/docker/docker_init/create_users.js:/docker-entrypoint-initdb.d/0_create_users.js" \
-  mongo:8
+  mongo:9
 ```
 
 Then build and run the DataSpaces-Entities service Docker image:
