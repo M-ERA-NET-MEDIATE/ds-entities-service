@@ -7,6 +7,9 @@ from typing import TYPE_CHECKING
 import pytest
 
 if TYPE_CHECKING:
+    from pathlib import Path
+    from typing import Any
+
     from ..conftest import ClientFixture, ParameterizeGetEntities
 
 pytestmark = [
@@ -42,33 +45,37 @@ def test_get_entity(
     assert resolved_entity == parameterized_entity.parsed_entity, json.dumps(resolved_entity, indent=2)
 
 
-def test_get_entity_instance(
-    parameterized_entity: ParameterizeGetEntities,
+def test_get_multiple_entities(
+    static_dir: Path,
     client: ClientFixture,
 ) -> None:
-    """Validate that we can instantiate a DLite Instance from the response"""
+    """Test the route to retrieve multiple entities (a list response)."""
     import json
 
-    from dlite import Instance
+    import yaml
+    from fastapi import status
+
+    # Load the entities fresh from file, since the `backend_test_data` fixture's entities are mutated when
+    # inserted into a live MongoDB backend (an `_id` field is added).
+    entities: list[dict[str, Any]] = yaml.safe_load((static_dir / "valid_entities_soft7.yaml").read_text())
 
     with client() as client_:
-        response = client_.get(ENDPOINT, params={"id": [parameterized_entity.identity]})
+        response = client_.get(ENDPOINT, params={"id": [entity["identity"] for entity in entities]})
 
     try:
-        resolved_entity = response.json()
+        resolved_entities = response.json()
     except json.JSONDecodeError:
         pytest.fail(f"Response not JSON: {response.text}")
 
-    assert resolved_entity == parameterized_entity.parsed_entity, resolved_entity
+    assert response.status_code == status.HTTP_200_OK, json.dumps(resolved_entities, indent=2)
+    assert isinstance(resolved_entities, list), json.dumps(resolved_entities, indent=2)
 
-    # Tweak resolved entity to be DLite compatible
-    resolved_entity["uri"] = resolved_entity.pop("identity")
-    for property_name, property_value in list(resolved_entity["properties"].items()):
-        if property_value["type"].startswith("http"):
-            resolved_entity["properties"][property_name]["$ref"] = property_value["type"]
-            resolved_entity["properties"][property_name]["type"] = "ref"
+    def sort_key(entity: dict[str, Any]) -> str:
+        return entity["identity"]
 
-    Instance.from_dict(resolved_entity)
+    assert sorted(resolved_entities, key=sort_key) == sorted(entities, key=sort_key), json.dumps(
+        resolved_entities, indent=2
+    )
 
 
 def test_get_entity_not_found(client: ClientFixture) -> None:

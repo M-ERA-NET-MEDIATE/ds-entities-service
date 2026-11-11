@@ -23,10 +23,6 @@ cd ds-entities-service
 pip install -U --index-url="https://gitlab.sintef.no/api/v4/projects/17883/packages/pypi/simple" -e .
 ```
 
-> **Important**: If using this service locally alongside [DLite](https://github.com/SINTEF/dlite), it is important to note that issues may occur if [NumPy](https://numpy.org) v2 is used.
-> There is no known issues with NumPy v1.
-> This is a registered issue found for DLite v0.5.16.
-
 ## Run the service
 
 The service requires a MongoDB server to be running, and the service needs to be able to connect to it.
@@ -44,7 +40,7 @@ docker run --rm -d \
   --publish "27017:27017" \
   --network "dataspaces_entities_net" \
   --volume "${PWD}/docker/docker_init/create_users.js:/docker-entrypoint-initdb.d/0_create_users.js" \
-  mongo:8
+  mongo:9
 ```
 
 Then build and run the DataSpaces-Entities service Docker image:
@@ -85,6 +81,16 @@ Furthermore, the used `localhost` port can be changed via the `DS_ENTITIES_PORT`
 
 The `--env-file` argument is optional, but if used, it should point to a file containing the environment variables needed by the service.
 See the section on [using a file for environment variables](#using-a-file-for-environment-variables) for more information.
+
+### MongoDB version
+
+The service is tested against MongoDB 9 (the `mongo:9` Docker image).
+MongoDB 8 cannot start on Linux kernel versions 6.19 through 7.0.13 (see [SERVER-121912](https://jira.mongodb.org/browse/SERVER-121912)).
+
+If you previously ran the Docker Compose setup with `mongo:8`, note that `docker compose up` reuses the MongoDB container's data volume, so MongoDB 9 will start on the existing MongoDB 8 data.
+This works, but back up any data you want to keep first.
+To start with an empty database instead, run `docker compose down -v` before `docker compose up`.
+Going back to `mongo:8` with the same data is only possible as long as the MongoDB `featureCompatibilityVersion` has not been raised to `9.0`.
 
 ### Using a file for environment variables
 

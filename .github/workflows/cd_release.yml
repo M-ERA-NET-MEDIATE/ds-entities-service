@@ -23,7 +23,7 @@ jobs:
       package_dirs: dataspaces_entities
       install_extras: "[dev]"
       pip_index_url: "${{ vars.EXTERNAL_PYPI_INDEX_URL }}"
-      python_version_build: "3.10"
+      python_version_build: "3.11"
       build_libs: flit
       build_cmd: "flit build"
       build_dir: "dist"
