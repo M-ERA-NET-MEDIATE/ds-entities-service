@@ -82,6 +82,16 @@ Furthermore, the used `localhost` port can be changed via the `DS_ENTITIES_PORT`
 The `--env-file` argument is optional, but if used, it should point to a file containing the environment variables needed by the service.
 See the section on [using a file for environment variables](#using-a-file-for-environment-variables) for more information.
 
+### MongoDB version
+
+The service is tested against MongoDB 9 (the `mongo:9` Docker image).
+MongoDB 8 cannot start on Linux kernel versions 6.19 through 7.0.13 (see [SERVER-121912](https://jira.mongodb.org/browse/SERVER-121912)).
+
+If you previously ran the Docker Compose setup with `mongo:8`, note that `docker compose up` reuses the MongoDB container's data volume, so MongoDB 9 will start on the existing MongoDB 8 data.
+This works, but back up any data you want to keep first.
+To start with an empty database instead, run `docker compose down -v` before `docker compose up`.
+Going back to `mongo:8` with the same data is only possible as long as the MongoDB `featureCompatibilityVersion` has not been raised to `9.0`.
+
 ### Using a file for environment variables
 
 The service supports a "dot-env" file, i.e., a `.env` file with a list of (secret) environment variables.

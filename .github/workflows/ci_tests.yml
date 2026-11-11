@@ -114,7 +114,7 @@ jobs:
               break
             fi
             if docker logs mongo 2>&1 | grep -q "MongoDB init process complete" && \
-               docker exec mongo mongosh --quiet \
+               timeout 10 docker exec mongo mongosh --quiet \
                  "mongodb://dataspaces:dataspaces@localhost:27017/entities_service?authSource=admin" \
                  --eval "db.runCommand({ ping: 1 }).ok" >/dev/null 2>&1; then
               echo "MongoDB is ready."
