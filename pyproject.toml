@@ -30,40 +30,40 @@ classifiers = [
     "Development Status :: 2 - Pre-Alpha",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
     "Natural Language :: English",
     "Operating System :: OS Independent",
 ]
-requires-python = "~=3.10"
+requires-python = "~=3.11"
 dynamic = ["version", "description"]
 
 dependencies = [
     "DataSpaces-Auth[fastapi] >=0.5.0,<1",  # From SINTEF's GitLab (SemanticMatter group)
-    "DataSpaces-Utils[fastapi] >=0.4.2,<1",  # From SINTEF's GitLab (SemanticMatter group)
-    "fastapi >=0.143.0,<1",
-    "httpx2 >=2.13.1,<3",
-    "pydantic-settings >=2.15,<3",
-    "pymongo >=4.18.3,<5",
+    "DataSpaces-Utils[fastapi] >=0.5.0,<1",  # From SINTEF's GitLab (SemanticMatter group)
+    "fastapi >=0.162.2,<1",
+    "httpx2 >=2.16.0,<3",
+    "pydantic-settings >=2.16.2,<3",
+    "pymongo >=4.19.0,<5",
     "python-dotenv >=1.2.4,<2",
     "pyyaml >=6.0.3,<7",
-    "soft7 >=0.5.0,<1",
+    "soft7 >=0.6.0,<1",
     "uvicorn-worker >=0.4.0,<1",
 ]
 
 [project.optional-dependencies]
-pre-commit = ["pre-commit ~=4.6"]
+pre-commit = ["pre-commit ~=4.7"]
 testing = [
     "DataSpaces-Auth[pytest]",
-    "dlite-python ~=0.5.29,<0.5.40",  # Avoid SegmentationFault from DLite (v0.5.40+)
     "httpx2-pytest ~=2.0",
-    "pytest ~=9.1",
+    "pytest ~=9.2",
     "pytest-cov ~=7.1",
 ]
 server = [
-    "gunicorn ~=26.2",
+    "gunicorn ~=27.0",
 ]
 dev = ["DataSpaces-Entities[pre-commit,testing]"]
 
@@ -78,7 +78,7 @@ Changelog = "https://M-ERA-NET-MEDIATE.github.io/ds-entities-service/latest/CHAN
 line-length = 108
 
 [tool.mypy]
-python_version = "3.10"
+python_version = "3.11"
 ignore_missing_imports = true
 scripts_are_modules = true
 warn_unused_configs = true
@@ -132,7 +132,7 @@ isort.required-imports = ["from __future__ import annotations"]
 ]
 
 [tool.pytest.ini_options]
-minversion = "8.3"
+minversion = "9"
 addopts = "-rs --cov=dataspaces_entities --cov-config=pyproject.toml --cov-report=term-missing:skip-covered --no-cov-on-fail"
 filterwarnings = [
     # Treat all warnings as errors
@@ -145,9 +145,6 @@ filterwarnings = [
     # Keep this only for as long as SemanticMatter/ds-auth#32 is not fixed.
     # Link: https://github.com/SemanticMatter/ds-auth/issues/32
     "ignore:.*The realm-export\\.json file was not found.*:UserWarning",
-
-    # Avoid SegmentationFault from DLite
-    "ignore::DeprecationWarning:dlite",
 
     # Ignore deprecation warning from anyio BlockingPortal usage (used by Starlette)
     "ignore:.*BlockingPortal.*:DeprecationWarning",

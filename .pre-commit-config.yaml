@@ -71,7 +71,7 @@ repos:
     rev: v3.22.0
     hooks:
     - id: pyupgrade
-      args: [--py310-plus]
+      args: [--py311-plus]
 
   # Bandit is a security linter
   # More information can be found in its documentation:
