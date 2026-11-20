@@ -2,34 +2,33 @@
 
 ## [Unreleased](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/tree/HEAD)
 
-[Full Changelog](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/compare/v0.7.0...HEAD)
-
-## Python support
-
-Drop support for Python 3.10 and add support for Python 3.14 and 3.15.
-The package now requires Python 3.11 or newer.
-The minimum versions of the dependencies have been raised (FastAPI, DataSpaces-Utils, soft7, and others).
-
-## MongoDB 9
-
-The Docker image and the Docker Compose setup now use MongoDB 9 (`mongo:9`), since MongoDB 8 cannot start on Linux kernels 6.19 through 7.0.13.
-The README documents the MongoDB version and what to expect when upgrading an existing Docker Compose data volume from MongoDB 8.
-
-## Remove DLite
-
-All DLite references have been removed, including the test dependency and the NumPy v2 caveat in the README.
-
-## Fixes
-
-Entity responses are now validated left to right.
-A list of entities is no longer also passed through the single-entity validators, which avoids an HTTP 500 response when soft7 raises a `TypeError` instead of a validation error.
+[Full Changelog](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/compare/v0.7.1...HEAD)
 
 ## Misc.
 
-Updated Python dependencies, dev and CI tooling (pre-commit hooks, GitHub Actions, Dockerfile requirements).
+Updated Python dependencies (FastAPI, httpx2, pydantic-settings, pymongo) and dev/CI tooling (pre-commit hooks, GitHub Actions, Dockerfile requirements).
 
-Added tests for the `PUT /entities` route, fixed the live-backend multi-entity test, and made the CI MongoDB readiness probe fail fast instead of waiting indefinitely.
+Updated the `YamlRoute` constructor to accept the new `max_body_size` and `form_limits` parameters added to FastAPI's `APIRoute`, and pass them through, so the custom route keeps working with the newer FastAPI.
 
+No functional or API changes.
+
+
+## [v0.7.1](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/tree/v0.7.1) (2026-11-20)
+
+[Full Changelog](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/compare/v0.7.0...v0.7.1)
+
+## Misc.
+
+Updated Python dependencies (FastAPI, httpx2, pydantic-settings, pymongo) and dev/CI tooling (pre-commit hooks, GitHub Actions, Dockerfile requirements).
+
+Updated the `YamlRoute` constructor to accept the new `max_body_size` and `form_limits` parameters added to FastAPI's `APIRoute`, and pass them through, so the custom route keeps working with the newer FastAPI.
+
+No functional or API changes.
+
+
+**Merged pull requests:**
+
+- \[pre-commit.ci\] pre-commit autoupdate [\#309](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/pull/309) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
 
 ## [v0.7.0](https://github.com/M-ERA-NET-MEDIATE/ds-entities-service/tree/v0.7.0) (2026-11-12)
 
