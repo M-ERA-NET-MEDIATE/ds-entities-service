@@ -23,6 +23,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from typing import Any
 
     from fastapi import IncEx, params
+    from fastapi._form_limits import _FormLimits
     from fastapi.datastructures import DefaultPlaceholder
     from s7 import SOFT7Entity
     from starlette.routing import BaseRoute
@@ -273,6 +274,8 @@ class YamlRoute(APIRoute):
             generate_unique_id
         ),
         strict_content_type: bool | DefaultPlaceholder = Default(True),
+        max_body_size: int | None = None,
+        form_limits: _FormLimits | None = None,
     ) -> None:
         # Ensure that the Route only extends the OpenAPI spec for methods that expect an entities body.
         body_entities_methods = {"POST", "PUT", "PATCH"}
@@ -337,4 +340,6 @@ class YamlRoute(APIRoute):
             openapi_extra=openapi_extra,
             generate_unique_id_function=generate_unique_id_function,
             strict_content_type=strict_content_type,
+            max_body_size=max_body_size,
+            form_limits=form_limits,
         )
