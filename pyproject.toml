@@ -44,12 +44,12 @@ dynamic = ["version", "description"]
 dependencies = [
     "DataSpaces-Auth[fastapi] >=0.5.0,<1",  # From SINTEF's GitLab (SemanticMatter group)
     "DataSpaces-Utils[fastapi] >=0.5.0,<1",  # From SINTEF's GitLab (SemanticMatter group)
-    "fastapi >=0.163.1,<1",
+    "fastapi >=0.165.0,<1",
     "httpx2 >=2.16.2,<3",
     "pydantic-settings >=2.16.3,<3",
-    "pymongo >=4.20.0,<5",
+    "pymongo >=4.20.1,<5",
     "python-dotenv >=1.2.4,<2",
-    "pyyaml >=6.0.3,<7",
+    "pyyaml >=6.0.4,<7",
     "soft7 >=0.6.0,<1",
     "uvicorn-worker >=0.4.0,<1",
 ]
